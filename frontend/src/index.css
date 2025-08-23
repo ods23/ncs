@@ -1,0 +1,98 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* 달력 스타일 - 토요일은 푸른색, 일요일은 붉은색 */
+.react-datepicker__day--saturday {
+  color: #3b82f6 !important; /* 푸른색 */
+  font-weight: 600;
+}
+
+.react-datepicker__day--sunday {
+  color: #ef4444 !important; /* 붉은색 */
+  font-weight: 600;
+}
+
+/* 호버 효과 */
+.react-datepicker__day--saturday:hover {
+  background-color: #dbeafe !important;
+  color: #1d4ed8 !important;
+}
+
+.react-datepicker__day--sunday:hover {
+  background-color: #fee2e2 !important;
+  color: #dc2626 !important;
+}
+
+/* 선택된 날짜 스타일 */
+.react-datepicker__day--saturday.react-datepicker__day--selected {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+
+.react-datepicker__day--sunday.react-datepicker__day--selected {
+  background-color: #ef4444 !important;
+  color: white !important;
+}
+
+/* 오늘 날짜 스타일 */
+.react-datepicker__day--saturday.react-datepicker__day--today {
+  background-color: #dbeafe !important;
+  color: #1d4ed8 !important;
+  font-weight: 700;
+}
+
+.react-datepicker__day--sunday.react-datepicker__day--today {
+  background-color: #fee2e2 !important;
+  color: #dc2626 !important;
+  font-weight: 700;
+}
+
+/* 주말 배경색 (선택적) */
+.react-datepicker__day--saturday,
+.react-datepicker__day--sunday {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* AG Grid 내부의 DatePicker 스타일 */
+.ag-grid-datepicker .react-datepicker__day--saturday {
+  color: #3b82f6 !important;
+  font-weight: 600;
+}
+
+.ag-grid-datepicker .react-datepicker__day--sunday {
+  color: #ef4444 !important;
+  font-weight: 600;
+}
+
+.ag-grid-datepicker .react-datepicker__day--saturday:hover {
+  background-color: #dbeafe !important;
+  color: #1d4ed8 !important;
+}
+
+.ag-grid-datepicker .react-datepicker__day--sunday:hover {
+  background-color: #fee2e2 !important;
+  color: #dc2626 !important;
+}
+
+.ag-grid-datepicker .react-datepicker__day--saturday.react-datepicker__day--selected {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+
+.ag-grid-datepicker .react-datepicker__day--sunday.react-datepicker__day--selected {
+  background-color: #ef4444 !important;
+  color: white !important;
+}
+
+ 
