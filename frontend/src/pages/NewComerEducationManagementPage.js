@@ -79,6 +79,37 @@ const NewComerEducationManagementPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [originalFileName, setOriginalFileName] = useState('');
+  
+  // 그리드 높이 상태
+  const [gridHeight, setGridHeight] = useState('calc(100vh - 280px)');
+  
+  // 화면 크기에 따른 그리드 높이 계산
+  const calculateGridHeight = () => {
+    const windowHeight = window.innerHeight;
+    const headerHeight = 80; // 헤더 높이
+    const searchBarHeight = 120; // 검색바 높이
+    const footerHeight = 60; // 건수 표시 높이
+    const padding = 40; // 여백
+    
+    const calculatedHeight = windowHeight - headerHeight - searchBarHeight - footerHeight - padding;
+    return Math.max(calculatedHeight, 400); // 최소 높이 400px 보장
+  };
+  
+  // 화면 크기 변화 감지
+  useEffect(() => {
+    const handleResize = () => {
+      setGridHeight(calculateGridHeight());
+    };
+    
+    // 초기 높이 설정
+    setGridHeight(calculateGridHeight());
+    
+    // 리사이즈 이벤트 리스너 추가
+    window.addEventListener('resize', handleResize);
+    
+    // 클린업
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // AG Grid 컬럼 정의
   const columnDefs = [
@@ -1652,8 +1683,9 @@ const NewComerEducationManagementPage = () => {
 
       {/* AG Grid */}
       <div className="ag-theme-alpine" style={{ 
-        height: 'calc(100vh - 300px)', 
-        minHeight: '500px',
+        height: `${gridHeight}px`, 
+        minHeight: '400px',
+        maxHeight: 'calc(100vh - 200px)',
         width: '100%'
       }}>
         <AgGridReact
