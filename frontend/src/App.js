@@ -6,8 +6,6 @@ import Header from './components/Header';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
-import SchedulePage from './pages/SchedulePage';
-import StatisticsPage from './pages/StatisticsPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
 import UserRegistrationPage from './pages/UserRegistrationPage';
@@ -49,8 +47,7 @@ const AppContent = () => {
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/" element={user ? <DashboardPage /> : <Navigate to="/login" />} />
-          <Route path="/schedule" element={user ? <SchedulePage /> : <Navigate to="/login" />} />
-          <Route path="/statistics" element={user ? <StatisticsPage /> : <Navigate to="/login" />} />
+
           <Route path="/admin" element={user ? <AdminPage /> : <Navigate to="/login" />} />
           <Route path="/mypage" element={user ? <MyPageWithSidebar /> : <Navigate to="/login" />} />
 

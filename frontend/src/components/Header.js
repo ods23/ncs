@@ -7,8 +7,7 @@ import {
   Folder as FolderIcon,
   Description as DescriptionIcon,
   Settings as SettingsIcon,
-  CalendarToday as CalendarIcon,
-  TrendingUp as TrendingUpIcon
+
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -124,8 +123,7 @@ const Header = () => {
     if (path === '/new-comers') return '초신자관리';
     if (path === '/transfer-believers') return '전입신자관리';
     if (path === '/new-comer-education') return '초신자교육관리';
-    if (path === '/schedule') return '일정 관리';
-    if (path === '/statistics') return '통계 대시보드';
+
     if (path === '/mypage') return 'MyPage';
     if (path === '/') return '대시보드';
     
@@ -246,67 +244,9 @@ const Header = () => {
             홈
           </Button>
           
-          {/* 일정 버튼 */}
-          <Button
-            color="inherit"
-            onClick={() => navigate('/schedule')}
-            startIcon={<CalendarIcon sx={{ fontSize: 14 }} />}
-            sx={{ 
-              fontSize: '12px',
-              fontWeight: '600',
-              minWidth: 'auto',
-              px: 1.5,
-              py: 0.5,
-              height: '28px',
-              borderRadius: '14px',
-              background: 'rgba(255,255,255,0.1)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              textTransform: 'none',
-              transform: 'translateY(-10px)',
-              '&:hover': {
-                background: 'rgba(255,255,255,0.2)',
-                transform: 'translateY(-11px)',
-                boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-                border: '1px solid rgba(255,255,255,0.3)'
-              }
-            }}
-          >
-            일정
-          </Button>
+
           
-          {/* 통계 버튼 */}
-          <Button
-            color="inherit"
-            onClick={() => navigate('/statistics')}
-            startIcon={<TrendingUpIcon sx={{ fontSize: 14 }} />}
-            sx={{ 
-              fontSize: '12px',
-              fontWeight: '600',
-              minWidth: 'auto',
-              px: 1.5,
-              py: 0.5,
-              height: '28px',
-              borderRadius: '14px',
-              background: 'rgba(255,255,255,0.1)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              textTransform: 'none',
-              transform: 'translateY(-10px)',
-              '&:hover': {
-                background: 'rgba(255,255,255,0.2)',
-                transform: 'translateY(-11px)',
-                boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-                border: '1px solid rgba(255,255,255,0.3)'
-              }
-            }}
-          >
-            통계
-          </Button>
+
           
           {/* 관리자 버튼 */}
           {user && user.role === '관리자' && (
