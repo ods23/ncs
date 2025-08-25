@@ -195,6 +195,32 @@ const NewComerManagementPage = () => {
   const [openDuplicateDialog, setOpenDuplicateDialog] = useState(false);
   const [duplicateGraduates, setDuplicateGraduates] = useState([]);
   const [originalNumber, setOriginalNumber] = useState(null); // 기존 번호 저장용
+  
+  // 그리드 높이 상태
+  const [gridHeight, setGridHeight] = useState('calc(100vh - 200px)');
+  
+  // 화면 크기에 따른 그리드 높이 계산 (초신자 수료자 관리와 동일)
+  const calculateGridHeight = () => {
+    const windowHeight = window.innerHeight;
+    const calculatedHeight = windowHeight - 200; // 초신자 수료자 관리와 동일한 높이
+    return Math.max(calculatedHeight, 400); // 최소 높이 400px 보장
+  };
+  
+  // 화면 크기 변화 감지
+  useEffect(() => {
+    const handleResize = () => {
+      setGridHeight(calculateGridHeight());
+    };
+    
+    // 초기 높이 설정
+    setGridHeight(calculateGridHeight());
+    
+    // 리사이즈 이벤트 리스너 추가
+    window.addEventListener('resize', handleResize);
+    
+    // 클린업
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // AG Grid 컬럼 정의
   const columnDefs = [
@@ -2372,8 +2398,8 @@ const NewComerManagementPage = () => {
 
       {/* AG Grid */}
       <div className="ag-theme-alpine" style={{ 
-        height: 'calc(100vh - 200px)', 
-        minHeight: '500px',
+        height: `${gridHeight}px`, 
+        minHeight: '400px',
         width: '100%',
         marginTop: '-4px'
       }}>

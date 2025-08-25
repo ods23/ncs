@@ -5,7 +5,9 @@ import { Box } from '@mui/material';
 import Header from './components/Header';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import HomePage from './pages/HomePage';
+import DashboardPage from './pages/DashboardPage';
+import SchedulePage from './pages/SchedulePage';
+import StatisticsPage from './pages/StatisticsPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
 import UserRegistrationPage from './pages/UserRegistrationPage';
@@ -26,6 +28,7 @@ import SystemConstantsPage from './pages/SystemConstantsPage';
 import AdminPage from './pages/AdminPage';
 import MyPageWithSidebar from './pages/MyPageWithSidebar';
 import NewComerEducationManagementPage from './pages/NewComerEducationManagementPage';
+import TransferBelieverEducationManagementPage from './pages/TransferBelieverEducationManagementPage';
 
 const AppContent = () => {
   const { user, loading } = useAuth();
@@ -45,7 +48,9 @@ const AppContent = () => {
           <Route path="/register" element={!user ? <RegisterPage /> : <Navigate to="/" />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
-          <Route path="/" element={user ? <HomePage /> : <Navigate to="/login" />} />
+          <Route path="/" element={user ? <DashboardPage /> : <Navigate to="/login" />} />
+          <Route path="/schedule" element={user ? <SchedulePage /> : <Navigate to="/login" />} />
+          <Route path="/statistics" element={user ? <StatisticsPage /> : <Navigate to="/login" />} />
           <Route path="/admin" element={user ? <AdminPage /> : <Navigate to="/login" />} />
           <Route path="/mypage" element={user ? <MyPageWithSidebar /> : <Navigate to="/login" />} />
 
@@ -63,6 +68,7 @@ const AppContent = () => {
         <Route path="/admin/transfer-believer-graduate" element={user ? <TransferGraduateManagementPage /> : <Navigate to="/login" />} />
         <Route path="/admin/all-graduate" element={user ? <AllGraduateManagementPage /> : <Navigate to="/login" />} />
         <Route path="/new-comer-education" element={user ? <NewComerEducationManagementPage /> : <Navigate to="/login" />} />
+        <Route path="/transfer-believer-education" element={user ? <TransferBelieverEducationManagementPage /> : <Navigate to="/login" />} />
         <Route path="/transfer-believer/register" element={user ? <NewComerManagementPage /> : <Navigate to="/login" />} />
         <Route path="/transfer-believer-graduate" element={user ? <NewComerManagementPage /> : <Navigate to="/login" />} />
         <Route path="/menu/:menuId" element={user ? <MenuPage /> : <Navigate to="/login" />} />

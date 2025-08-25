@@ -64,8 +64,12 @@ app.use('/api/graduates', require('./routes/graduateRouter'));
 app.use('/api/new-comer-graduates', require('./routes/newComerGraduateRouter'));
 app.use('/api/transfer-graduates', require('./routes/transferGraduateRouter'));
 
-// 초신자교육관리 라우터
+// 교육관리 라우터
 app.use('/api/new-comer-education', require('./routes/newComerEducationRouter'));
+app.use('/api/transfer-believer-education', require('./routes/transferBelieverEducationRouter'));
+
+// 통계 라우터
+app.use('/api/statistics', require('./routes/statistics'));
 
 // Health check
 app.get('/health', (req, res) => {

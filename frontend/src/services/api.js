@@ -6,6 +6,12 @@ const api = axios.create({
   timeout: 10000,
 });
 
+// API 전용 인스턴스 (baseURL에 /api 포함)
+const apiWithPrefix = axios.create({
+  baseURL: (process.env.REACT_APP_API_URL || 'http://localhost:3001') + '/api',
+  timeout: 10000,
+});
+
 // 토큰 갱신 함수
 const refreshToken = async () => {
   try {
@@ -63,6 +69,46 @@ api.interceptors.response.use(
         const newToken = await refreshToken();
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
+      } catch (refreshError) {
+        // 토큰 갱신 실패 시 로그인 페이지로 리다이렉트
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/unauthorized';
+        return Promise.reject(refreshError);
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+// Request interceptor for apiWithPrefix instance
+apiWithPrefix.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor for apiWithPrefix instance
+apiWithPrefix.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        const newToken = await refreshToken();
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return apiWithPrefix(originalRequest);
       } catch (refreshError) {
         // 토큰 갱신 실패 시 로그인 페이지로 리다이렉트
         localStorage.removeItem('token');
@@ -146,27 +192,27 @@ export const systemConstantsAPI = {
 
 // Common Files API
 export const commonFilesAPI = {
-  getAll: (params) => api.get('/api/common-files', { params }),
-  upload: (formData) => api.post('/api/common-files/upload', formData, {
+  getAll: (params) => apiWithPrefix.get('/common-files', { params }),
+  upload: (formData) => apiWithPrefix.post('/common-files/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
-  download: (id) => api.get(`/api/common-files/${id}/download`, {
+  download: (id) => apiWithPrefix.get(`/common-files/${id}/download`, {
     responseType: 'blob'
   }),
-  getById: (id) => api.get(`/api/common-files/${id}`),
-  delete: (id) => api.delete(`/api/common-files/${id}`),
+  getById: (id) => apiWithPrefix.get(`/common-files/${id}`),
+  delete: (id) => apiWithPrefix.delete(`/common-files/${id}`),
 };
 
 // Files API
 export const filesAPI = {
-  upload: (formData) => api.post('/api/files/upload', formData, {
+  upload: (formData) => apiWithPrefix.post('/files/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
-  download: (id) => api.get(`/api/files/download/${id}`, {
+  download: (id) => apiWithPrefix.get(`/files/download/${id}`, {
     responseType: 'blob'
   }),
-  getById: (id) => api.get(`/api/files/${id}`),
-  delete: (id) => api.delete(`/api/files/${id}`),
+  getById: (id) => apiWithPrefix.get(`/files/${id}`),
+  delete: (id) => apiWithPrefix.delete(`/files/${id}`),
 };
 
 // 파일 URL 생성 함수

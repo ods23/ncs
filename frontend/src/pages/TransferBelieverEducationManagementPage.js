@@ -1,37 +1,43 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Box, 
+  Button, 
   TextField, 
   Typography,
-  IconButton,
-  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions
+  Grid,
+  Paper,
+  IconButton,
+  Tooltip,
+  Alert,
+  Snackbar
 } from '@mui/material';
 import { 
-  Search as SearchIcon,
   Add as AddIcon,
   Edit as EditIcon,
-  Save as SaveIcon,
-  Cancel as CancelIcon,
-  Visibility as VisibilityIcon,
+  Delete as DeleteIcon,
+  Download as DownloadIcon,
   Image as ImageIcon,
-  FileDownload as FileDownloadIcon
+  Save as SaveIcon
 } from '@mui/icons-material';
 import { AgGridReact } from 'ag-grid-react';
+import { AgGridColumn } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { useAuth } from '../contexts/AuthContext';
 import * as XLSX from 'xlsx';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { ko } from 'date-fns/locale/ko';
 
-const NewComerEducationManagementPage = () => {
+const TransferBelieverEducationManagementPage = () => {
   const { user } = useAuth();
   const [gridRef] = useState(useRef());
   
@@ -157,14 +163,14 @@ const NewComerEducationManagementPage = () => {
       }
     },
     {
-              headerName: '초신자관리 파일',
+              headerName: '전입신자관리 파일',
         width: 100,
         minWidth: 120,
         maxWidth: 150,
       sortable: false,
       filter: false,
       cellRenderer: (params) => {
-        const hasNewComerFile = params.data.file_id; // 초신자관리 파일
+        const hasNewComerFile = params.data.file_id; // 전입신자관리 파일
         
         if (!hasNewComerFile) {
           return (
@@ -178,7 +184,7 @@ const NewComerEducationManagementPage = () => {
 
         return (
           <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-            <Tooltip title="초신자관리 파일 보기" arrow placement="top">
+            <Tooltip title="전입신자관리 파일 보기" arrow placement="top">
                              <IconButton
                  size="small"
                  onClick={() => handleFileView(params.data.file_id)}
@@ -342,7 +348,7 @@ const NewComerEducationManagementPage = () => {
       }
     },
     { 
-      headerName: '초신자', 
+              headerName: '전입신자', 
       field: 'believer_name', 
       width: 120, 
       minWidth: 120, 
@@ -703,7 +709,7 @@ const NewComerEducationManagementPage = () => {
     }
   };
 
-  // 교사 목록 가져오기 (사용자등록에서 초신자교사 가져오기)
+        // 교사 목록 가져오기 (사용자등록에서 전입신자교사 가져오기)
   const fetchTeachers = async () => {
     try {
       const response = await fetch('/api/users', {
@@ -756,7 +762,7 @@ const NewComerEducationManagementPage = () => {
   // 사용 가능한 년도 목록 가져오기
   const fetchAvailableYears = async () => {
     try {
-      const response = await fetch('/api/new-comer-education/years', {
+      const response = await fetch('/api/transfer-believer-education/years', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -804,10 +810,10 @@ const NewComerEducationManagementPage = () => {
 
       if (searchParams.believer_name && searchParams.believer_name.trim() !== '') {
         queryParams.append('believer_name', searchParams.believer_name.trim());
-        console.log('초신자명 파라미터 추가:', searchParams.believer_name.trim());
+        console.log('전입신자명 파라미터 추가:', searchParams.believer_name.trim());
       }
 
-      const url = `/api/new-comer-education${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+              const url = `/api/transfer-believer-education${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
       console.log('요청 URL:', url);
 
       console.log('교육 데이터 API 요청 시작');
@@ -832,7 +838,7 @@ const NewComerEducationManagementPage = () => {
           console.log('=== 파일 정보 확인 ===');
           data.forEach((row, index) => {
             console.log(`행 ${index + 1} - ${row.believer_name}:`);
-            console.log('  초신자관리 파일 ID:', row.file_id);
+            console.log('  전입신자관리 파일 ID:', row.file_id);
             console.log('  교육관리 파일 ID:', row.education_file_id);
           });
         }
@@ -1215,17 +1221,13 @@ const NewComerEducationManagementPage = () => {
       console.log('양육 시작일:', educationStartDate);
       console.log('양육 종료일:', educationEndDate);
       
-      // 1. 초신자관리 DB 업데이트 (new_comers 테이블) - 교육관리용 부분 수정 API 사용
-      console.log('1. 초신자관리 DB 업데이트 시작');
-      console.log('요청 URL:', `/api/new-comers/${formData.id}/education`);
-      console.log('요청 데이터:', {
-        teacher: formData.teacher,
-        name: formData.believer_name,
-        believer_type: formData.believer_type,
-        education_type: formData.education_type
-      });
+      // 전입신자 교육 데이터 생성 또는 업데이트
+      console.log('전입신자 교육 데이터 생성 또는 업데이트 시작');
+              console.log('요청 URL:', `/api/transfer-believer-education/new-comer/${formData.id}`);
+      console.log('file_id:', formData.file_id);
+      console.log('uploadedFile:', uploadedFile);
       
-      const newComerUpdateResponse = await fetch(`/api/new-comers/${formData.id}/education`, {
+              const educationUpdateResponse = await fetch(`/api/transfer-believer-education/new-comer/${formData.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1237,41 +1239,7 @@ const NewComerEducationManagementPage = () => {
           believer_type: formData.believer_type,
           education_type: formData.education_type,
           education_start_date: educationStartDate,
-          education_end_date: educationEndDate
-        })
-      });
-
-      console.log('초신자관리 업데이트 응답 상태:', newComerUpdateResponse.status);
-      
-      if (!newComerUpdateResponse.ok) {
-        const errorText = await newComerUpdateResponse.text();
-        console.error('초신자관리 업데이트 실패 - 상태:', newComerUpdateResponse.status);
-        console.error('초신자관리 업데이트 실패 - 응답:', errorText);
-        throw new Error('초신자관리 데이터 업데이트 실패');
-      }
-      
-      const newComerUpdateData = await newComerUpdateResponse.json();
-      console.log('1. 초신자관리 DB 업데이트 성공');
-      
-      // 신자구분 변경으로 인한 번호 업데이트가 있는 경우 알림
-      if (newComerUpdateData.number) {
-        console.log('신자구분 변경으로 번호가 업데이트되었습니다:', newComerUpdateData.number);
-        alert(`신자구분 변경으로 인해 등록번호가 ${newComerUpdateData.number}로 변경되었습니다.`);
-      }
-
-      // 2. 교육 데이터 생성 또는 업데이트 (new_comer_education 테이블)
-      console.log('2. 교육 데이터 생성 또는 업데이트 시작');
-      console.log('요청 URL:', `/api/new-comer-education/new-comer/${formData.id}`);
-      console.log('file_id:', formData.file_id);
-      console.log('uploadedFile:', uploadedFile);
-      
-      const educationUpdateResponse = await fetch(`/api/new-comer-education/new-comer/${formData.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
+          education_end_date: educationEndDate,
           week1_date: formData.week1_date,
           week2_date: formData.week2_date,
           week3_date: formData.week3_date,
@@ -1293,13 +1261,21 @@ const NewComerEducationManagementPage = () => {
         })
       });
 
-      console.log('교육 데이터 업데이트 응답 상태:', educationUpdateResponse.status);
+      console.log('전입신자 교육 데이터 업데이트 응답 상태:', educationUpdateResponse.status);
 
       if (educationUpdateResponse.ok) {
-        console.log('2. 교육 데이터 업데이트 성공');
-        console.log('3. 교육 데이터 재조회 시작');
+        const educationUpdateData = await educationUpdateResponse.json();
+        console.log('전입신자 교육 데이터 업데이트 성공');
+        
+        // 신자구분 변경으로 인한 번호 업데이트가 있는 경우 알림
+        if (educationUpdateData.newRegistrationNumber) {
+          console.log('신자구분 변경으로 번호가 업데이트되었습니다:', educationUpdateData.newRegistrationNumber);
+          alert(`신자구분 변경으로 인해 등록번호가 ${educationUpdateData.newRegistrationNumber}로 변경되었습니다.`);
+        }
+        
+        console.log('교육 데이터 재조회 시작');
         await fetchEducationData(searchConditions);
-        console.log('3. 교육 데이터 재조회 완료');
+        console.log('교육 데이터 재조회 완료');
         
         setOpenDialog(false);
         setEditingData(null);
@@ -1332,9 +1308,9 @@ const NewComerEducationManagementPage = () => {
         alert('저장이 완료되었습니다.');
       } else {
         const errorText = await educationUpdateResponse.text();
-        console.error('교육 데이터 업데이트 실패 - 상태:', educationUpdateResponse.status);
-        console.error('교육 데이터 업데이트 실패 - 응답:', errorText);
-        alert('교육 데이터 저장 중 오류가 발생했습니다.');
+        console.error('전입신자 교육 데이터 업데이트 실패 - 상태:', educationUpdateResponse.status);
+        console.error('전입신자 교육 데이터 업데이트 실패 - 응답:', errorText);
+        alert('전입신자 교육 데이터 저장 중 오류가 발생했습니다.');
       }
     } catch (error) {
       console.error('=== 저장 실패 ===');
@@ -1359,7 +1335,7 @@ const NewComerEducationManagementPage = () => {
       const excelData = currentData.map((row, index) => ({
         '순번': index + 1,
         '양육교사': row.teacher || '',
-        '초신자명': row.believer_name || '',
+                  '전입신자명': row.believer_name || '',
         '신자구분': row.believer_type || '',
         '교육구분': row.education_type || '',
         '등록번호': row.registration_number || '',
@@ -1393,7 +1369,7 @@ const NewComerEducationManagementPage = () => {
       const colWidths = [
         { wch: 5 },   // 순번
         { wch: 15 },  // 양육교사
-        { wch: 15 },  // 초신자명
+        { wch: 15 },  // 전입신자명
         { wch: 12 },  // 신자구분
         { wch: 12 },  // 교육구분
         { wch: 12 },  // 등록번호
@@ -1419,12 +1395,12 @@ const NewComerEducationManagementPage = () => {
       ws['!cols'] = colWidths;
       
       // 워크북에 워크시트 추가
-      XLSX.utils.book_append_sheet(wb, ws, '초신자교육관리');
+              XLSX.utils.book_append_sheet(wb, ws, '전입신자교육관리');
       
       // 파일명 생성 (년도 포함)
       const currentYear = searchConditions.year || new Date().getFullYear();
       const currentDate = new Date().toISOString().split('T')[0];
-      const fileName = `초신자교육관리_${currentYear}년_${currentDate}.xlsx`;
+              const fileName = `전입신자교육관리_${currentYear}년_${currentDate}.xlsx`;
       
       // 엑셀 파일 다운로드
       XLSX.writeFile(wb, fileName);
@@ -1488,7 +1464,7 @@ const NewComerEducationManagementPage = () => {
                 }
               }}
             >
-              <FileDownloadIcon sx={{ fontSize: 16 }} />
+              <DownloadIcon sx={{ fontSize: 16 }} />
             </IconButton>
           </Tooltip>
           <TextField
@@ -1585,7 +1561,7 @@ const NewComerEducationManagementPage = () => {
           />
 
           <TextField
-            label="초신자명"
+                            label="전입신자명"
             value={searchConditions.believer_name}
             onChange={(e) => setSearchConditions({...searchConditions, believer_name: e.target.value})}
             size="small"
@@ -1638,7 +1614,7 @@ const NewComerEducationManagementPage = () => {
                 }
               }}
             >
-              <SearchIcon sx={{ fontSize: 16 }} />
+              <AddIcon sx={{ fontSize: 16 }} />
             </IconButton>
           </Tooltip>
 
@@ -1736,7 +1712,7 @@ const NewComerEducationManagementPage = () => {
           fontWeight: '600',
           fontSize: '18px'
         }}>
-          {editingData ? '초신자 교육 데이터 수정' : '교육 데이터 추가'}
+                          {editingData ? '전입신자 교육 데이터 수정' : '교육 데이터 추가'}
         </DialogTitle>
         
         <DialogContent sx={{ padding: '20px' }}>
@@ -2096,7 +2072,7 @@ const NewComerEducationManagementPage = () => {
           <Button
             onClick={() => setOpenDialog(false)}
             variant="outlined"
-            startIcon={<CancelIcon />}
+            startIcon={<DeleteIcon />}
             sx={{
               borderRadius: '8px',
               textTransform: 'none',
@@ -2127,4 +2103,4 @@ const NewComerEducationManagementPage = () => {
   );
 };
 
-export default NewComerEducationManagementPage;
+export default TransferBelieverEducationManagementPage;

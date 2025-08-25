@@ -3,7 +3,7 @@ const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
 const { pool } = require('../config/database');
 
-// 초신자교육관리 데이터 조회
+// 전입신자교육관리 데이터 조회
 router.get('/', authenticateToken, async (req, res) => {
   let conn;
   try {
@@ -44,7 +44,7 @@ router.get('/', authenticateToken, async (req, res) => {
       FROM new_comers nc
       LEFT JOIN new_comer_education nce ON nc.id = nce.new_comer_id
       WHERE nc.department = '새가족위원회'
-        AND nc.believer_type = '초신자'
+        AND nc.believer_type = '전입신자'
     `;
     
     const params = [];
@@ -72,18 +72,18 @@ router.get('/', authenticateToken, async (req, res) => {
       params.push(`%${req.query.teacher.trim()}%`);
     }
     
-    // 초신자명 필터
+    // 전입신자명 필터
     if (req.query.believer_name && req.query.believer_name.trim() !== '') {
       query += ` AND nc.name LIKE ?`;
       params.push(`%${req.query.believer_name.trim()}%`);
     }
     
     // 기본 정렬: 양육교사, 등록번호 오름차순
-    query += ` ORDER BY nc.teacher ASC, nc.number ASC`;
+    query += ` ORDER BY nc.teacher ASC, COALESCE(nc.number, '') ASC`;
     
     const rows = await conn.query(query, params);
     
-    console.log('=== 초신자교육관리 조회 결과 ===');
+    console.log('=== 전입신자교육관리 조회 결과 ===');
     console.log('1. 실행된 SQL 쿼리:', query);
     console.log('2. 쿼리 파라미터:', params);
     console.log('3. 조회된 행 수:', rows.length);
@@ -117,14 +117,14 @@ router.get('/', authenticateToken, async (req, res) => {
       console.log('week8_comment:', firstRow.week8_comment);
       console.log('overall_comment:', firstRow.overall_comment);
       console.log('=== 파일 정보 ===');
-      console.log('초신자관리 파일 ID (nc.file_id):', firstRow.file_id);
+      console.log('전입신자관리 파일 ID (nc.file_id):', firstRow.file_id);
       console.log('교육관리 파일 ID (education_file_id):', firstRow.education_file_id);
     }
     console.log('=== 로그 끝 ===');
     
     res.json(rows);
   } catch (error) {
-    console.error('초신자교육관리 조회 오류:', error);
+    console.error('전입신자교육관리 조회 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   } finally {
     if (conn) conn.release();
@@ -141,7 +141,7 @@ router.get('/years', authenticateToken, async (req, res) => {
       SELECT DISTINCT year 
       FROM new_comers 
       WHERE department = '새가족위원회' 
-        AND believer_type = '초신자'
+        AND believer_type = '전입신자'
         AND year IS NOT NULL
       ORDER BY year DESC
     `;
@@ -158,7 +158,7 @@ router.get('/years', authenticateToken, async (req, res) => {
   }
 });
 
-// 초신자교육관리 데이터 생성
+// 전입신자교육관리 데이터 생성
 router.post('/', authenticateToken, async (req, res) => {
   let conn;
   try {
@@ -238,14 +238,14 @@ router.post('/', authenticateToken, async (req, res) => {
       message: '교육 데이터가 성공적으로 생성되었습니다.' 
     });
   } catch (error) {
-    console.error('초신자교육관리 생성 오류:', error);
+    console.error('전입신자교육관리 생성 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   } finally {
     if (conn) conn.release();
   }
 });
 
-// 초신자교육관리 데이터 수정
+// 전입신자교육관리 데이터 수정
 router.put('/:id', authenticateToken, async (req, res) => {
   let conn;
   try {
@@ -330,14 +330,14 @@ router.put('/:id', authenticateToken, async (req, res) => {
     
     res.json({ message: '교육 데이터가 성공적으로 수정되었습니다.' });
   } catch (error) {
-    console.error('초신자교육관리 수정 오류:', error);
+    console.error('전입신자교육관리 수정 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   } finally {
     if (conn) conn.release();
   }
 });
 
-// 초신자교육관리용 교육 데이터 생성 또는 업데이트 (new_comer_id 기준)
+// 전입신자교육관리용 교육 데이터 생성 또는 업데이트 (new_comer_id 기준)
 router.put('/new-comer/:new_comer_id', authenticateToken, async (req, res) => {
   let conn;
   try {
@@ -345,6 +345,12 @@ router.put('/new-comer/:new_comer_id', authenticateToken, async (req, res) => {
     
     const { new_comer_id } = req.params;
     const {
+      teacher,
+      name,
+      believer_type,
+      education_type,
+      education_start_date,
+      education_end_date,
       week1_date,
       week2_date,
       week3_date,
@@ -365,9 +371,216 @@ router.put('/new-comer/:new_comer_id', authenticateToken, async (req, res) => {
       file_id
     } = req.body;
     
-    console.log('=== 초신자교육관리 교육 데이터 생성/업데이트 시작 ===');
+    console.log('=== 전입신자교육관리 교육 데이터 생성/업데이트 시작 ===');
     console.log('new_comer_id:', new_comer_id);
     console.log('요청 데이터:', req.body);
+    
+    // 1. new_comers 테이블 업데이트 (등록번호 생성 로직 포함)
+    if (teacher || name || believer_type || education_type || education_start_date || education_end_date) {
+      console.log('1. new_comers 테이블 업데이트 시작');
+      
+      // 기존 데이터 조회
+      const existingDataResult = await conn.query('SELECT * FROM new_comers WHERE id = ?', [new_comer_id]);
+      
+      if (existingDataResult.length === 0) {
+        return res.status(404).json({ error: '전입신자를 찾을 수 없습니다.' });
+      }
+      
+      const existingData = existingDataResult[0];
+      console.log('기존 데이터:', existingData);
+      
+      // 신자구분 변경 확인 및 번호 처리
+      const existingBelieverType = existingData.believer_type;
+      const existingYear = existingData.year;
+      const existingDepartment = existingData.department;
+      let shouldReorderNumbers = false;
+      let finalNumber = existingData.number;
+      
+      if (believer_type !== undefined && existingBelieverType !== believer_type) {
+        console.log('신자구분 변경 감지');
+        console.log('기존 신자구분:', existingBelieverType);
+        console.log('새 신자구분:', believer_type);
+        
+        if (existingBelieverType === '전입신자' && believer_type === '초신자') {
+          // 전입신자 → 초신자: 새로운 초신자 번호 생성
+          console.log('전입신자 → 초신자 변경: 새로운 번호 생성');
+          shouldReorderNumbers = true;
+          
+          // 년도에서 마지막 2자리 추출
+          const yearSuffix = existingYear ? existingYear.toString().slice(-2) : new Date().getFullYear().toString().slice(-2);
+          
+          // 부서, 신자유형(초신자), 년도 기준으로 순번 조회
+          const rowNumberQuery = `
+            SELECT COUNT(*) as current_count
+            FROM new_comers 
+            WHERE department = ? AND believer_type = ? AND year = ?
+          `;
+          
+          const rowNumberResult = await conn.query(rowNumberQuery, [existingDepartment, believer_type, existingYear]);
+          const currentCount = parseInt(rowNumberResult[0]?.current_count) || 0;
+          const nextNumber = currentCount + 1;
+          finalNumber = `${yearSuffix}-${String(nextNumber).padStart(3, '0')}`;
+          
+          console.log('초신자 현재 등록된 수:', currentCount);
+          console.log('초신자 다음 순번:', nextNumber);
+          console.log('초신자 생성된 번호:', finalNumber);
+        } else if (existingBelieverType === '초신자' && believer_type === '전입신자') {
+          // 초신자 → 전입신자: 새로운 전입신자 번호 생성
+          console.log('초신자 → 전입신자 변경: 새로운 번호 생성');
+          shouldReorderNumbers = true;
+          
+          // 년도에서 마지막 2자리 추출
+          const yearSuffix = existingYear ? existingYear.toString().slice(-2) : new Date().getFullYear().toString().slice(-2);
+          
+          // 부서, 신자유형(전입신자), 년도 기준으로 순번 조회
+          const rowNumberQuery = `
+            SELECT COUNT(*) as current_count
+            FROM new_comers 
+            WHERE department = ? AND believer_type = ? AND year = ?
+          `;
+          
+          const rowNumberResult = await conn.query(rowNumberQuery, [existingDepartment, believer_type, existingYear]);
+          const currentCount = parseInt(rowNumberResult[0]?.current_count) || 0;
+          const nextNumber = currentCount + 1;
+          finalNumber = `${yearSuffix}-${String(nextNumber).padStart(3, '0')}`;
+          
+          console.log('전입신자 현재 등록된 수:', currentCount);
+          console.log('전입신자 다음 순번:', nextNumber);
+          console.log('전입신자 생성된 번호:', finalNumber);
+        }
+      }
+      
+      // 부분 업데이트 - 제공된 필드만 업데이트
+      const updateFields = [];
+      const updateParams = [];
+      
+      if (teacher !== undefined) {
+        updateFields.push('teacher = ?');
+        updateParams.push(teacher);
+      }
+      
+      if (name !== undefined) {
+        updateFields.push('name = ?');
+        updateParams.push(name);
+      }
+      
+      if (believer_type !== undefined) {
+        updateFields.push('believer_type = ?');
+        updateParams.push(believer_type);
+      }
+      
+      if (education_type !== undefined) {
+        updateFields.push('education_type = ?');
+        updateParams.push(education_type);
+      }
+      
+      if (education_start_date !== undefined) {
+        updateFields.push('education_start_date = ?');
+        updateParams.push(education_start_date);
+      }
+      
+      if (education_end_date !== undefined) {
+        updateFields.push('education_end_date = ?');
+        updateParams.push(education_end_date);
+      }
+      
+      // 신자구분이 변경된 경우 번호도 업데이트
+      if (believer_type !== undefined && existingBelieverType !== believer_type) {
+        updateFields.push('number = ?');
+        updateParams.push(finalNumber);
+      }
+      
+      // 업데이트할 필드가 없으면 에러
+      if (updateFields.length === 0) {
+        return res.status(400).json({ error: '업데이트할 데이터가 없습니다.' });
+      }
+      
+      updateFields.push('updated_at = NOW()');
+      updateParams.push(new_comer_id);
+      
+      const sql = `
+        UPDATE new_comers SET
+          ${updateFields.join(', ')}
+        WHERE id = ?
+      `;
+      
+      console.log('실행할 SQL:', sql);
+      console.log('SQL 파라미터:', updateParams);
+      
+      const result = await conn.query(sql, updateParams);
+      
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: '전입신자를 찾을 수 없습니다.' });
+      }
+      
+      // 신자구분 변경으로 인한 번호 재정렬
+      if (shouldReorderNumbers) {
+        console.log('=== 번호 재정렬 시작 ===');
+        
+        // 전입신자 → 초신자 변경인 경우 전입신자 번호 재정렬
+        if (existingBelieverType === '전입신자' && believer_type === '초신자') {
+          console.log('전입신자 → 초신자 변경: 전입신자 번호 재정렬');
+          try {
+                         const reorderResponse = await fetch(`${req.protocol}://${req.get('host')}/api/transfer-believer-education/reorder-numbers`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': req.headers.authorization
+              },
+              body: JSON.stringify({
+                year: existingYear,
+                department: existingDepartment
+              })
+            });
+            
+            if (reorderResponse.ok) {
+              const reorderData = await reorderResponse.json();
+              console.log('전입신자 번호 재정렬 완료:', reorderData.message);
+              console.log('재정렬된 전입신자 수:', reorderData.updatedCount);
+            } else {
+              console.error('전입신자 번호 재정렬 실패');
+            }
+          } catch (error) {
+            console.error('전입신자 번호 재정렬 중 오류:', error);
+          }
+        }
+        // 초신자 → 전입신자 변경인 경우 초신자 번호 재정렬
+        else if (existingBelieverType === '초신자' && believer_type === '전입신자') {
+          console.log('초신자 → 전입신자 변경: 초신자 번호 재정렬');
+          try {
+            const reorderResponse = await fetch(`${req.protocol}://${req.get('host')}/api/new-comers/reorder-numbers`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': req.headers.authorization
+              },
+              body: JSON.stringify({
+                year: existingYear,
+                department: existingDepartment
+              })
+            });
+            
+            if (reorderResponse.ok) {
+              const reorderData = await reorderResponse.json();
+              console.log('초신자 번호 재정렬 완료:', reorderData.message);
+              console.log('재정렬된 초신자 수:', reorderData.updatedCount);
+            } else {
+              console.error('초신자 번호 재정렬 실패');
+            }
+          } catch (error) {
+            console.error('초신자 번호 재정렬 중 오류:', error);
+          }
+        }
+      }
+      
+      console.log('1. new_comers 테이블 업데이트 완료');
+      
+      // 신자구분 변경으로 인한 번호 업데이트가 있는 경우 응답에 포함
+      if (believer_type !== undefined && existingBelieverType !== believer_type) {
+        res.locals.newRegistrationNumber = finalNumber;
+        console.log('신자구분 변경으로 번호 업데이트:', finalNumber);
+      }
+    }
     
     // 빈 문자열을 null로 변환하는 함수
     const convertEmptyToNull = (value) => {
@@ -397,7 +610,7 @@ router.put('/new-comer/:new_comer_id', authenticateToken, async (req, res) => {
     
     console.log('처리된 데이터:', processedData);
     
-    // 기존 교육 데이터 확인
+    // 2. 교육 데이터 생성 또는 업데이트
     const existingDataResult = await conn.query(
       'SELECT id FROM new_comer_education WHERE new_comer_id = ?', 
       [new_comer_id]
@@ -405,7 +618,7 @@ router.put('/new-comer/:new_comer_id', authenticateToken, async (req, res) => {
     
     if (existingDataResult.length > 0) {
       // 기존 데이터가 있으면 업데이트
-      console.log('기존 교육 데이터 발견, 업데이트 진행');
+      console.log('2. 기존 교육 데이터 발견, 업데이트 진행');
       const educationId = existingDataResult[0].id;
       
                    const updateQuery = `
@@ -463,10 +676,17 @@ router.put('/new-comer/:new_comer_id', authenticateToken, async (req, res) => {
       }
       
       console.log('=== 교육 데이터 업데이트 완료 ===');
-      res.json({ message: '교육 데이터가 성공적으로 업데이트되었습니다.' });
+      
+      // 신자구분 변경으로 인한 번호 업데이트가 있는 경우 응답에 포함
+      const responseData = { message: '전입신자 교육 데이터가 성공적으로 업데이트되었습니다.' };
+      if (res.locals.newRegistrationNumber) {
+        responseData.newRegistrationNumber = res.locals.newRegistrationNumber;
+      }
+      
+      res.json(responseData);
     } else {
       // 기존 데이터가 없으면 새로 생성
-      console.log('기존 교육 데이터 없음, 새로 생성');
+      console.log('2. 기존 교육 데이터 없음, 새로 생성');
       
                    const insertQuery = `
         INSERT INTO new_comer_education (
@@ -520,13 +740,20 @@ router.put('/new-comer/:new_comer_id', authenticateToken, async (req, res) => {
       const insertResult = await conn.query(insertQuery, insertParams);
       
       console.log('=== 교육 데이터 생성 완료 ===');
-      res.status(201).json({ 
+      
+      // 신자구분 변경으로 인한 번호 업데이트가 있는 경우 응답에 포함
+      const responseData = { 
         id: insertResult.insertId,
-        message: '교육 데이터가 성공적으로 생성되었습니다.' 
-      });
+        message: '전입신자 교육 데이터가 성공적으로 생성되었습니다.' 
+      };
+      if (res.locals.newRegistrationNumber) {
+        responseData.newRegistrationNumber = res.locals.newRegistrationNumber;
+      }
+      
+      res.status(201).json(responseData);
     }
   } catch (error) {
-    console.error('=== 초신자교육관리 교육 데이터 생성/업데이트 오류 ===');
+    console.error('=== 전입신자교육관리 교육 데이터 생성/업데이트 오류 ===');
     console.error('오류 메시지:', error.message);
     console.error('오류 스택:', error.stack);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
@@ -535,7 +762,7 @@ router.put('/new-comer/:new_comer_id', authenticateToken, async (req, res) => {
   }
 });
 
-// 초신자교육관리 데이터 삭제
+// 전입신자교육관리 데이터 삭제
 router.delete('/:id', authenticateToken, async (req, res) => {
   let conn;
   try {
@@ -552,7 +779,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     
     res.json({ message: '교육 데이터가 성공적으로 삭제되었습니다.' });
   } catch (error) {
-    console.error('초신자교육관리 삭제 오류:', error);
+    console.error('전입신자교육관리 삭제 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   } finally {
     if (conn) conn.release();
@@ -569,7 +796,7 @@ router.get('/teachers', authenticateToken, async (req, res) => {
       SELECT DISTINCT teacher 
       FROM new_comers 
       WHERE department = '새가족위원회' 
-        AND believer_type = '초신자'
+        AND believer_type = '전입신자'
         AND teacher IS NOT NULL 
         AND teacher != ''
       ORDER BY teacher ASC
@@ -581,6 +808,79 @@ router.get('/teachers', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('양육교사 목록 조회 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// 전입신자 번호 재정렬 API
+router.post('/reorder-numbers', authenticateToken, async (req, res) => {
+  let conn;
+  try {
+    const { year, department } = req.body;
+    
+    console.log('=== 전입신자 번호 재정렬 시작 ===');
+    console.log('년도:', year);
+    console.log('부서:', department);
+    
+    if (!year || !department) {
+      return res.status(400).json({ error: '년도와 부서는 필수입니다.' });
+    }
+    
+    conn = await pool.getConnection();
+    
+    // 트랜잭션 시작
+    await conn.beginTransaction();
+    
+    try {
+      // 해당 년도, 부서의 전입신자 목록 조회 (ID 순으로 정렬)
+      const selectQuery = `
+        SELECT id, name, number
+        FROM new_comers 
+        WHERE year = ? AND department = ? AND believer_type = '전입신자'
+        ORDER BY id ASC
+      `;
+      
+      const transferBelievers = await conn.query(selectQuery, [year, department]);
+      
+      console.log('재정렬 대상 전입신자 수:', transferBelievers.length);
+      
+      // 년도에서 마지막 2자리 추출
+      const yearSuffix = year.toString().slice(-2);
+      
+      // 각 전입신자에 대해 순차적으로 번호 재할당
+      for (let i = 0; i < transferBelievers.length; i++) {
+        const transferBeliever = transferBelievers[i];
+        const newNumber = `${yearSuffix}-${String(i + 1).padStart(3, '0')}`;
+        
+        console.log(`전입신자 ${transferBeliever.name}: ${transferBeliever.number} → ${newNumber}`);
+        
+        // 번호 업데이트
+        await conn.query(
+          'UPDATE new_comers SET number = ? WHERE id = ?',
+          [newNumber, transferBeliever.id]
+        );
+      }
+      
+      // 트랜잭션 커밋
+      await conn.commit();
+      
+      console.log('=== 전입신자 번호 재정렬 완료 ===');
+      
+      res.json({ 
+        message: '전입신자 번호가 성공적으로 재정렬되었습니다.',
+        updatedCount: transferBelievers.length
+      });
+      
+    } catch (error) {
+      // 트랜잭션 롤백
+      await conn.rollback();
+      throw error;
+    }
+    
+  } catch (error) {
+    console.error('전입신자 번호 재정렬 실패:', error);
+    res.status(500).json({ error: '전입신자 번호 재정렬 중 오류가 발생했습니다.' });
   } finally {
     if (conn) conn.release();
   }

@@ -221,6 +221,11 @@ router.post('/upload', authenticateToken, async (req, res) => {
 
 // 파일 다운로드
 router.get('/:id/download', authenticateToken, async (req, res) => {
+  console.log('=== 공통파일 다운로드 API 호출 ===');
+  console.log('요청 파라미터:', req.params);
+  console.log('파일 ID:', req.params.id);
+  console.log('사용자 정보:', req.user);
+  
   let conn;
   try {
     conn = await pool.getConnection();
@@ -228,11 +233,15 @@ router.get('/:id/download', authenticateToken, async (req, res) => {
       SELECT * FROM common_files WHERE id = ?
     `, [req.params.id]);
     
+    console.log('DB 조회 결과:', files);
+    
     if (files.length === 0) {
+      console.log('파일을 찾을 수 없음');
       return res.status(404).json({ error: '파일을 찾을 수 없습니다.' });
     }
     
     const file = files[0];
+    console.log('찾은 파일 정보:', file);
     
     // 시스템상수값을 사용하여 절대경로 구성
     const fileRootPath = await getSystemConstant('file_root_path') || path.join(__dirname, '../uploads');
@@ -247,10 +256,13 @@ router.get('/:id/download', authenticateToken, async (req, res) => {
     });
     
     if (!fs.existsSync(absolutePath)) {
+      console.log('파일이 서버에 존재하지 않음:', absolutePath);
       return res.status(404).json({ error: '파일이 서버에 존재하지 않습니다.' });
     }
     
+    console.log('파일 다운로드 시작:', file.original_name);
     res.download(absolutePath, file.original_name);
+    console.log('파일 다운로드 완료');
   } catch (error) {
     console.error('파일 다운로드 실패:', error);
     res.status(500).json({ error: '파일 다운로드 중 오류가 발생했습니다.' });

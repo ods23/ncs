@@ -35,7 +35,9 @@ const FileManagementPage = () => {
   // ResizeObserver 경고 억제
   useEffect(() => {
     const originalError = console.error;
+    
     console.error = (...args) => {
+      // ResizeObserver 경고 억제
       if (args[0] && typeof args[0] === 'string' && args[0].includes('ResizeObserver')) {
         return;
       }
@@ -149,14 +151,30 @@ const FileManagementPage = () => {
   };
 
   const fetchFiles = async () => {
+    console.log('=== fetchFiles 시작 ===');
     setLoading(true);
     try {
+      console.log('commonFilesAPI.getAll() 호출...');
       const response = await commonFilesAPI.getAll();
-      console.log('파일 목록 결과:', response.data);
+      console.log('API 응답 전체:', response);
+      console.log('API 응답 데이터:', response.data);
+      console.log('데이터 타입:', typeof response.data);
+      console.log('데이터 길이:', Array.isArray(response.data) ? response.data.length : '배열 아님');
+      
       setFiles(response.data);
       setFilteredFiles(response.data);
+      
+      console.log('상태 업데이트 완료:');
+      console.log('- files 상태:', response.data);
+      console.log('- filteredFiles 상태:', response.data);
     } catch (error) {
       console.error('파일 목록 가져오기 실패:', error);
+      console.error('오류 상세 정보:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        statusText: error.response?.statusText
+      });
       setError('파일 목록을 가져오는데 실패했습니다.');
       
       // 2초 후 에러 메시지 자동 제거
@@ -165,6 +183,7 @@ const FileManagementPage = () => {
       }, 2000);
     } finally {
       setLoading(false);
+      console.log('=== fetchFiles 완료 ===');
     }
   };
 
@@ -383,14 +402,26 @@ const FileManagementPage = () => {
       return;
     }
 
+    console.log('=== 파일 보기 시작 ===');
+    console.log('파일 ID:', fileId);
+    console.log('파일명:', fileName);
+    console.log('MIME 타입:', mimeType);
+    console.log('현재 토큰:', localStorage.getItem('token'));
+
     try {
+      console.log('commonFilesAPI.download() 호출...');
       const response = await commonFilesAPI.download(fileId);
+      console.log('다운로드 응답:', response);
+      console.log('응답 데이터 타입:', typeof response.data);
+      console.log('응답 데이터 크기:', response.data?.size || '알 수 없음');
       
       // 파일 확장자로 타입 판단
       const fileExtension = fileName.split('.').pop()?.toLowerCase();
       const isImage = mimeType?.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExtension);
       const isPdf = mimeType === 'application/pdf' || fileExtension === 'pdf';
       const isText = mimeType?.startsWith('text/') || ['txt', 'md', 'html', 'css', 'js', 'json', 'xml'].includes(fileExtension);
+      
+      console.log('파일 타입 판단:', { fileExtension, isImage, isPdf, isText });
       
       // Blob 생성 시 적절한 MIME 타입 설정
       let blob;
@@ -404,10 +435,16 @@ const FileManagementPage = () => {
         blob = new Blob([response.data]);
       }
       
+      console.log('생성된 Blob:', blob);
+      console.log('Blob 크기:', blob.size);
+      console.log('Blob 타입:', blob.type);
+      
       const url = window.URL.createObjectURL(blob);
+      console.log('생성된 URL:', url);
       
       if (isImage || isPdf) {
         // 이미지나 PDF 파일은 새 창에서 열기
+        console.log('새 창에서 파일 열기 시도...');
         const newWindow = window.open(url, '_blank');
         if (!newWindow) {
           setError('팝업이 차단되었습니다. 팝업 차단을 해제해주세요.');
@@ -416,13 +453,17 @@ const FileManagementPage = () => {
           setTimeout(() => {
             setError('');
           }, 2000);
+        } else {
+          console.log('새 창 열기 성공');
         }
         // 메모리 정리
         setTimeout(() => {
           window.URL.revokeObjectURL(url);
+          console.log('URL 메모리 정리 완료');
         }, 1000);
       } else {
         // 기타 파일은 다운로드
+        console.log('파일 다운로드 실행...');
         const link = document.createElement('a');
         link.href = url;
         link.setAttribute('download', fileName);
@@ -430,9 +471,19 @@ const FileManagementPage = () => {
         link.click();
         link.remove();
         window.URL.revokeObjectURL(url);
+        console.log('파일 다운로드 완료');
       }
+      
+      console.log('=== 파일 보기 완료 ===');
     } catch (error) {
       console.error('파일 보기 실패:', error);
+      console.error('에러 상세 정보:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        config: error.config
+      });
       setError('파일 보기에 실패했습니다.');
       
       // 2초 후 에러 메시지 자동 제거
