@@ -322,6 +322,34 @@ CREATE TABLE `user_menus` (
   CONSTRAINT `user_menus_ibfk_2` FOREIGN KEY (`menu_id`) REFERENCES `menus` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
+-- yearly_new_family_statistics table
+CREATE TABLE `yearly_new_family_statistics` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `year` int(4) NOT NULL COMMENT '년도',
+  `new_comer_registration` int(11) DEFAULT 0 COMMENT '초신자등록',
+  `transfer_believer_registration` int(11) DEFAULT 0 COMMENT '전입신자등록',
+  `total_registration` int(11) DEFAULT 0 COMMENT '등록전체합계',
+  `new_comer_graduate_prev_year` int(11) DEFAULT 0 COMMENT '초신자전년도수료',
+  `new_comer_graduate_current_year` int(11) DEFAULT 0 COMMENT '초신자올해수료',
+  `new_comer_graduate_total` int(11) DEFAULT 0 COMMENT '초신자수료합계',
+  `transfer_believer_graduate_prev_year` int(11) DEFAULT 0 COMMENT '전입신자전년도수료',
+  `transfer_believer_graduate_current_year` int(11) DEFAULT 0 COMMENT '전입신자올해수료',
+  `transfer_believer_graduate_total` int(11) DEFAULT 0 COMMENT '전입신자수료합계',
+  `total_graduate` int(11) DEFAULT 0 COMMENT '수료전체합계',
+  `new_comer_education_in_progress` int(11) DEFAULT 0 COMMENT '초신자교육중',
+  `new_comer_education_discontinued` int(11) DEFAULT 0 COMMENT '초신자교육중단',
+  `new_comer_education_total` int(11) DEFAULT 0 COMMENT '초신자교육합계',
+  `transfer_believer_education_in_progress` int(11) DEFAULT 0 COMMENT '전입신자교육중',
+  `transfer_believer_education_discontinued` int(11) DEFAULT 0 COMMENT '전입신자교육중단',
+  `transfer_believer_education_total` int(11) DEFAULT 0 COMMENT '전입신자교육합계',
+  `total_education` int(11) DEFAULT 0 COMMENT '교육전체합계',
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_year` (`year`),
+  KEY `idx_year` (`year`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+
 -- 기본 데이터 삽입
 -- s_users_seq 데이터
 INSERT INTO s_users_seq (id, seq) VALUES (undefined, undefined);

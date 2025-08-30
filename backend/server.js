@@ -70,7 +70,8 @@ app.use('/api/transfer-graduates', require('./routes/transferGraduateRouter'));
 app.use('/api/new-comer-education', require('./routes/newComerEducationRouter'));
 app.use('/api/transfer-believer-education', require('./routes/transferBelieverEducationRouter'));
 
-
+// 통계 관리 라우터
+app.use('/api/statistics', require('./routes/statisticsRouter'));
 
 // Health check
 app.get('/health', (req, res) => {
