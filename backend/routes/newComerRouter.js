@@ -625,7 +625,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
         console.log('파일 ID 확인:', fileId);
         
         // 파일 정보 조회
-        const fileSql = 'SELECT saved_path FROM new_comer_files WHERE id = ?';
+        const fileSql = 'SELECT saved_path FROM new_comers_files WHERE id = ?';
         const fileResult = await conn.query(fileSql, [fileId]);
         
         console.log('파일 조회 결과:', fileResult);
@@ -654,7 +654,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
           }
           
           // 파일 DB 레코드 삭제
-          const deleteFileSql = 'DELETE FROM new_comer_files WHERE id = ?';
+          const deleteFileSql = 'DELETE FROM new_comers_files WHERE id = ?';
           await conn.query(deleteFileSql, [fileId]);
           console.log('파일 DB 레코드 삭제 완료:', fileId);
         } else {

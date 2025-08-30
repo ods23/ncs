@@ -1,9 +1,10 @@
 const express = require('express');
+const router = express.Router();
+const { pool } = require('../config/database');
+const { authenticateToken } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const router = express.Router();
-const { pool } = require('../config/database');
 
 // 시스템상수값 가져오기 함수
 async function getSystemConstant(key) {
@@ -20,27 +21,6 @@ async function getSystemConstant(key) {
     return null;
   }
 }
-
-// 인증 미들웨어
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ error: '액세스 토큰이 필요합니다.' });
-  }
-  if (token === 'null' || token === 'undefined') {
-    return res.status(401).json({ error: '유효하지 않은 토큰입니다.' });
-  }
-  
-  try {
-    const jwt = require('jsonwebtoken');
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    return res.status(403).json({ error: '유효하지 않은 토큰입니다.' });
-  }
-};
 
 // 동적 Multer 설정 생성 함수
 async function createMulterStorage() {
@@ -111,7 +91,7 @@ async function createUploadMiddleware() {
   });
 }
 
-// 파일 업로드
+// 초신자 파일 업로드
 router.post('/upload', authenticateToken, async (req, res) => {
   try {
     const upload = await createUploadMiddleware();
@@ -173,7 +153,7 @@ router.post('/upload', authenticateToken, async (req, res) => {
           mimetype: req.file.mimetype
         });
       } catch (error) {
-        console.error('파일 업로드 실패:', error);
+        console.error('초신자 파일 업로드 실패:', error);
         res.status(500).json({ error: '파일 업로드 중 오류가 발생했습니다.' });
       } finally {
         if (conn) conn.release();
@@ -185,18 +165,68 @@ router.post('/upload', authenticateToken, async (req, res) => {
   }
 });
 
-// 파일 다운로드
-router.get('/download/:id', authenticateToken, async (req, res) => {
+// 초신자 파일 조회
+router.get('/:fileId', authenticateToken, async (req, res) => {
   let conn;
   try {
+    const { fileId } = req.params;
+    
     conn = await pool.getConnection();
-    const files = await conn.query(`
-      SELECT * FROM new_comers_files WHERE id = ?
-    `, [req.params.id]);
-    if (files.length === 0) {
+    
+    const sql = `
+      SELECT 
+        id,
+        original_name,
+        saved_name,
+        saved_path,
+        size,
+        mimetype,
+        uploaded_by,
+        created_at,
+        updated_at
+      FROM new_comers_files
+      WHERE id = ?
+    `;
+    
+    const results = await conn.query(sql, [fileId]);
+    
+    if (results.length === 0) {
       return res.status(404).json({ error: '파일을 찾을 수 없습니다.' });
     }
-    const file = files[0];
+    
+    res.json(results[0]);
+  } catch (error) {
+    console.error('초신자 파일 조회 실패:', error);
+    res.status(500).json({ error: '파일 조회 중 오류가 발생했습니다.' });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// 초신자 파일 다운로드
+router.get('/download/:fileId', authenticateToken, async (req, res) => {
+  let conn;
+  try {
+    const { fileId } = req.params;
+    
+    conn = await pool.getConnection();
+    
+    const sql = `
+      SELECT 
+        original_name,
+        saved_path,
+        mimetype
+      FROM new_comers_files
+      WHERE id = ?
+    `;
+    
+    const results = await conn.query(sql, [fileId]);
+    
+    if (results.length === 0) {
+      return res.status(404).json({ error: '파일을 찾을 수 없습니다.' });
+    }
+    
+    const file = results[0];
     
     // 시스템상수값을 사용하여 절대경로 구성
     const fileRootPath = await getSystemConstant('file_root_path') || path.join(__dirname, '../uploads');
@@ -216,87 +246,63 @@ router.get('/download/:id', authenticateToken, async (req, res) => {
     // 다운로드 시 원래 파일명 사용
     res.download(absolutePath, file.original_name);
   } catch (error) {
-    console.error('파일 다운로드 실패:', error);
+    console.error('초신자 파일 다운로드 실패:', error);
     res.status(500).json({ error: '파일 다운로드 중 오류가 발생했습니다.' });
   } finally {
     if (conn) conn.release();
   }
 });
 
-// 파일 정보 조회
-router.get('/:id', authenticateToken, async (req, res) => {
+// 초신자 파일 삭제
+router.delete('/:fileId', authenticateToken, async (req, res) => {
   let conn;
   try {
+    const { fileId } = req.params;
+    
     conn = await pool.getConnection();
-    const files = await conn.query(`
-      SELECT * FROM new_comers_files WHERE id = ?
-    `, [req.params.id]);
-    if (files.length === 0) {
+    
+    // 파일 정보 조회
+    const selectSql = `
+      SELECT saved_path
+      FROM new_comers_files
+      WHERE id = ?
+    `;
+    
+    const results = await conn.query(selectSql, [fileId]);
+    
+    if (results.length === 0) {
       return res.status(404).json({ error: '파일을 찾을 수 없습니다.' });
     }
-    // 조회 시 원래 파일명 그대로 전달
-    res.json(files[0]);
-  } catch (error) {
-    console.error('파일 정보 조회 실패:', error);
-    res.status(500).json({ error: '파일 정보 조회 중 오류가 발생했습니다.' });
-  } finally {
-    if (conn) conn.release();
-  }
-});
-
-// 파일 삭제
-router.delete('/:id', authenticateToken, async (req, res) => {
-  let conn;
-  try {
-    conn = await pool.getConnection();
-    const files = await conn.query(`
-      SELECT * FROM new_comers_files WHERE id = ?
-    `, [req.params.id]);
-    if (files.length === 0) {
-      return res.status(404).json({ error: '파일을 찾을 수 없습니다.' });
-    }
-    const file = files[0];
+    
+    const fileInfo = results[0];
     
     // 시스템상수값을 사용하여 절대경로 구성
     const fileRootPath = await getSystemConstant('file_root_path') || path.join(__dirname, '../uploads');
     const fileUploadPath = await getSystemConstant('file_upload_path') || '/uploads';
-    const absolutePath = path.join(fileRootPath, fileUploadPath.replace(/^\/+/, ''), file.saved_path);
+    const absolutePath = path.join(fileRootPath, fileUploadPath.replace(/^\/+/, ''), fileInfo.saved_path);
     
     console.log('파일 삭제 경로:', {
-      saved_path: file.saved_path,
+      saved_path: fileInfo.saved_path,
       fileRootPath,
       fileUploadPath,
       absolutePath
     });
     
-    // 실제 파일 삭제
+    // 파일 시스템에서 삭제
     if (fs.existsSync(absolutePath)) {
       fs.unlinkSync(absolutePath);
     }
-    // DB에서 파일 정보 삭제
-    await conn.query('DELETE FROM new_comers_files WHERE id = ?', [req.params.id]);
+    
+    // 데이터베이스에서 삭제
+    await conn.query('DELETE FROM new_comers_files WHERE id = ?', [fileId]);
+    
     res.json({ message: '파일이 성공적으로 삭제되었습니다.' });
   } catch (error) {
-    console.error('파일 삭제 실패:', error);
+    console.error('초신자 파일 삭제 실패:', error);
     res.status(500).json({ error: '파일 삭제 중 오류가 발생했습니다.' });
   } finally {
     if (conn) conn.release();
   }
 });
 
-// Multer 오류 처리 미들웨어
-router.use((error, req, res, next) => {
-  if (error instanceof multer.MulterError) {
-    if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ error: '파일 크기가 너무 큽니다. (최대 10MB)' });
-    }
-    return res.status(400).json({ error: '파일 업로드 오류: ' + error.message });
-  }
-  if (error.message === '지원하지 않는 파일 형식입니다.') {
-    return res.status(400).json({ error: error.message });
-  }
-  console.error('파일 업로드 미들웨어 오류:', error);
-  res.status(500).json({ error: '파일 업로드 중 오류가 발생했습니다.' });
-});
-
-module.exports = router; 
+module.exports = router;

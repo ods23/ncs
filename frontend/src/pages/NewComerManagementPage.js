@@ -1910,7 +1910,7 @@ const NewComerManagementPage = () => {
     }
     
     try {
-      // new_comer_files 테이블에서 파일 정보 조회
+              // new_comers_files 테이블에서 파일 정보 조회
       const response = await fetch(`http://localhost:3001/api/files/${fileId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`

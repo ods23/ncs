@@ -1138,7 +1138,10 @@ const TransferBelieverManagementPage = () => {
         // 신자구분 변경으로 인한 번호 업데이트가 있는 경우 알림
         if (responseData.number) {
           console.log('신자구분 변경으로 번호가 업데이트되었습니다:', responseData.number);
-          alert(`신자구분 변경으로 인해 등록번호가 ${responseData.number}로 변경되었습니다.`);
+          // 신자구분이 초신자로 변경되는 경우에만 알림 표시
+          if (submitData.believer_type === '초신자') {
+            alert(`신자구분 변경으로 인해 등록번호가 ${responseData.number}로 변경되었습니다.`);
+          }
         }
         
         setOpenDialog(false);
@@ -1412,15 +1415,8 @@ const TransferBelieverManagementPage = () => {
         }
       });
 
-      // 중복 확인
+      // 중복 확인 (초신자관리와 동일한 로직)
       console.log('중복 확인 시작 - 전송 데이터:', transferData);
-      
-      // 강제로 중복 확인을 위해 테스트 데이터로 확인
-      console.log('=== 중복 확인 테스트 ===');
-      const testName = transferData.name;
-      const testBirthDate = transferData.birth_date;
-      console.log('테스트할 이름:', testName);
-      console.log('테스트할 생년월일:', testBirthDate);
       
       const duplicateGraduates = await checkDuplicateGraduate(transferData.name, transferData.birth_date);
       console.log('중복 확인 결과:', duplicateGraduates);
@@ -1869,7 +1865,7 @@ const TransferBelieverManagementPage = () => {
     }
     
     try {
-      // new_comer_files 테이블에서 파일 정보 조회
+              // new_comers_files 테이블에서 파일 정보 조회
       const response = await fetch(`http://localhost:3001/api/files/${fileId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`

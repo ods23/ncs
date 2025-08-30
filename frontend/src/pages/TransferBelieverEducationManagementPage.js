@@ -78,7 +78,7 @@ const TransferBelieverEducationManagementPage = () => {
     week7_comment: '',
     week8_comment: '',
     overall_comment: '',
-    file_id: null
+    education_file_id: null
   });
 
   // 첨부파일 관련 상태
@@ -187,7 +187,7 @@ const TransferBelieverEducationManagementPage = () => {
             <Tooltip title="전입신자관리 파일 보기" arrow placement="top">
                              <IconButton
                  size="small"
-                 onClick={() => handleFileView(params.data.file_id)}
+                 onClick={() => handleFileView(params.data.file_id, false)}
                  sx={{
                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                    color: 'white',
@@ -247,7 +247,7 @@ const TransferBelieverEducationManagementPage = () => {
             <Tooltip title="교육관리 파일 보기" arrow placement="top">
                              <IconButton
                  size="small"
-                 onClick={() => handleFileView(params.data.education_file_id)}
+                 onClick={() => handleFileView(params.data.education_file_id, true)}
                  sx={{
                    background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
                    color: 'white',
@@ -901,7 +901,7 @@ const TransferBelieverEducationManagementPage = () => {
     formData.append('file', selectedFile);
 
     try {
-      const response = await fetch('/api/files/upload', {
+      const response = await fetch('/api/new-comer-files/upload', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -912,7 +912,7 @@ const TransferBelieverEducationManagementPage = () => {
       if (response.ok) {
         const result = await response.json();
         setUploadedFile(result);
-        setFormData(prev => ({ ...prev, file_id: result.id }));
+        setFormData(prev => ({ ...prev, education_file_id: result.id }));
         alert('파일이 성공적으로 업로드되었습니다.');
       } else {
         let errorMessage = '파일 업로드 중 오류가 발생했습니다.';
@@ -943,7 +943,7 @@ const TransferBelieverEducationManagementPage = () => {
     }
 
     try {
-      const response = await fetch(`/api/files/${uploadedFile.id}`, {
+      const response = await fetch(`/api/new-comer-files/${uploadedFile.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -952,7 +952,7 @@ const TransferBelieverEducationManagementPage = () => {
 
       if (response.ok) {
         setUploadedFile(null);
-        setFormData(prev => ({ ...prev, file_id: null }));
+        setFormData(prev => ({ ...prev, education_file_id: null }));
         setSelectedFile(null);
         setOriginalFileName('');
         alert('파일이 삭제되었습니다.');
@@ -974,7 +974,7 @@ const TransferBelieverEducationManagementPage = () => {
   };
 
   // 파일 보기 함수
-  const handleFileView = async (fileId = null) => {
+  const handleFileView = async (fileId = null, isEducationFile = false) => {
     const targetFileId = fileId || (uploadedFile ? uploadedFile.id : null);
     
     if (!targetFileId) {
@@ -983,7 +983,12 @@ const TransferBelieverEducationManagementPage = () => {
     }
 
     try {
-      const response = await fetch(`/api/files/download/${targetFileId}`, {
+      // 전입신자관리 파일과 교육관리 파일을 구분하여 API 호출
+      const apiUrl = isEducationFile 
+        ? `/api/new-comer-files/download/${targetFileId}`  // 교육관리 파일
+        : `/api/files/download/${targetFileId}`;           // 전입신자관리 파일
+      
+      const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -1091,16 +1096,16 @@ const TransferBelieverEducationManagementPage = () => {
       week7_comment: data.week7_comment || '',
       week8_comment: data.week8_comment || '',
       overall_comment: data.overall_comment || '',
-      file_id: data.file_id || null
+      education_file_id: data.education_file_id || null
     });
     console.log('formData 설정 완료');
     
     // 파일 관련 상태 설정
-    if (data.file_id) {
-      console.log('기존 파일 ID 발견:', data.file_id);
+    if (data.education_file_id) {
+      console.log('기존 교육 파일 ID 발견:', data.education_file_id);
       // 기존 파일 정보를 가져오기
       try {
-        const fileResponse = await fetch(`/api/files/${data.file_id}`, {
+        const fileResponse = await fetch(`/api/new-comer-files/${data.education_file_id}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -1108,13 +1113,13 @@ const TransferBelieverEducationManagementPage = () => {
         if (fileResponse.ok) {
           const fileInfo = await fileResponse.json();
           setUploadedFile(fileInfo);
-          console.log('기존 파일 정보 로드:', fileInfo);
+          console.log('기존 교육 파일 정보 로드:', fileInfo);
         } else {
-          console.error('파일 정보 로드 실패');
+          console.error('교육 파일 정보 로드 실패');
           setUploadedFile(null);
         }
       } catch (error) {
-        console.error('파일 정보 로드 중 오류:', error);
+        console.error('교육 파일 정보 로드 중 오류:', error);
         setUploadedFile(null);
       }
     } else {
@@ -1224,7 +1229,7 @@ const TransferBelieverEducationManagementPage = () => {
       // 전입신자 교육 데이터 생성 또는 업데이트
       console.log('전입신자 교육 데이터 생성 또는 업데이트 시작');
               console.log('요청 URL:', `/api/transfer-believer-education/new-comer/${formData.id}`);
-      console.log('file_id:', formData.file_id);
+      console.log('education_file_id:', formData.education_file_id);
       console.log('uploadedFile:', uploadedFile);
       
               const educationUpdateResponse = await fetch(`/api/transfer-believer-education/new-comer/${formData.id}`, {
@@ -1257,7 +1262,7 @@ const TransferBelieverEducationManagementPage = () => {
           week7_comment: formData.week7_comment,
           week8_comment: formData.week8_comment,
           overall_comment: formData.overall_comment,
-          file_id: formData.file_id
+          file_id: formData.education_file_id
         })
       });
 
@@ -1302,7 +1307,7 @@ const TransferBelieverEducationManagementPage = () => {
           week7_comment: '',
           week8_comment: '',
           overall_comment: '',
-          file_id: null
+          education_file_id: null
         });
         console.log('=== 교육데이터 저장 완료 ===');
         alert('저장이 완료되었습니다.');
@@ -2039,7 +2044,7 @@ const TransferBelieverEducationManagementPage = () => {
                   업로드된 파일: {uploadedFile.original_name}
                 </Typography>
                 <Button
-                  onClick={() => handleFileView()}
+                  onClick={() => handleFileView(null, true)}
                   variant="outlined"
                   size="small"
                   sx={{

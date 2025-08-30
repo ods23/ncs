@@ -14,7 +14,8 @@ import {
   FileDownload as FileDownloadIcon,
   FileUpload as FileUploadIcon,
   Search as SearchIcon,
-  Print as PrintIcon
+  Print as PrintIcon,
+  Image as ImageIcon
 } from '@mui/icons-material';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
@@ -178,6 +179,74 @@ const TransferGraduateManagementPage = () => {
         alignItems: 'center',
         justifyContent: 'center',
         height: '100%'
+      },
+      headerClass: 'ag-header-cell-separator'
+    },
+    {
+      headerName: '파일',
+      field: 'file_id',
+      width: 80,
+      minWidth: 80,
+      maxWidth: 100,
+      sortable: false,
+      filter: false,
+      cellRenderer: (params) => {
+        const fileId = params.data.file_id;
+        if (!fileId) {
+          return (
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center'
+            }}>
+              <Typography
+                sx={{
+                  fontSize: '12px',
+                  color: '#9ca3af',
+                  textAlign: 'center'
+                }}
+              >
+                없음
+              </Typography>
+            </Box>
+          );
+        }
+        
+        return (
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Tooltip title="파일보기" arrow placement="top">
+              <IconButton
+                size="small"
+                onClick={() => handleFileView(fileId)}
+                sx={{
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  color: 'white',
+                  width: 28,
+                  height: 28,
+                  borderRadius: '8px',
+                  boxShadow: '0 2px 4px rgba(16, 185, 129, 0.2)',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    transform: 'translateY(-1px) scale(1.05)',
+                    boxShadow: '0 4px 8px rgba(16, 185, 129, 0.3)'
+                  },
+                  '&:active': {
+                    transform: 'translateY(0px) scale(1.02)',
+                    boxShadow: '0 2px 4px rgba(16, 185, 129, 0.2)'
+                  }
+                }}
+              >
+                <ImageIcon sx={{ fontSize: 14 }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        );
+      },
+      cellStyle: {
+        borderRight: '1px solid #f1f3f4',
+        fontSize: '14px',
+        lineHeight: '20px'
       },
       headerClass: 'ag-header-cell-separator'
     },
@@ -403,6 +472,71 @@ const TransferGraduateManagementPage = () => {
       console.error('수료자 목록 가져오기 실패:', error);
       setGraduates([]);
       setSelectedPrintItems(new Set());
+    }
+  };
+
+  // 파일 보기 함수 (전입신자관리와 동일)
+  const handleFileView = async (fileId = null) => {
+    if (!fileId) {
+      alert('볼 파일이 없습니다.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/files/download/${fileId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        // 파일 다운로드 또는 새 창에서 열기
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        
+        // 파일 타입에 따라 처리
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.startsWith('image/')) {
+          // 이미지 파일은 새 창에서 열기
+          const newWindow = window.open(url, '_blank');
+          if (!newWindow) {
+            alert('팝업이 차단되었습니다. 팝업 차단을 해제해주세요.');
+          }
+        } else if (contentType === 'application/pdf') {
+          // PDF 파일은 새 창에서 열기
+          const newWindow = window.open(url, '_blank');
+          if (!newWindow) {
+            alert('팝업이 차단되었습니다. 팝업 차단을 해제해주세요.');
+          }
+        } else {
+          // 기타 파일은 다운로드
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'file';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+        
+        // 메모리 정리
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+        }, 1000);
+      } else {
+        let errorMessage = '파일 다운로드 중 오류가 발생했습니다.';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (parseError) {
+          console.error('응답 파싱 오류:', parseError);
+          errorMessage = `서버 오류 (${response.status}): ${response.statusText}`;
+        }
+        alert(errorMessage);
+      }
+    } catch (error) {
+      console.error('파일 보기 실패:', error);
+      alert('파일 보기 중 오류가 발생했습니다.');
     }
   };
 

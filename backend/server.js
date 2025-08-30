@@ -50,13 +50,15 @@ app.use('/api/code-details', require('./routes/codeDetails'));
 app.use('/api/screens', require('./routes/screens'));
 app.use('/api/menus', require('./routes/menus'));
 app.use('/api/user-menus', require('./routes/userMenus'));
+// 파일 관리 라우터 (더 구체적인 경로를 먼저 등록)
+app.use('/api/new-comer-files', require('./routes/newComerFiles'));
 app.use('/api/files', require('./routes/files'));
 app.use('/api/common-files', require('./routes/commonFiles'));
 app.use('/api/system-constants', require('./routes/systemConstants'));
 
 // 신자 관리 라우터 - 완전 분리
 app.use('/api/new-comers', require('./routes/newComerRouter'));           // 초신자 관리
-app.use('/api/transfer-believers', require('./routes/TransferBelieverRouter')); // 전입신자 관리
+app.use('/api/transfer-believers', require('./routes/transferBelieverManagementRouter')); // 전입신자 관리
 app.use('/api/all-believers', require('./routes/AllBelieverRouter'));     // 등록전체조회
 
 // 기존 라우터들

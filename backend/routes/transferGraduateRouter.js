@@ -10,34 +10,36 @@ router.get('/', async (req, res) => {
     
     let query = `
       SELECT 
-        id,
-        graduate_number,
-        print_count,
-        department,
-        believer_type,
-        education_type,
-        year,
-        name,
-        gender,
-        marital_status,
-        DATE_FORMAT(birth_date, '%Y-%m-%d') as birth_date,
-        address,
-        phone,
-        teacher,
-        DATE_FORMAT(register_date, '%Y-%m-%d') as register_date,
-        DATE_FORMAT(education_start_date, '%Y-%m-%d') as education_start_date,
-        education_end_date,
-        affiliation_org,
-        belong,
-        DATE_FORMAT(new_life_strategy_date, '%Y-%m-%d') as new_life_strategy_date,
-        identity_verified,
-        prev_church,
-        comment,
-        new_comer_id,
-        created_at,
-        updated_at
-      FROM new_comers_graduates 
-      WHERE believer_type = '전입신자' AND department = '새가족위원회' AND education_type = '수료'
+        tg.id,
+        tg.graduate_number,
+        tg.print_count,
+        tg.department,
+        tg.believer_type,
+        tg.education_type,
+        tg.year,
+        tg.name,
+        tg.gender,
+        tg.marital_status,
+        DATE_FORMAT(tg.birth_date, '%Y-%m-%d') as birth_date,
+        tg.address,
+        tg.phone,
+        tg.teacher,
+        DATE_FORMAT(tg.register_date, '%Y-%m-%d') as register_date,
+        DATE_FORMAT(tg.education_start_date, '%Y-%m-%d') as education_start_date,
+        tg.education_end_date,
+        tg.affiliation_org,
+        tg.belong,
+        DATE_FORMAT(tg.new_life_strategy_date, '%Y-%m-%d') as new_life_strategy_date,
+        tg.identity_verified,
+        tg.prev_church,
+        tg.comment,
+        tg.new_comer_id,
+        tg.created_at,
+        tg.updated_at,
+        tb.file_id
+      FROM new_comers_graduates tg
+      LEFT JOIN new_comers tb ON tg.new_comer_id = tb.id
+      WHERE tg.believer_type = '전입신자' AND tg.education_type = '수료' AND tg.department = '새가족위원회'
     `;
     
     const params = [];
@@ -81,34 +83,36 @@ router.get('/:id', async (req, res) => {
     
     const query = `
       SELECT 
-        id,
-        graduate_number,
-        print_count,
-        department,
-        believer_type,
-        education_type,
-        year,
-        name,
-        gender,
-        marital_status,
-        DATE_FORMAT(birth_date, '%Y-%m-%d') as birth_date,
-        address,
-        phone,
-        teacher,
-        DATE_FORMAT(register_date, '%Y-%m-%d') as register_date,
-        DATE_FORMAT(education_start_date, '%Y-%m-%d') as education_start_date,
-        education_end_date,
-        affiliation_org,
-        belong,
-        DATE_FORMAT(new_life_strategy_date, '%Y-%m-%d') as new_life_strategy_date,
-        identity_verified,
-        prev_church,
-        comment,
-        new_comer_id,
-        created_at,
-        updated_at
-      FROM new_comers_graduates 
-      WHERE id = ? AND believer_type = '전입신자'
+        tg.id,
+        tg.graduate_number,
+        tg.print_count,
+        tg.department,
+        tg.believer_type,
+        tg.education_type,
+        tg.year,
+        tg.name,
+        tg.gender,
+        tg.marital_status,
+        DATE_FORMAT(tg.birth_date, '%Y-%m-%d') as birth_date,
+        tg.address,
+        tg.phone,
+        tg.teacher,
+        DATE_FORMAT(tg.register_date, '%Y-%m-%d') as register_date,
+        DATE_FORMAT(tg.education_start_date, '%Y-%m-%d') as education_start_date,
+        tg.education_end_date,
+        tg.affiliation_org,
+        tg.belong,
+        DATE_FORMAT(tg.new_life_strategy_date, '%Y-%m-%d') as new_life_strategy_date,
+        tg.identity_verified,
+        tg.prev_church,
+        tg.comment,
+        tg.new_comer_id,
+        tg.created_at,
+        tg.updated_at,
+        tb.file_id
+      FROM new_comers_graduates tg
+      LEFT JOIN new_comers tb ON tg.new_comer_id = tb.id
+      WHERE tg.id = ? AND tg.believer_type = '전입신자'
     `;
     
     const conn = await pool.getConnection();

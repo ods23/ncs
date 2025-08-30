@@ -10,60 +10,62 @@ router.get('/', async (req, res) => {
     
     let query = `
       SELECT 
-        id,
-        graduate_number,
-        print_count,
-        department,
-        believer_type,
-        education_type,
-        year,
-        name,
-        gender,
-        marital_status,
-        DATE_FORMAT(birth_date, '%Y-%m-%d') as birth_date,
-        address,
-        phone,
-        teacher,
-        DATE_FORMAT(register_date, '%Y-%m-%d') as register_date,
-        DATE_FORMAT(education_start_date, '%Y-%m-%d') as education_start_date,
-        DATE_FORMAT(education_end_date, '%Y-%m-%d') as education_end_date,
-        affiliation_org,
-        belong,
-        DATE_FORMAT(new_life_strategy_date, '%Y-%m-%d') as new_life_strategy_date,
-        identity_verified,
-        prev_church,
-        comment,
-        new_comer_id,
-        created_at,
-        updated_at
-      FROM new_comers_graduates 
-      WHERE believer_type = '초신자' AND education_type = '수료' AND department = '새가족위원회'
+        ng.id,
+        ng.graduate_number,
+        ng.print_count,
+        ng.department,
+        ng.believer_type,
+        ng.education_type,
+        ng.year,
+        ng.name,
+        ng.gender,
+        ng.marital_status,
+        DATE_FORMAT(ng.birth_date, '%Y-%m-%d') as birth_date,
+        ng.address,
+        ng.phone,
+        ng.teacher,
+        DATE_FORMAT(ng.register_date, '%Y-%m-%d') as register_date,
+        DATE_FORMAT(ng.education_start_date, '%Y-%m-%d') as education_start_date,
+        DATE_FORMAT(ng.education_end_date, '%Y-%m-%d') as education_end_date,
+        ng.affiliation_org,
+        ng.belong,
+        DATE_FORMAT(ng.new_life_strategy_date, '%Y-%m-%d') as new_life_strategy_date,
+        ng.identity_verified,
+        ng.prev_church,
+        ng.comment,
+        ng.new_comer_id,
+        ng.created_at,
+        ng.updated_at,
+        nc.file_id
+      FROM new_comers_graduates ng
+      LEFT JOIN new_comers nc ON ng.new_comer_id = nc.id
+      WHERE ng.believer_type = '초신자' AND ng.education_type = '수료' AND ng.department = '새가족위원회'
     `;
     
     const params = [];
     
     // 조회 조건 추가
     if (year && year.trim() !== '') {
-      query += ' AND year = ?';
+      query += ' AND ng.year = ?';
       params.push(year.trim());
     }
     
     if (name && name.trim() !== '') {
-      query += ' AND name LIKE ?';
+      query += ' AND ng.name LIKE ?';
       params.push(`%${name.trim()}%`);
     }
     
     if (believer_type && believer_type.trim() !== '') {
-      query += ' AND believer_type = ?';
+      query += ' AND ng.believer_type = ?';
       params.push(believer_type.trim());
     }
     
     if (phone && phone.trim() !== '') {
-      query += ' AND phone LIKE ?';
+      query += ' AND ng.phone LIKE ?';
       params.push(`%${phone.trim()}%`);
     }
     
-    query += ' ORDER BY year ASC, department ASC, believer_type ASC, id ASC';
+    query += ' ORDER BY ng.year ASC, ng.department ASC, ng.believer_type ASC, ng.id ASC';
     
     console.log('초신자 수료자 조회 SQL:', query);
     console.log('초신자 수료자 조회 파라미터:', params);

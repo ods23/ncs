@@ -1284,7 +1284,7 @@ const TransferBelieverEducationManagementPage = () => {
         alert(`신자구분 변경으로 인해 등록번호가 ${newComerUpdateData.number}로 변경되었습니다.`);
       }
 
-      // 2. 교육 데이터 생성 또는 업데이트 (new_comer_education 테이블)
+              // 2. 교육 데이터 생성 또는 업데이트 (new_comers_education 테이블)
       console.log('2. 교육 데이터 생성 또는 업데이트 시작');
               console.log('요청 URL:', `/api/transfer-believers/education/new-comer/${formData.id}`);
       console.log('file_id:', formData.file_id);

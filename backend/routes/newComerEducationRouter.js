@@ -42,7 +42,7 @@ router.get('/', authenticateToken, async (req, res) => {
         nc.created_at,
         nc.updated_at
       FROM new_comers nc
-      LEFT JOIN new_comer_education nce ON nc.id = nce.new_comer_id
+      LEFT JOIN new_comers_education nce ON nc.id = nce.new_comer_id
       WHERE nc.department = '새가족위원회'
         AND nc.believer_type = '초신자'
     `;
@@ -61,9 +61,16 @@ router.get('/', authenticateToken, async (req, res) => {
     }
     
     // 교육구분 필터
+    console.log('=== 교육구분 필터 확인 ===');
+    console.log('req.query.education_type:', req.query.education_type);
+    console.log('req.query:', req.query);
+    
     if (req.query.education_type && req.query.education_type.trim() !== '') {
       query += ` AND nc.education_type = ?`;
       params.push(req.query.education_type.trim());
+      console.log('교육구분 필터 적용:', req.query.education_type.trim());
+    } else {
+      console.log('교육구분 필터 미적용');
     }
     
     // 양육교사명 필터
@@ -186,7 +193,7 @@ router.post('/', authenticateToken, async (req, res) => {
     } = req.body;
     
     const query = `
-      INSERT INTO new_comer_education (
+      INSERT INTO new_comers_education (
         new_comer_id,
         week1_date,
         week2_date,
@@ -275,7 +282,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     } = req.body;
     
     const query = `
-      UPDATE new_comer_education SET
+      UPDATE new_comers_education SET
         new_comer_id = ?,
         week1_date = ?,
         week2_date = ?,
@@ -399,7 +406,7 @@ router.put('/new-comer/:new_comer_id', authenticateToken, async (req, res) => {
     
     // 기존 교육 데이터 확인
     const existingDataResult = await conn.query(
-      'SELECT id FROM new_comer_education WHERE new_comer_id = ?', 
+      'SELECT id FROM new_comers_education WHERE new_comer_id = ?', 
       [new_comer_id]
     );
     
@@ -409,7 +416,7 @@ router.put('/new-comer/:new_comer_id', authenticateToken, async (req, res) => {
       const educationId = existingDataResult[0].id;
       
                    const updateQuery = `
-        UPDATE new_comer_education SET
+        UPDATE new_comers_education SET
           week1_date = ?,
           week2_date = ?,
           week3_date = ?,
@@ -469,7 +476,7 @@ router.put('/new-comer/:new_comer_id', authenticateToken, async (req, res) => {
       console.log('기존 교육 데이터 없음, 새로 생성');
       
                    const insertQuery = `
-        INSERT INTO new_comer_education (
+        INSERT INTO new_comers_education (
           new_comer_id,
           week1_date,
           week2_date,
@@ -543,7 +550,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     
     const { id } = req.params;
     
-    const query = `DELETE FROM new_comer_education WHERE id = ?`;
+    const query = `DELETE FROM new_comers_education WHERE id = ?`;
     const [result] = await conn.query(query, [id]);
     
     if (result.affectedRows === 0) {
