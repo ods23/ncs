@@ -382,98 +382,213 @@ const StatisticsPage = () => {
       </Grid>
 
       {/* 통계 테이블 */}
-      <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+      <Paper sx={{ width: '100%', overflow: 'auto' }}>
         <TableContainer sx={{ maxHeight: 600 }}>
           <Table stickyHeader>
             <TableHead>
+              {/* 메인 헤더 행 */}
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>년도</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>초신자 등록</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>전입신자 등록</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>등록 합계</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>초신자 수료</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>전입신자 수료</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>수료 합계</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>교육 중</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>교육 합계</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>작업</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, borderRight: '3px solid #6b7280' }}>년도</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, borderRight: '3px solid #1e40af' }} colSpan={3}>등록</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, borderRight: '3px solid #059669' }} colSpan={7}>수료</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, borderRight: '3px solid #f59e0b' }} colSpan={7}>교육</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1 }}>작업</TableCell>
+              </TableRow>
+              
+              {/* 서브 헤더 행 */}
+              <TableRow>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #6b7280' }}>
+                  {/* 년도 칼럼은 비어있음 */}
+                </TableCell>
+                
+                {/* 등록 서브헤더 */}
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>초신자</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>전입신자</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #1e40af' }}>합계</TableCell>
+                
+                {/* 수료 서브헤더 */}
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }} colSpan={3}>초신자</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #059669' }} colSpan={3}>전입신자</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #059669' }}>전체 합계</TableCell>
+                
+                {/* 교육 서브헤더 */}
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }} colSpan={3}>초신자</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #f59e0b' }} colSpan={3}>전입신자</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #f59e0b' }}>전체 합계</TableCell>
+                
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5 }}>
+                  {/* 작업 칼럼은 비어있음 */}
+                </TableCell>
+              </TableRow>
+              
+              {/* 상세 헤더 행 */}
+              <TableRow>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #6b7280' }}>
+                  {/* 년도 칼럼은 비어있음 */}
+                </TableCell>
+                
+                {/* 등록 상세헤더 */}
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}></TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}></TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #1e40af' }}></TableCell>
+                
+                {/* 수료 상세헤더 */}
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>전년도</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>올해</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>합계</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>전년도</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>올해</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>합계</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #059669' }}>수료 전체 합계</TableCell>
+                
+                {/* 교육 상세헤더 */}
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>교육중</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>교육중단</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>합계</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>교육중</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>교육중단</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>합계</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #f59e0b' }}>교육 전체 합계</TableCell>
+                
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5 }}>수정/삭제</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredStatistics.map((stat) => (
-                <TableRow key={stat.id} hover>
-                  <TableCell>
-                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1f2937' }}>
-                      {stat.year}년
-                    </Typography>
+                <TableRow key={stat.year} hover>
+                  {/* 년도 */}
+                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#dbeafe', textAlign: 'center', borderRight: '3px solid #6b7280' }}>
+                    {stat.year}
                   </TableCell>
-                  <TableCell>
+                  
+                  {/* 등록 섹션 */}
+                  <TableCell sx={{ textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
                     <Chip 
                       label={stat.new_comer_registration} 
                       color="primary" 
                       variant="outlined"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
                     <Chip 
                       label={stat.transfer_believer_registration} 
                       color="secondary" 
                       variant="outlined"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#dbeafe', textAlign: 'center', borderRight: '3px solid #1e40af' }}>
                     <Chip 
                       label={stat.total_registration} 
                       color="success" 
                       variant="filled"
                     />
                   </TableCell>
-                  <TableCell>
+                  
+                  {/* 수료 섹션 */}
+                  <TableCell sx={{ textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                    <Chip 
+                      label={stat.new_comer_graduate_prev_year} 
+                      color="primary" 
+                      variant="outlined"
+                    />
+                  </TableCell>
+                  <TableCell sx={{ textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                    <Chip 
+                      label={stat.new_comer_graduate_current_year} 
+                      color="primary" 
+                      variant="outlined"
+                    />
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#dcfce7', textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
                     <Chip 
                       label={stat.new_comer_graduate_total} 
-                      color="primary" 
+                      color="success" 
                       variant="filled"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                    <Chip 
+                      label={stat.transfer_believer_graduate_prev_year} 
+                      color="secondary" 
+                      variant="outlined"
+                    />
+                  </TableCell>
+                  <TableCell sx={{ textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                    <Chip 
+                      label={stat.transfer_believer_graduate_current_year} 
+                      color="secondary" 
+                      variant="outlined"
+                    />
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#dcfce7', textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
                     <Chip 
                       label={stat.transfer_believer_graduate_total} 
-                      color="secondary" 
+                      color="success" 
                       variant="filled"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#bbf7d0', textAlign: 'center', borderRight: '3px solid #059669' }}>
                     <Chip 
                       label={stat.total_graduate} 
                       color="success" 
                       variant="filled"
                     />
                   </TableCell>
-                  <TableCell>
+                  
+                  {/* 교육 섹션 */}
+                  <TableCell sx={{ textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
                     <Chip 
-                      label={stat.total_education} 
+                      label={stat.new_comer_education_in_progress} 
                       color="warning" 
                       variant="outlined"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
                     <Chip 
-                      label={stat.total_education + stat.total_graduate} 
-                      color="info" 
+                      label={stat.new_comer_education_discontinued} 
+                      color="warning" 
+                      variant="outlined"
+                    />
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#fef3c7', textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                    <Chip 
+                      label={stat.new_comer_education_total} 
+                      color="warning" 
                       variant="filled"
                     />
                   </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Tooltip title="자동 계산" arrow>
-                        <IconButton
-                          size="small"
-                          onClick={() => calculateStatistics(stat.year)}
-                          sx={{ color: '#10b981' }}
-                        >
-                          <CalculateIcon />
-                        </IconButton>
-                      </Tooltip>
+                  <TableCell sx={{ textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                    <Chip 
+                      label={stat.transfer_believer_education_in_progress} 
+                      color="warning" 
+                      variant="outlined"
+                    />
+                  </TableCell>
+                  <TableCell sx={{ textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                    <Chip 
+                      label={stat.transfer_believer_education_discontinued} 
+                      color="warning" 
+                      variant="outlined"
+                    />
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#fef3c7', textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                    <Chip 
+                      label={stat.transfer_believer_education_total} 
+                      color="warning" 
+                      variant="filled"
+                    />
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#fde68a', textAlign: 'center', borderRight: '3px solid #f59e0b' }}>
+                    <Chip 
+                      label={stat.total_education} 
+                      color="warning" 
+                      variant="filled"
+                    />
+                  </TableCell>
+                  
+                  {/* 작업 칼럼 */}
+                  <TableCell sx={{ textAlign: 'center' }}>
+                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
                       <Tooltip title="수정" arrow>
                         <IconButton
                           size="small"
