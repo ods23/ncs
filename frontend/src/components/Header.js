@@ -7,7 +7,7 @@ import {
   Folder as FolderIcon,
   Description as DescriptionIcon,
   Settings as SettingsIcon,
-
+  TrendingUp as TrendingUpIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -123,6 +123,7 @@ const Header = () => {
     if (path === '/new-comers') return '초신자관리';
     if (path === '/transfer-believers') return '전입신자관리';
     if (path === '/new-comer-education') return '초신자교육관리';
+    if (path === '/statistics') return '년도별 새가족 전체 통계';
 
     if (path === '/mypage') return 'MyPage';
     if (path === '/') return '대시보드';
@@ -782,6 +783,41 @@ const Header = () => {
                   </span>
                 </MenuItem>
               )}
+              
+              {/* 통계 메뉴 */}
+              <MenuItem 
+                onClick={() => handleAdminMenuClick('/statistics')} 
+                sx={{ 
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  py: 1.5,
+                  px: 2,
+                  margin: '8px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
+                  borderTop: '2px solid rgba(139, 92, 246, 0.2)',
+                  borderBottom: '1px solid rgba(0,0,0,0.05)',
+                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%)',
+                    transform: 'translateX(4px) scale(1.02)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                    border: '1px solid rgba(139, 92, 246, 0.2)'
+                  },
+                  '&:active': {
+                    transform: 'translateX(4px) scale(0.98)'
+                  }
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <TrendingUpIcon sx={{ 
+                    fontSize: 16,
+                    color: '#8b5cf6',
+                    filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))'
+                  }} />
+                  통계 조회
+                </span>
+              </MenuItem>
  
               </Menu>
           )}

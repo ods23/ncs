@@ -27,6 +27,7 @@ import AdminPage from './pages/AdminPage';
 import MyPageWithSidebar from './pages/MyPageWithSidebar';
 import NewComerEducationManagementPage from './pages/NewComerEducationManagementPage';
 import TransferBelieverEducationManagementPage from './pages/TransferBelieverEducationManagementPage';
+import StatisticsPage from './pages/StatisticsPage';
 
 const AppContent = () => {
   const { user, loading } = useAuth();
@@ -66,6 +67,7 @@ const AppContent = () => {
         <Route path="/admin/all-graduate" element={user ? <AllGraduateManagementPage /> : <Navigate to="/login" />} />
         <Route path="/new-comer-education" element={user ? <NewComerEducationManagementPage /> : <Navigate to="/login" />} />
         <Route path="/transfer-believer-education" element={user ? <TransferBelieverEducationManagementPage /> : <Navigate to="/login" />} />
+        <Route path="/statistics" element={user ? <StatisticsPage /> : <Navigate to="/login" />} />
         <Route path="/transfer-believer/register" element={user ? <NewComerManagementPage /> : <Navigate to="/login" />} />
         <Route path="/transfer-believer-graduate" element={user ? <NewComerManagementPage /> : <Navigate to="/login" />} />
         <Route path="/menu/:menuId" element={user ? <MenuPage /> : <Navigate to="/login" />} />
