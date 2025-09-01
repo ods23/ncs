@@ -473,12 +473,12 @@ const StatisticsPage = () => {
                 
                 {/* 수료 서브헤더 */}
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }} colSpan={3}>초신자</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #059669' }} colSpan={3}>전입신자</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }} colSpan={3}>전입신자</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #059669' }} rowSpan={2}>합계</TableCell>
                 
                 {/* 교육 서브헤더 */}
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }} colSpan={3}>초신자</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b' }} colSpan={3}>전입신자</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }} colSpan={3}>전입신자</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b' }} rowSpan={2}>합계</TableCell>
                 
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb' }}>
