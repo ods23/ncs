@@ -208,6 +208,11 @@ const StatisticsPage = () => {
   // 새 통계 추가 모드 열기
   const openAddDialog = () => {
     resetForm();
+    // 현재 년도를 기본값으로 설정
+    setFormData(prev => ({
+      ...prev,
+      year: new Date().getFullYear()
+    }));
     setOpenDialog(true);
   };
 
@@ -269,150 +274,214 @@ const StatisticsPage = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* 헤더 */}
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: '#1f2937' }}>
-          📊 년도별 새가족 전체 통계
-        </Typography>
-        <Box>
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={loadStatistics}
-            disabled={loading}
-            sx={{ mr: 1 }}
-          >
-            새로고침
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={openAddDialog}
+
+      {/* 조회조건, 버튼 및 요약 카드 */}
+      <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center' }}>
+        <FormControl size="small" sx={{ width: 120 }}>
+          <InputLabel sx={{ fontSize: '12px', fontWeight: '600', color: '#374151' }}>년도</InputLabel>
+          <Select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
             sx={{
-              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+              height: '36px',
+              borderRadius: '12px',
+              background: 'rgba(255, 255, 255, 0.8)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(0,0,0,0.1)',
+              transition: 'all 0.3s ease',
               '&:hover': {
-                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)'
+                borderColor: '#3b82f6',
+                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.1)'
+              },
+              '&.Mui-focused': {
+                borderColor: '#3b82f6',
+                boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)'
               }
             }}
           >
-            통계 추가
-          </Button>
-        </Box>
-      </Box>
-
-      {/* 년도 필터 */}
-      <Box sx={{ mb: 3 }}>
-        <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel>년도 필터</InputLabel>
-          <Select
-            value={selectedYear}
-            label="년도 필터"
-            onChange={(e) => setSelectedYear(e.target.value)}
-          >
-            <MenuItem value="">전체 년도</MenuItem>
+            <MenuItem value="">전체</MenuItem>
             {Array.from(new Set(statistics.map(stat => stat.year))).sort((a, b) => b - a).map(year => (
               <MenuItem key={year} value={year}>{year}년</MenuItem>
             ))}
           </Select>
         </FormControl>
-      </Box>
+        
+        <Tooltip title="새로고침" arrow placement="top">
+          <IconButton
+            onClick={loadStatistics}
+            disabled={loading}
+            size="small"
+            sx={{
+              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+              color: 'white',
+              width: 36,
+              height: 36,
+              borderRadius: '12px',
+              boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.3), 0 2px 4px -1px rgba(59, 130, 246, 0.2)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
+                transform: 'translateY(-2px) scale(1.05)',
+                boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.4), 0 4px 6px -2px rgba(59, 130, 246, 0.3)'
+              },
+              '&:active': {
+                transform: 'translateY(0) scale(0.98)'
+              },
+              '&.Mui-disabled': {
+                background: '#e5e7eb',
+                color: '#9ca3af',
+                transform: 'none',
+                boxShadow: 'none'
+              }
+            }}
+          >
+            <RefreshIcon sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Tooltip>
+        
+        <Tooltip title="통계 추가" arrow placement="top">
+          <IconButton
+            onClick={openAddDialog}
+            size="small"
+            sx={{
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+              color: 'white',
+              width: 36,
+              height: 36,
+              borderRadius: '12px',
+              boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.3), 0 2px 4px -1px rgba(16, 185, 129, 0.2)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                transform: 'translateY(-2px) scale(1.05)',
+                boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.4), 0 4px 6px -2px rgba(16, 185, 129, 0.3)'
+              },
+              '&:active': {
+                transform: 'translateY(0) scale(0.98)'
+              }
+            }}
+          >
+            <AddIcon sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Tooltip>
 
-      {/* 요약 카드 */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={3}>
-          <Card sx={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', color: 'white' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography variant="h6" sx={{ mb: 1 }}>총 등록</Typography>
-                  <Typography variant="h4">
-                    {filteredStatistics.reduce((sum, stat) => sum + stat.total_registration, 0)}
-                  </Typography>
-                </Box>
-                <PeopleIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <Card sx={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography variant="h6" sx={{ mb: 1 }}>총 수료</Typography>
-                  <Typography variant="h4">
-                    {filteredStatistics.reduce((sum, stat) => sum + stat.total_graduate, 0)}
-                  </Typography>
-                </Box>
-                <CheckCircleIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <Card sx={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography variant="h6" sx={{ mb: 1 }}>교육 중</Typography>
-                  <Typography variant="h4">
-                    {filteredStatistics.reduce((sum, stat) => sum + stat.total_education, 0)}
-                  </Typography>
-                </Box>
-                <SchoolIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <Card sx={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', color: 'white' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography variant="h6" sx={{ mb: 1 }}>관리 년도</Typography>
-                  <Typography variant="h4">
-                    {filteredStatistics.length}
-                  </Typography>
-                </Box>
-                <TrendingUpIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+        {/* 요약 카드들 */}
+        <Box sx={{ display: 'flex', gap: 2, flex: 1 }}>
+          {/* 총 등록 카드 */}
+          <Box sx={{ 
+            flex: 1, 
+            background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', 
+            borderRadius: 3, 
+            p: 2, 
+            color: 'white',
+            height: '36px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+            }
+          }}>
+            <Box sx={{ textAlign: 'center', flex: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '16px' }}>총 등록</Typography>
+              <Typography variant="h4" sx={{ fontWeight: 'bold', fontSize: '22px', lineHeight: 1 }}>
+                {filteredStatistics.reduce((sum, stat) => sum + stat.total_registration, 0)}
+              </Typography>
+            </Box>
+            <PeopleIcon sx={{ fontSize: 20, opacity: 0.8, color: '#93c5fd' }} />
+          </Box>
+
+          {/* 총 수료 카드 */}
+          <Box sx={{ 
+            flex: 1, 
+            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
+            borderRadius: 3, 
+            p: 2, 
+            color: 'white',
+            height: '36px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+            }
+          }}>
+            <Box sx={{ textAlign: 'center', flex: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '16px' }}>총 수료</Typography>
+              <Typography variant="h4" sx={{ fontWeight: 'bold', fontSize: '22px', lineHeight: 1 }}>
+                {filteredStatistics.reduce((sum, stat) => sum + stat.total_graduate, 0)}
+              </Typography>
+            </Box>
+            <CheckCircleIcon sx={{ fontSize: 20, opacity: 0.8, color: '#86efac' }} />
+          </Box>
+
+          {/* 관리 년도 카드 */}
+          <Box sx={{ 
+            flex: 1, 
+            background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', 
+            borderRadius: 3, 
+            p: 2, 
+            color: 'white',
+            height: '36px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+            }
+          }}>
+            <Box sx={{ textAlign: 'center', flex: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '16px' }}>관리 년도</Typography>
+              <Typography variant="h4" sx={{ fontWeight: 'bold', fontSize: '22px', lineHeight: 1 }}>
+                {filteredStatistics.length}
+              </Typography>
+            </Box>
+            <TrendingUpIcon sx={{ fontSize: 20, opacity: 0.8, color: '#c4b5fd' }} />
+          </Box>
+        </Box>
+      </Box>
 
       {/* 통계 테이블 */}
       <Paper sx={{ width: '100%', overflow: 'auto' }}>
         <TableContainer sx={{ maxHeight: 600 }}>
-          <Table stickyHeader>
+          <Table stickyHeader sx={{ border: '1px solid #e5e7eb' }}>
             <TableHead>
               {/* 메인 헤더 행 */}
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, borderRight: '3px solid #6b7280' }} rowSpan={3}>년도</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, borderRight: '3px solid #1e40af' }} colSpan={3}>등록</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, borderRight: '3px solid #059669' }} colSpan={7}>수료</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, borderRight: '3px solid #f59e0b' }} colSpan={7}>교육</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1 }}>작업</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, border: '1px solid #e5e7eb', borderRight: '3px solid #6b7280' }} rowSpan={3}>년도</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, border: '1px solid #e5e7eb', borderRight: '3px solid #1e40af' }} colSpan={3}>등록</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, border: '1px solid #e5e7eb', borderRight: '3px solid #059669' }} colSpan={7}>수료</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b' }} colSpan={7}>교육</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, border: '1px solid #e5e7eb' }}>작업</TableCell>
               </TableRow>
               
               {/* 서브 헤더 행 */}
               <TableRow>
                 {/* 등록 서브헤더 */}
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }} rowSpan={2}>초신자</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }} rowSpan={2}>전입신자</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #1e40af' }} rowSpan={2}>합계</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }} rowSpan={2}>초신자</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }} rowSpan={2}>전입신자</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #1e40af' }} rowSpan={2}>합계</TableCell>
                 
                 {/* 수료 서브헤더 */}
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }} colSpan={3}>초신자</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #059669' }} colSpan={3}>전입신자</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #059669' }}>전체 합계</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }} colSpan={3}>초신자</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #059669' }} colSpan={3}>전입신자</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #059669' }} rowSpan={2}>합계</TableCell>
                 
                 {/* 교육 서브헤더 */}
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }} colSpan={3}>초신자</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #f59e0b' }} colSpan={3}>전입신자</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #f59e0b' }}>전체 합계</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }} colSpan={3}>초신자</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b' }} colSpan={3}>전입신자</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b' }} rowSpan={2}>합계</TableCell>
                 
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5 }}>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb' }}>
                   {/* 작업 칼럼은 비어있음 */}
                 </TableCell>
               </TableRow>
@@ -420,50 +489,48 @@ const StatisticsPage = () => {
               {/* 상세 헤더 행 */}
               <TableRow>
                 {/* 수료 상세헤더 */}
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>전년도</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>올해</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>합계</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>전년도</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>올해</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>합계</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #059669' }}>수료 전체 합계</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>전년도</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>올해</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>합계</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>전년도</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>올해</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>합계</TableCell>
                 
                 {/* 교육 상세헤더 */}
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>교육중</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>교육중단</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>합계</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>교육중</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>교육중단</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>합계</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #f59e0b' }}>교육 전체 합계</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>교육중</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>교육중단</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>합계</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>교육중</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>교육중단</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>합계</TableCell>
                 
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5 }}>수정/삭제</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb' }}>수정/삭제</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredStatistics.map((stat) => (
                 <TableRow key={stat.year} hover>
                   {/* 년도 */}
-                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#dbeafe', textAlign: 'center', borderRight: '3px solid #6b7280' }}>
+                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#dbeafe', textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '3px solid #6b7280' }}>
                     {stat.year}
                   </TableCell>
                   
                   {/* 등록 섹션 */}
-                  <TableCell sx={{ textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
                     <Chip 
                       label={stat.new_comer_registration} 
                       color="primary" 
                       variant="outlined"
                     />
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
                     <Chip 
                       label={stat.transfer_believer_registration} 
                       color="secondary" 
                       variant="outlined"
                     />
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#dbeafe', textAlign: 'center', borderRight: '3px solid #1e40af' }}>
+                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#dbeafe', textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '3px solid #1e40af' }}>
                     <Chip 
                       label={stat.total_registration} 
                       color="success" 
@@ -472,49 +539,49 @@ const StatisticsPage = () => {
                   </TableCell>
                   
                   {/* 수료 섹션 */}
-                  <TableCell sx={{ textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
                     <Chip 
                       label={stat.new_comer_graduate_prev_year} 
                       color="primary" 
                       variant="outlined"
                     />
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
                     <Chip 
                       label={stat.new_comer_graduate_current_year} 
                       color="primary" 
                       variant="outlined"
                     />
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#dcfce7', textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#dcfce7', textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
                     <Chip 
                       label={stat.new_comer_graduate_total} 
                       color="success" 
                       variant="filled"
                     />
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
                     <Chip 
                       label={stat.transfer_believer_graduate_prev_year} 
                       color="secondary" 
                       variant="outlined"
                     />
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
                     <Chip 
                       label={stat.transfer_believer_graduate_current_year} 
                       color="secondary" 
                       variant="outlined"
                     />
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#dcfce7', textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#dcfce7', textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
                     <Chip 
                       label={stat.transfer_believer_graduate_total} 
                       color="success" 
                       variant="filled"
                     />
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#bbf7d0', textAlign: 'center', borderRight: '3px solid #059669' }}>
+                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#bbf7d0', textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '3px solid #059669' }}>
                     <Chip 
                       label={stat.total_graduate} 
                       color="success" 
@@ -523,49 +590,49 @@ const StatisticsPage = () => {
                   </TableCell>
                   
                   {/* 교육 섹션 */}
-                  <TableCell sx={{ textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
                     <Chip 
                       label={stat.new_comer_education_in_progress} 
                       color="warning" 
                       variant="outlined"
                     />
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
                     <Chip 
                       label={stat.new_comer_education_discontinued} 
                       color="warning" 
                       variant="outlined"
                     />
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#fef3c7', textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#fef3c7', textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
                     <Chip 
                       label={stat.new_comer_education_total} 
                       color="warning" 
                       variant="filled"
                     />
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
                     <Chip 
                       label={stat.transfer_believer_education_in_progress} 
                       color="warning" 
                       variant="outlined"
                     />
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
                     <Chip 
                       label={stat.transfer_believer_education_discontinued} 
                       color="warning" 
                       variant="outlined"
                     />
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#fef3c7', textAlign: 'center', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#fef3c7', textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
                     <Chip 
                       label={stat.transfer_believer_education_total} 
                       color="warning" 
                       variant="filled"
                     />
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#fde68a', textAlign: 'center', borderRight: '3px solid #f59e0b' }}>
+                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#fde68a', textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b' }}>
                     <Chip 
                       label={stat.total_education} 
                       color="warning" 
@@ -574,7 +641,7 @@ const StatisticsPage = () => {
                   </TableCell>
                   
                   {/* 작업 칼럼 */}
-                  <TableCell sx={{ textAlign: 'center' }}>
+                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb' }}>
                     <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
                       <Tooltip title="수정" arrow>
                         <IconButton
@@ -609,190 +676,502 @@ const StatisticsPage = () => {
         onClose={() => setOpenDialog(false)}
         maxWidth="md"
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 4,
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            border: '1px solid #e5e7eb'
+          }
+        }}
       >
-        <DialogTitle>
-          {editingStat ? `${editingStat.year}년 통계 수정` : '새 통계 추가'}
+        <DialogTitle sx={{
+          background: 'linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%)',
+          borderBottom: '1px solid #e5e7eb',
+          borderRadius: '16px 16px 0 0',
+          p: 3
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{
+              width: 40,
+              height: 40,
+              background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <CalculateIcon sx={{ color: 'white', fontSize: 20 }} />
+            </Box>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1f2937' }}>
+                {editingStat ? `${editingStat.year}년 통계 수정` : '새 통계 추가'}
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#6b7280', mt: 0.5 }}>
+                {editingStat ? '통계 데이터를 수정합니다' : '새로운 년도 통계를 추가합니다'}
+              </Typography>
+            </Box>
+          </Box>
         </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} md={6}>
+        
+        <DialogContent sx={{ p: 3, backgroundColor: '#f9fafb' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {/* 년도 입력 */}
+            <Paper sx={{ p: 3, backgroundColor: 'white', borderRadius: 3, boxShadow: 1 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#374151', mb: 1 }}>
+                년도
+              </Typography>
               <TextField
                 fullWidth
-                label="년도"
                 type="number"
                 value={formData.year}
                 onChange={(e) => handleFormChange('year', parseInt(e.target.value))}
                 disabled={!!editingStat}
-                sx={{ mb: 2 }}
+                placeholder="예: 2024"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#3b82f6'
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#3b82f6',
+                      borderWidth: 2
+                    }
+                  }
+                }}
               />
-            </Grid>
+            </Paper>
             
-            {/* 초신자 관련 필드 */}
-            <Grid item xs={12}>
-              <Typography variant="h6" sx={{ mb: 2, color: '#3b82f6' }}>초신자</Typography>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="등록 수"
-                type="number"
-                value={formData.new_comer_registration}
-                onChange={(e) => handleFormChange('new_comer_registration', parseInt(e.target.value) || 0)}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="전년도 수료"
-                type="number"
-                value={formData.new_comer_graduate_prev_year}
-                onChange={(e) => handleFormChange('new_comer_graduate_prev_year', parseInt(e.target.value) || 0)}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="올해 수료"
-                type="number"
-                value={formData.new_comer_graduate_current_year}
-                onChange={(e) => handleFormChange('new_comer_graduate_current_year', parseInt(e.target.value) || 0)}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="교육 중"
-                type="number"
-                value={formData.new_comer_education_in_progress}
-                onChange={(e) => handleFormChange('new_comer_education_in_progress', parseInt(e.target.value) || 0)}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="교육 중단"
-                type="number"
-                value={formData.new_comer_education_discontinued}
-                onChange={(e) => handleFormChange('new_comer_education_discontinued', parseInt(e.target.value) || 0)}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="교육 합계"
-                type="number"
-                value={formData.new_comer_education_total}
-                InputProps={{ readOnly: true }}
-                sx={{ backgroundColor: '#f8fafc' }}
-              />
-            </Grid>
+            {/* 초신자 섹션 */}
+            <Paper sx={{ p: 3, backgroundColor: 'white', borderRadius: 3, boxShadow: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                <Box sx={{
+                  width: 32,
+                  height: 32,
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                  borderRadius: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <PeopleIcon sx={{ color: 'white', fontSize: 16 }} />
+                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#3b82f6' }}>
+                  초신자
+                </Typography>
+              </Box>
+              
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="등록 수"
+                    type="number"
+                    value={formData.new_comer_registration}
+                    onChange={(e) => handleFormChange('new_comer_registration', parseInt(e.target.value) || 0)}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#3b82f6'
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#3b82f6',
+                          borderWidth: 2
+                        }
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="전년도 수료"
+                    type="number"
+                    value={formData.new_comer_graduate_prev_year}
+                    onChange={(e) => handleFormChange('new_comer_graduate_prev_year', parseInt(e.target.value) || 0)}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#3b82f6'
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#3b82f6',
+                          borderWidth: 2
+                        }
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="올해 수료"
+                    type="number"
+                    value={formData.new_comer_graduate_current_year}
+                    onChange={(e) => handleFormChange('new_comer_graduate_current_year', parseInt(e.target.value) || 0)}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#3b82f6'
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#3b82f6',
+                          borderWidth: 2
+                        }
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="교육 중"
+                    type="number"
+                    value={formData.new_comer_education_in_progress}
+                    onChange={(e) => handleFormChange('new_comer_education_in_progress', parseInt(e.target.value) || 0)}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#3b82f6'
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#3b82f6',
+                          borderWidth: 2
+                        }
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="교육 중단"
+                    type="number"
+                    value={formData.new_comer_education_discontinued}
+                    onChange={(e) => handleFormChange('new_comer_education_discontinued', parseInt(e.target.value) || 0)}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#3b82f6'
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#3b82f6',
+                          borderWidth: 2
+                        }
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="교육 합계"
+                    type="number"
+                    value={formData.new_comer_education_total}
+                    InputProps={{ readOnly: true }}
+                    sx={{
+                      backgroundColor: '#f8fafc',
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        backgroundColor: '#f8fafc'
+                      }
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
 
-            {/* 전입신자 관련 필드 */}
-            <Grid item xs={12}>
-              <Typography variant="h6" sx={{ mb: 2, color: '#8b5cf6' }}>전입신자</Typography>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="등록 수"
-                type="number"
-                value={formData.transfer_believer_registration}
-                onChange={(e) => handleFormChange('transfer_believer_registration', parseInt(e.target.value) || 0)}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="전년도 수료"
-                type="number"
-                value={formData.transfer_believer_graduate_prev_year}
-                onChange={(e) => handleFormChange('transfer_believer_graduate_prev_year', parseInt(e.target.value) || 0)}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="올해 수료"
-                type="number"
-                value={formData.transfer_believer_graduate_current_year}
-                onChange={(e) => handleFormChange('transfer_believer_graduate_current_year', parseInt(e.target.value) || 0)}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="교육 중"
-                type="number"
-                value={formData.transfer_believer_education_in_progress}
-                onChange={(e) => handleFormChange('transfer_believer_education_in_progress', parseInt(e.target.value) || 0)}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="교육 중단"
-                type="number"
-                value={formData.transfer_believer_education_discontinued}
-                onChange={(e) => handleFormChange('transfer_believer_education_discontinued', parseInt(e.target.value) || 0)}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="교육 합계"
-                type="number"
-                value={formData.transfer_believer_education_total}
-                InputProps={{ readOnly: true }}
-                sx={{ backgroundColor: '#f8fafc' }}
-              />
-            </Grid>
+            {/* 전입신자 섹션 */}
+            <Paper sx={{ p: 3, backgroundColor: 'white', borderRadius: 3, boxShadow: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                <Box sx={{
+                  width: 32,
+                  height: 32,
+                  background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                  borderRadius: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <SchoolIcon sx={{ color: 'white', fontSize: 16 }} />
+                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#8b5cf6' }}>
+                  전입신자
+                </Typography>
+              </Box>
+              
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="등록 수"
+                    type="number"
+                    value={formData.transfer_believer_registration}
+                    onChange={(e) => handleFormChange('transfer_believer_registration', parseInt(e.target.value) || 0)}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#8b5cf6'
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#8b5cf6',
+                          borderWidth: 2
+                        }
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="전년도 수료"
+                    type="number"
+                    value={formData.transfer_believer_graduate_prev_year}
+                    onChange={(e) => handleFormChange('transfer_believer_graduate_prev_year', parseInt(e.target.value) || 0)}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#8b5cf6'
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#8b5cf6',
+                          borderWidth: 2
+                        }
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="올해 수료"
+                    type="number"
+                    value={formData.transfer_believer_graduate_current_year}
+                    onChange={(e) => handleFormChange('transfer_believer_graduate_current_year', parseInt(e.target.value) || 0)}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#8b5cf6'
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#8b5cf6',
+                          borderWidth: 2
+                        }
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="교육 중"
+                    type="number"
+                    value={formData.transfer_believer_education_in_progress}
+                    onChange={(e) => handleFormChange('transfer_believer_education_in_progress', parseInt(e.target.value) || 0)}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#8b5cf6'
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#8b5cf6',
+                          borderWidth: 2
+                        }
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="교육 중단"
+                    type="number"
+                    value={formData.transfer_believer_education_discontinued}
+                    onChange={(e) => handleFormChange('transfer_believer_education_discontinued', parseInt(e.target.value) || 0)}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#8b5cf6'
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#8b5cf6',
+                          borderWidth: 2
+                        }
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="교육 합계"
+                    type="number"
+                    value={formData.transfer_believer_education_total}
+                    InputProps={{ readOnly: true }}
+                    sx={{
+                      backgroundColor: '#f8fafc',
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        backgroundColor: '#f8fafc'
+                      }
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
 
-            {/* 합계 필드 */}
-            <Grid item xs={12}>
-              <Typography variant="h6" sx={{ mb: 2, color: '#10b981' }}>합계</Typography>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="등록 합계"
-                type="number"
-                value={formData.total_registration}
-                InputProps={{ readOnly: true }}
-                sx={{ backgroundColor: '#f8fafc' }}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="수료 합계"
-                type="number"
-                value={formData.total_graduate}
-                InputProps={{ readOnly: true }}
-                sx={{ backgroundColor: '#f8fafc' }}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="교육 합계"
-                type="number"
-                value={formData.total_education}
-                InputProps={{ readOnly: true }}
-                sx={{ backgroundColor: '#f8fafc' }}
-              />
-            </Grid>
-          </Grid>
+            {/* 합계 섹션 */}
+            <Paper sx={{ 
+              p: 3, 
+              background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)', 
+              borderRadius: 3, 
+              boxShadow: 1,
+              border: '1px solid #bbf7d0'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                <Box sx={{
+                  width: 32,
+                  height: 32,
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  borderRadius: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <CheckCircleIcon sx={{ color: 'white', fontSize: 16 }} />
+                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#10b981' }}>
+                  합계
+                </Typography>
+              </Box>
+              
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="등록 합계"
+                    type="number"
+                    value={formData.total_registration}
+                    InputProps={{ readOnly: true }}
+                    sx={{
+                      backgroundColor: '#f0fdf4',
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        backgroundColor: '#f0fdf4',
+                        '& fieldset': {
+                          borderColor: '#bbf7d0'
+                        }
+                      },
+                      '& .MuiInputBase-input': {
+                        color: '#065f46',
+                        fontWeight: 600
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="수료 합계"
+                    type="number"
+                    value={formData.total_graduate}
+                    InputProps={{ readOnly: true }}
+                    sx={{
+                      backgroundColor: '#f0fdf4',
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        backgroundColor: '#f0fdf4',
+                        '& fieldset': {
+                          borderColor: '#bbf7d0'
+                        }
+                      },
+                      '& .MuiInputBase-input': {
+                        color: '#065f46',
+                        fontWeight: 600
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="교육 합계"
+                    type="number"
+                    value={formData.total_education}
+                    InputProps={{ readOnly: true }}
+                    sx={{
+                      backgroundColor: '#f0fdf4',
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        backgroundColor: '#f0fdf4',
+                        '& fieldset': {
+                          borderColor: '#bbf7d0'
+                        }
+                      },
+                      '& .MuiInputBase-input': {
+                        color: '#065f46',
+                        fontWeight: 600
+                      }
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
+          </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>취소</Button>
+        
+        <DialogActions sx={{ 
+          backgroundColor: '#f9fafb', 
+          borderTop: '1px solid #e5e7eb', 
+          borderRadius: '0 0 16px 16px',
+          p: 3,
+          gap: 2
+        }}>
+          <Button 
+            onClick={() => setOpenDialog(false)}
+            sx={{
+              px: 3,
+              py: 1.5,
+              border: '1px solid #d1d5db',
+              color: '#374151',
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 500,
+              '&:hover': {
+                backgroundColor: '#f9fafb',
+                borderColor: '#9ca3af'
+              }
+            }}
+          >
+            취소
+          </Button>
           <Button 
             onClick={saveStatistics}
-            variant="contained"
             sx={{
+              px: 3,
+              py: 1.5,
               background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+              color: 'white',
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 500,
+              boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.3)',
               '&:hover': {
-                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)'
-              }
+                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.4)',
+                transform: 'translateY(-1px)'
+              },
+              transition: 'all 0.2s ease'
             }}
           >
             {editingStat ? '수정' : '추가'}
