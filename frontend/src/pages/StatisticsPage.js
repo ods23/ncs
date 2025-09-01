@@ -388,7 +388,7 @@ const StatisticsPage = () => {
             <TableHead>
               {/* 메인 헤더 행 */}
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, borderRight: '3px solid #6b7280' }}>년도</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, borderRight: '3px solid #6b7280' }} rowSpan={3}>년도</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, borderRight: '3px solid #1e40af' }} colSpan={3}>등록</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, borderRight: '3px solid #059669' }} colSpan={7}>수료</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, borderRight: '3px solid #f59e0b' }} colSpan={7}>교육</TableCell>
@@ -397,14 +397,10 @@ const StatisticsPage = () => {
               
               {/* 서브 헤더 행 */}
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #6b7280' }}>
-                  {/* 년도 칼럼은 비어있음 */}
-                </TableCell>
-                
                 {/* 등록 서브헤더 */}
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>초신자</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>전입신자</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #1e40af' }}>합계</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }} rowSpan={2}>초신자</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }} rowSpan={2}>전입신자</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #1e40af' }} rowSpan={2}>합계</TableCell>
                 
                 {/* 수료 서브헤더 */}
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }} colSpan={3}>초신자</TableCell>
@@ -423,15 +419,6 @@ const StatisticsPage = () => {
               
               {/* 상세 헤더 행 */}
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #6b7280' }}>
-                  {/* 년도 칼럼은 비어있음 */}
-                </TableCell>
-                
-                {/* 등록 상세헤더 */}
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}></TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}></TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '3px solid #1e40af' }}></TableCell>
-                
                 {/* 수료 상세헤더 */}
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>전년도</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, borderRight: '1px solid #94a3b8' }}>올해</TableCell>
