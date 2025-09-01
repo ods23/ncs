@@ -47,7 +47,8 @@ import {
   CartesianGrid,
   Tooltip as RechartsTooltip,
   Legend,
-  ResponsiveContainer
+  ResponsiveContainer,
+  LabelList
 } from 'recharts';
 
 const StatisticsPage = () => {
@@ -773,18 +774,40 @@ const StatisticsPage = () => {
 
       {/* 년도별 등록/수료 현황 차트 */}
       {statistics.length > 0 && (
-        <Paper sx={{ width: '100%', mt: 3, p: 3 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              기준 년도:
-            </Typography>
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>년도</InputLabel>
+        <Paper sx={{ width: '100%', mt: 3, p: 2, boxSizing: 'border-box' }}>
+        <div className="w-full p-4 bg-gradient-to-br from-white to-blue-50 rounded-2xl shadow-lg border border-blue-100" style={{ boxSizing: 'border-box' }}>
+          {/* 헤더 */}
+          <div className="flex items-center" style={{ marginBottom: '12px' }}>
+            <FormControl size="small" sx={{ width: 120 }}>
+              <InputLabel sx={{ fontSize: '12px', fontWeight: '600', color: '#374151' }}>년도</InputLabel>
               <Select
                 value={chartBaseYear}
                 onChange={(e) => setChartBaseYear(e.target.value)}
-                label="년도"
+                sx={{
+                  height: '36px',
+                  borderRadius: '12px',
+                  background: 'rgba(255, 255, 255, 0.8)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(0,0,0,0.1)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    borderColor: '#3b82f6',
+                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.1)'
+                  },
+                  '&.Mui-focused': {
+                    borderColor: '#3b82f6',
+                    boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    border: 'none'
+                  },
+                  '& .MuiSelect-select': {
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    color: '#374151',
+                    padding: '8px 12px'
+                  }
+                }}
               >
                 {statistics
                   .map(stat => parseInt(stat.year))
@@ -796,74 +819,154 @@ const StatisticsPage = () => {
                   ))}
               </Select>
             </FormControl>
+          </div>
+
+          {/* 차트 영역 */}
+          <Box sx={{ height: 400, backgroundColor: 'white', borderRadius: 2, p: 2, border: '1px solid #e5e7eb' }}>
+            {(() => {
+              const chartData = prepareChartData();
+              console.log('차트 렌더링 체크:', { 
+                statisticsLength: statistics.length, 
+                chartBaseYear, 
+                chartDataLength: chartData.length,
+                chartData 
+              });
+              return chartData.length > 0;
+            })() ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={prepareChartData()}
+                  margin={{
+                    top: 20,
+                    right: 30,
+                    left: 20,
+                    bottom: 5,
+                  }}
+                >
+                  <CartesianGrid 
+                    strokeDasharray="3 3" 
+                    stroke="#e5e7eb"
+                    strokeOpacity={0.3}
+                  />
+                  <XAxis 
+                    dataKey="year" 
+                    tick={{ 
+                      fontSize: 12, 
+                      fill: '#6b7280',
+                      fontWeight: '500'
+                    }}
+                    tickFormatter={(value) => `${value}년`}
+                    axisLine={{ stroke: '#d1d5db' }}
+                    tickLine={{ stroke: '#d1d5db' }}
+                  />
+                  <YAxis 
+                    tick={{ 
+                      fontSize: 12, 
+                      fill: '#6b7280',
+                      fontWeight: '500'
+                    }}
+                    domain={[0, 'dataMax + 50']}
+                    axisLine={{ stroke: '#d1d5db' }}
+                    tickLine={{ stroke: '#d1d5db' }}
+                  />
+                  <RechartsTooltip 
+                    formatter={(value, name) => [value, name]}
+                    labelFormatter={(label) => `${label}년`}
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '12px',
+                      boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+                      fontSize: '14px'
+                    }}
+                  />
+                  <Legend 
+                    wrapperStyle={{
+                      paddingTop: '20px',
+                      fontSize: '14px',
+                      fontWeight: '500'
+                    }}
+                  />
+                  <Bar 
+                    dataKey="등록자" 
+                    fill="url(#blueGradient)" 
+                    name="등록자"
+                    radius={[4, 4, 0, 0]}
+                  >
+                    <LabelList 
+                      dataKey="등록자" 
+                      position="top" 
+                      style={{ 
+                        fill: '#1e40af', 
+                        fontSize: '12px', 
+                        fontWeight: 'bold'
+                      }}
+                      formatter={(value) => value > 0 ? value : ''}
+                    />
+                  </Bar>
+                  <Bar 
+                    dataKey="수료자" 
+                    fill="url(#greenGradient)" 
+                    name="수료자"
+                    radius={[4, 4, 0, 0]}
+                  >
+                    <LabelList 
+                      dataKey="수료자" 
+                      position="top" 
+                      style={{ 
+                        fill: '#059669', 
+                        fontSize: '12px', 
+                        fontWeight: 'bold'
+                      }}
+                      formatter={(value) => value > 0 ? value : ''}
+                    />
+                  </Bar>
+                  <defs>
+                    <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                      <stop offset="100%" stopColor="#1d4ed8" stopOpacity={0.6}/>
+                    </linearGradient>
+                    <linearGradient id="greenGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.8}/>
+                      <stop offset="100%" stopColor="#059669" stopOpacity={0.6}/>
+                    </linearGradient>
+                  </defs>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                height: '100%',
+                flexDirection: 'column',
+                gap: 2
+              }}>
+                <Box sx={{ 
+                  width: 48, 
+                  height: 48, 
+                  border: '3px solid #e3f2fd', 
+                  borderTop: '3px solid #2196f3',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  '@keyframes spin': {
+                    '0%': { transform: 'rotate(0deg)' },
+                    '100%': { transform: 'rotate(360deg)' }
+                  }
+                }} />
+                <Typography variant="h6" color="text.secondary">
+                  차트 데이터를 불러오는 중...
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  기준 년도: {chartBaseYear || '설정되지 않음'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  통계 데이터: {statistics.length}개
+                </Typography>
+              </Box>
+            )}
           </Box>
-          <Typography variant="h6" sx={{ fontWeight: 'bold', textAlign: 'center', flex: 1 }}>
-            년도별 전체 등록자/수료자 현황 ({chartBaseYear}년 기준)
-          </Typography>
-          <Box sx={{ width: 200 }}></Box>
-        </Box>
-        <Box sx={{ height: 400 }}>
-          {prepareChartData().length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={prepareChartData()}
-                margin={{
-                  top: 20,
-                  right: 30,
-                  left: 20,
-                  bottom: 5,
-                }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="year" 
-                  tick={{ fontSize: 12 }}
-                  tickFormatter={(value) => `${value}년`}
-                />
-                <YAxis 
-                  tick={{ fontSize: 12 }}
-                  domain={[0, 'dataMax + 50']}
-                />
-                <RechartsTooltip 
-                  formatter={(value, name) => [value, name]}
-                  labelFormatter={(label) => `${label}년`}
-                />
-                <Legend />
-                <Bar 
-                  dataKey="등록자" 
-                  fill="#3b82f6" 
-                  name="등록자"
-                  radius={[2, 2, 0, 0]}
-                />
-                <Bar 
-                  dataKey="수료자" 
-                  fill="#10b981" 
-                  name="수료자"
-                  radius={[2, 2, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              height: '100%',
-              flexDirection: 'column',
-              gap: 2
-            }}>
-              <Typography variant="h6" color="text.secondary">
-                차트 데이터를 불러오는 중...
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                기준 년도: {chartBaseYear || '설정되지 않음'}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                통계 데이터: {statistics.length}개
-              </Typography>
-            </Box>
-          )}
-        </Box>
+        </div>
         </Paper>
       )}
 
