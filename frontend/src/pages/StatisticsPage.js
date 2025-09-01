@@ -39,6 +39,16 @@ import {
   School as SchoolIcon,
   CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
 
 const StatisticsPage = () => {
   const [statistics, setStatistics] = useState([]);
@@ -46,6 +56,7 @@ const StatisticsPage = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [editingStat, setEditingStat] = useState(null);
   const [selectedYear, setSelectedYear] = useState('');
+  const [chartBaseYear, setChartBaseYear] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [formData, setFormData] = useState({
     year: '',
@@ -80,6 +91,13 @@ const StatisticsPage = () => {
       
       if (response.ok) {
         const data = await response.json();
+        console.log('API에서 받은 통계 데이터:', data);
+        console.log('통계 데이터 타입:', typeof data);
+        console.log('통계 데이터 길이:', Array.isArray(data) ? data.length : '배열이 아님');
+        if (Array.isArray(data) && data.length > 0) {
+          console.log('첫 번째 통계 데이터 샘플:', data[0]);
+          console.log('첫 번째 데이터의 키들:', Object.keys(data[0]));
+        }
         setStatistics(data);
       } else {
         throw new Error('통계 데이터를 불러오는데 실패했습니다.');
@@ -113,6 +131,80 @@ const StatisticsPage = () => {
       console.error('통계 계산 실패:', error);
       showSnackbar('통계 계산에 실패했습니다.', 'error');
     }
+  };
+
+  // 차트 데이터 준비 함수
+  const prepareChartData = () => {
+    console.log('차트 데이터 준비 시작:', { chartBaseYear, statistics });
+    console.log('통계 데이터 상세:', statistics);
+    
+    if (!chartBaseYear || statistics.length === 0) {
+      console.log('차트 데이터 준비 실패: 기준 년도 또는 통계 데이터 없음');
+      console.log('기준 년도:', chartBaseYear);
+      console.log('통계 데이터 길이:', statistics.length);
+      return [];
+    }
+    
+    const baseYear = parseInt(chartBaseYear);
+    const chartData = [];
+    
+    console.log('기준 년도로 변환:', baseYear);
+    console.log('통계 데이터의 년도들:', statistics.map(stat => stat.year));
+    
+    // 기준 년도를 포함하여 6년치 데이터 생성
+    for (let i = 5; i >= 0; i--) {
+      const year = baseYear - i;
+      const yearStr = year.toString();
+      
+      console.log(`검색 중인 년도: ${yearStr}`);
+      
+      // 해당 년도의 통계 데이터 찾기 (숫자 비교)
+      const yearData = statistics.find(stat => {
+        const statYear = parseInt(stat.year);
+        const searchYear = parseInt(yearStr);
+        console.log(`비교: ${statYear} === ${searchYear}?`, statYear === searchYear);
+        return statYear === searchYear;
+      });
+      
+      if (yearData) {
+        console.log(`${yearStr}년 데이터 찾음:`, yearData);
+        
+        // 등록 합계 계산 - total_registration 필드 사용
+        const registrationTotal = yearData.total_registration || 0;
+        
+        // 수료 합계 계산 - total_graduate 필드 사용
+        const completionTotal = yearData.total_graduate || 0;
+        
+        console.log(`${yearStr}년 등록 계산 상세:`, {
+          total_registration: yearData.total_registration,
+          registrationTotal
+        });
+        
+        console.log(`${yearStr}년 수료 계산 상세:`, {
+          total_graduate: yearData.total_graduate,
+          completionTotal
+        });
+        
+        console.log(`${yearStr}년 계산 결과:`, { registrationTotal, completionTotal });
+        
+        chartData.push({
+          year: yearStr,
+          등록자: registrationTotal,
+          수료자: completionTotal
+        });
+      } else {
+        console.log(`${yearStr}년 데이터 없음 - 통계 데이터에서 찾을 수 없음`);
+        // 데이터가 없는 경우 0으로 표시
+        chartData.push({
+          year: yearStr,
+          등록자: 0,
+          수료자: 0
+        });
+      }
+    }
+    
+    console.log('최종 차트 데이터:', chartData);
+    return chartData;
   };
 
   // 통계 생성/수정
@@ -266,6 +358,18 @@ const StatisticsPage = () => {
   useEffect(() => {
     loadStatistics();
   }, []);
+
+  // 통계 데이터가 로드되면 차트 기준 년도 설정
+  useEffect(() => {
+    if (statistics.length > 0) {
+      // 가장 최근 년도를 기준 년도로 설정
+      const years = statistics.map(stat => parseInt(stat.year)).sort((a, b) => b - a);
+      if (years.length > 0) {
+        setChartBaseYear(years[0].toString());
+        console.log('차트 기준 년도 설정:', years[0]);
+      }
+    }
+  }, [statistics]);
 
   // 년도별 필터링
   const filteredStatistics = selectedYear 
@@ -666,6 +770,102 @@ const StatisticsPage = () => {
           </Table>
         </TableContainer>
       </Paper>
+
+      {/* 년도별 등록/수료 현황 차트 */}
+      {statistics.length > 0 && (
+        <Paper sx={{ width: '100%', mt: 3, p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              기준 년도:
+            </Typography>
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel>년도</InputLabel>
+              <Select
+                value={chartBaseYear}
+                onChange={(e) => setChartBaseYear(e.target.value)}
+                label="년도"
+              >
+                {statistics
+                  .map(stat => parseInt(stat.year))
+                  .sort((a, b) => b - a)
+                  .map(year => (
+                    <MenuItem key={year} value={year.toString()}>
+                      {year}년
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+          </Box>
+          <Typography variant="h6" sx={{ fontWeight: 'bold', textAlign: 'center', flex: 1 }}>
+            년도별 전체 등록자/수료자 현황 ({chartBaseYear}년 기준)
+          </Typography>
+          <Box sx={{ width: 200 }}></Box>
+        </Box>
+        <Box sx={{ height: 400 }}>
+          {prepareChartData().length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={prepareChartData()}
+                margin={{
+                  top: 20,
+                  right: 30,
+                  left: 20,
+                  bottom: 5,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="year" 
+                  tick={{ fontSize: 12 }}
+                  tickFormatter={(value) => `${value}년`}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12 }}
+                  domain={[0, 'dataMax + 50']}
+                />
+                <RechartsTooltip 
+                  formatter={(value, name) => [value, name]}
+                  labelFormatter={(label) => `${label}년`}
+                />
+                <Legend />
+                <Bar 
+                  dataKey="등록자" 
+                  fill="#3b82f6" 
+                  name="등록자"
+                  radius={[2, 2, 0, 0]}
+                />
+                <Bar 
+                  dataKey="수료자" 
+                  fill="#10b981" 
+                  name="수료자"
+                  radius={[2, 2, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              height: '100%',
+              flexDirection: 'column',
+              gap: 2
+            }}>
+              <Typography variant="h6" color="text.secondary">
+                차트 데이터를 불러오는 중...
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                기준 년도: {chartBaseYear || '설정되지 않음'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                통계 데이터: {statistics.length}개
+              </Typography>
+            </Box>
+          )}
+        </Box>
+        </Paper>
+      )}
 
       {/* 통계 추가/수정 다이얼로그 */}
       <Dialog 
