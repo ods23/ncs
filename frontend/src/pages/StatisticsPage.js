@@ -461,7 +461,8 @@ const StatisticsPage = () => {
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, border: '1px solid #e5e7eb', borderRight: '3px solid #1e40af' }} colSpan={3}>등록</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, border: '1px solid #e5e7eb', borderRight: '3px solid #059669' }} colSpan={7}>수료</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b' }} colSpan={7}>교육</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, border: '1px solid #e5e7eb' }}>작업</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }} rowSpan={3}>수정</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, border: '1px solid #e5e7eb' }} rowSpan={3}>삭제</TableCell>
               </TableRow>
               
               {/* 서브 헤더 행 */}
@@ -480,10 +481,6 @@ const StatisticsPage = () => {
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }} colSpan={3}>초신자</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }} colSpan={3}>전입신자</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b' }} rowSpan={2}>합계</TableCell>
-                
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb' }}>
-                  {/* 작업 칼럼은 비어있음 */}
-                </TableCell>
               </TableRow>
               
               {/* 상세 헤더 행 */}
@@ -503,8 +500,6 @@ const StatisticsPage = () => {
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>교육중</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>교육중단</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>합계</TableCell>
-                
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb' }}>수정/삭제</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -640,28 +635,30 @@ const StatisticsPage = () => {
                     />
                   </TableCell>
                   
-                  {/* 작업 칼럼 */}
+                  {/* 수정 칼럼 */}
+                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
+                    <Tooltip title="수정" arrow>
+                      <IconButton
+                        size="small"
+                        onClick={() => openEditDialog(stat)}
+                        sx={{ color: '#3b82f6' }}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                  
+                  {/* 삭제 칼럼 */}
                   <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb' }}>
-                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                      <Tooltip title="수정" arrow>
-                        <IconButton
-                          size="small"
-                          onClick={() => openEditDialog(stat)}
-                          sx={{ color: '#3b82f6' }}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="삭제" arrow>
-                        <IconButton
-                          size="small"
-                          onClick={() => deleteStatistics(stat.year)}
-                          sx={{ color: '#ef4444' }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
+                    <Tooltip title="삭제" arrow>
+                      <IconButton
+                        size="small"
+                        onClick={() => deleteStatistics(stat.year)}
+                        sx={{ color: '#ef4444' }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
                   </TableCell>
                 </TableRow>
               ))}
