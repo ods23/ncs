@@ -45,10 +45,10 @@ router.get('/', async (req, res) => {
     
     const params = [];
     
-    // 조회 조건 추가
+    // 조회 조건 추가 - year 파라미터를 양육종료일의 년도와 비교
     if (year && year.trim() !== '') {
-      query += ' AND year = ?';
-      params.push(year.trim());
+      query += ' AND YEAR(ng.education_end_date) = ?';
+      params.push(parseInt(year.trim()));
     }
     
     if (name && name.trim() !== '') {

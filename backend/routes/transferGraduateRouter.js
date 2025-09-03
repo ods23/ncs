@@ -44,9 +44,9 @@ router.get('/', async (req, res) => {
     
     const params = [];
     
-    // 조회 조건 추가
+    // 조회 조건 추가 - year 파라미터를 양육종료일자의 년도와 비교
     if (year && typeof year === 'string' && year.trim() !== '') {
-      query += ' AND year = ?';
+      query += ' AND YEAR(tg.education_end_date) = ?';
       params.push(year.trim());
     }
     

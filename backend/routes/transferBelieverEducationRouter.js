@@ -49,14 +49,14 @@ router.get('/', authenticateToken, async (req, res) => {
     
     const params = [];
     
-    // 년도 필터
+    // 년도 필터 - year 파라미터를 등록신청일의 년도와 비교
     if (req.query.year && req.query.year.trim() !== '') {
-      query += ` AND nc.year = ?`;
+      query += ` AND YEAR(nc.register_date) = ?`;
       params.push(parseInt(req.query.year.trim()));
     } else {
       // 년도가 지정되지 않은 경우 현재 년도로 기본 설정
       const currentYear = new Date().getFullYear();
-      query += ` AND nc.year = ?`;
+      query += ` AND YEAR(nc.register_date) = ?`;
       params.push(currentYear);
     }
     

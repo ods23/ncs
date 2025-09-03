@@ -92,13 +92,6 @@ const StatisticsPage = () => {
       
       if (response.ok) {
         const data = await response.json();
-        console.log('API에서 받은 통계 데이터:', data);
-        console.log('통계 데이터 타입:', typeof data);
-        console.log('통계 데이터 길이:', Array.isArray(data) ? data.length : '배열이 아님');
-        if (Array.isArray(data) && data.length > 0) {
-          console.log('첫 번째 통계 데이터 샘플:', data[0]);
-          console.log('첫 번째 데이터의 키들:', Object.keys(data[0]));
-        }
         setStatistics(data);
       } else {
         throw new Error('통계 데이터를 불러오는데 실패했습니다.');
@@ -111,82 +104,123 @@ const StatisticsPage = () => {
     }
   };
 
-  // 자동 통계 계산
-  const calculateStatistics = async (year) => {
+  // 통계 자동 생성
+  const generateStatistics = async () => {
     try {
-      const response = await fetch(`/api/statistics/calculate/${year}`, {
+      const currentYear = new Date().getFullYear();
+      
+      // 2025년 이후부터만 생성 가능
+      if (formData.year < 2025) {
+        showSnackbar('2025년 이후부터 통계를 생성할 수 있습니다.', 'error');
+        return;
+      }
+
+      showSnackbar('통계 생성 중...', 'info');
+      
+      const response = await fetch('/api/statistics/generate', {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        },
+        body: JSON.stringify({
+          year: formData.year
+        })
       });
       
       if (response.ok) {
         const data = await response.json();
         showSnackbar(data.message, 'success');
-        loadStatistics(); // 데이터 새로고침
+        loadStatistics(); // 통계 데이터 새로고침
+        fetchMonthlyAgeStats(formData.year); // 월별/연령대별 통계도 새로고침
+        setOpenDialog(false); // 통계 생성 완료 후 팝업 닫기
       } else {
-        throw new Error('통계 계산에 실패했습니다.');
+        throw new Error('통계 생성에 실패했습니다.');
       }
     } catch (error) {
-      console.error('통계 계산 실패:', error);
-      showSnackbar('통계 계산에 실패했습니다.', 'error');
+      console.error('통계 생성 실패:', error);
+      showSnackbar('통계 생성에 실패했습니다.', 'error');
     }
   };
 
-  // 차트 데이터 준비 함수
+  // 월별/연령대별 통계 데이터 가져오기
+  const [monthlyAgeStats, setMonthlyAgeStats] = useState({});
+  
+  const fetchMonthlyAgeStats = async (year) => {
+    try {
+      console.log('=== 월별/연령대별 통계 조회 시작 ===');
+      console.log('조회할 년도:', year);
+      console.log('현재 localStorage 토큰:', localStorage.getItem('token') ? '있음' : '없음');
+      
+
+      const url = `/api/statistics/monthly-age?year=${year}&department=새가족위원회`;
+      console.log('API URL:', url);
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      console.log('API 응답 상태:', response.status, response.statusText);
+      console.log('API 응답 헤더:', Object.fromEntries(response.headers.entries()));
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('=== API 응답 데이터 ===');
+        console.log('데이터 타입:', typeof data);
+        console.log('데이터 키들:', Object.keys(data));
+        console.log('7월 데이터:', data[7]);
+        console.log('8월 데이터:', data[8]);
+        console.log('전체 데이터 구조:', JSON.stringify(data, null, 2));
+        
+        console.log('=== 상태 업데이트 전 ===');
+        console.log('현재 monthlyAgeStats:', monthlyAgeStats);
+        
+        setMonthlyAgeStats(data);
+        
+        console.log('=== 상태 업데이트 후 ===');
+        console.log('새로 설정된 데이터:', data);
+        console.log('monthlyAgeStats 상태 업데이트 완료');
+      } else {
+        const errorText = await response.text();
+        console.error('=== API 오류 응답 ===');
+        console.error('상태 코드:', response.status);
+        console.error('오류 내용:', errorText);
+        setMonthlyAgeStats({});
+      }
+    } catch (error) {
+      console.error('=== API 호출 중 오류 발생 ===');
+      console.error('오류 타입:', error.name);
+      console.error('오류 메시지:', error.message);
+      console.error('오류 스택:', error.stack);
+      setMonthlyAgeStats({});
+    }
+  };
+
+  // 차트 데이터 준비 함수 - 기준년도 기준으로 7년치 표시
   const prepareChartData = () => {
-    console.log('차트 데이터 준비 시작:', { chartBaseYear, statistics });
-    console.log('통계 데이터 상세:', statistics);
-    
     if (!chartBaseYear || statistics.length === 0) {
-      console.log('차트 데이터 준비 실패: 기준 년도 또는 통계 데이터 없음');
-      console.log('기준 년도:', chartBaseYear);
-      console.log('통계 데이터 길이:', statistics.length);
       return [];
     }
     
     const baseYear = parseInt(chartBaseYear);
     const chartData = [];
     
-    console.log('기준 년도로 변환:', baseYear);
-    console.log('통계 데이터의 년도들:', statistics.map(stat => stat.year));
-    
-    // 기준 년도를 포함하여 6년치 데이터 생성
-    for (let i = 5; i >= 0; i--) {
-      const year = baseYear - i;
+    // 기준년도 기준으로 7년치 데이터 생성 (기준년도-6년 ~ 기준년도)
+    for (let i = 0; i < 7; i++) {
+      const year = baseYear - 6 + i; // 기준년도에서 6년 전부터 시작
       const yearStr = year.toString();
       
-      console.log(`검색 중인 년도: ${yearStr}`);
-      
-      // 해당 년도의 통계 데이터 찾기 (숫자 비교)
-      const yearData = statistics.find(stat => {
-        const statYear = parseInt(stat.year);
-        const searchYear = parseInt(yearStr);
-        console.log(`비교: ${statYear} === ${searchYear}?`, statYear === searchYear);
-        return statYear === searchYear;
-      });
+      // 해당 년도의 통계 데이터 찾기
+      const yearData = statistics.find(stat => parseInt(stat.year) === year);
       
       if (yearData) {
-        console.log(`${yearStr}년 데이터 찾음:`, yearData);
-        
-        // 등록 합계 계산 - total_registration 필드 사용
+        // 등록 합계 계산
         const registrationTotal = yearData.total_registration || 0;
         
-        // 수료 합계 계산 - total_graduate 필드 사용
+        // 수료 합계 계산
         const completionTotal = yearData.total_graduate || 0;
-        
-        console.log(`${yearStr}년 등록 계산 상세:`, {
-          total_registration: yearData.total_registration,
-          registrationTotal
-        });
-        
-        console.log(`${yearStr}년 수료 계산 상세:`, {
-          total_graduate: yearData.total_graduate,
-          completionTotal
-        });
-        
-        console.log(`${yearStr}년 계산 결과:`, { registrationTotal, completionTotal });
         
         chartData.push({
           year: yearStr,
@@ -194,7 +228,6 @@ const StatisticsPage = () => {
           수료자: completionTotal
         });
       } else {
-        console.log(`${yearStr}년 데이터 없음 - 통계 데이터에서 찾을 수 없음`);
         // 데이터가 없는 경우 0으로 표시
         chartData.push({
           year: yearStr,
@@ -204,7 +237,6 @@ const StatisticsPage = () => {
       }
     }
     
-    console.log('최종 차트 데이터:', chartData);
     return chartData;
   };
 
@@ -358,6 +390,14 @@ const StatisticsPage = () => {
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
     loadStatistics();
+    // 현재년도로 월별/연령대별 통계도 로드
+    const currentYear = new Date().getFullYear();
+    
+    try {
+      fetchMonthlyAgeStats(currentYear);
+    } catch (error) {
+      console.error('fetchMonthlyAgeStats 호출 중 오류:', error);
+    }
   }, []);
 
   // 통계 데이터가 로드되면 차트 기준 년도 설정
@@ -367,7 +407,6 @@ const StatisticsPage = () => {
       const years = statistics.map(stat => parseInt(stat.year)).sort((a, b) => b - a);
       if (years.length > 0) {
         setChartBaseYear(years[0].toString());
-        console.log('차트 기준 년도 설정:', years[0]);
       }
     }
   }, [statistics]);
@@ -493,11 +532,11 @@ const StatisticsPage = () => {
             <Box sx={{ textAlign: 'center', flex: 1 }}>
               <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '16px' }}>총 등록</Typography>
               <Typography variant="h4" sx={{ fontWeight: 'bold', fontSize: '22px', lineHeight: 1 }}>
-                {filteredStatistics.reduce((sum, stat) => sum + stat.total_registration, 0)}
-              </Typography>
-            </Box>
+                    {filteredStatistics.reduce((sum, stat) => sum + stat.total_registration, 0)}
+                  </Typography>
+                </Box>
             <PeopleIcon sx={{ fontSize: 20, opacity: 0.8, color: '#93c5fd' }} />
-          </Box>
+              </Box>
 
           {/* 총 수료 카드 */}
           <Box sx={{ 
@@ -520,11 +559,11 @@ const StatisticsPage = () => {
             <Box sx={{ textAlign: 'center', flex: 1 }}>
               <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '16px' }}>총 수료</Typography>
               <Typography variant="h4" sx={{ fontWeight: 'bold', fontSize: '22px', lineHeight: 1 }}>
-                {filteredStatistics.reduce((sum, stat) => sum + stat.total_graduate, 0)}
-              </Typography>
-            </Box>
+                    {filteredStatistics.reduce((sum, stat) => sum + stat.total_graduate, 0)}
+                  </Typography>
+                </Box>
             <CheckCircleIcon sx={{ fontSize: 20, opacity: 0.8, color: '#86efac' }} />
-          </Box>
+              </Box>
 
           {/* 관리 년도 카드 */}
           <Box sx={{ 
@@ -548,12 +587,12 @@ const StatisticsPage = () => {
               <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '16px' }}>관리 년도</Typography>
               <Typography variant="h4" sx={{ fontWeight: 'bold', fontSize: '22px', lineHeight: 1 }}>
                 {filteredStatistics.length}
-              </Typography>
-            </Box>
+                  </Typography>
+                </Box>
             <TrendingUpIcon sx={{ fontSize: 20, opacity: 0.8, color: '#c4b5fd' }} />
-          </Box>
-        </Box>
-      </Box>
+              </Box>
+                </Box>
+              </Box>
 
       {/* 통계 테이블 */}
       <Paper sx={{ width: '100%', overflow: 'auto' }}>
@@ -742,28 +781,28 @@ const StatisticsPage = () => {
                   
                   {/* 수정 칼럼 */}
                   <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
-                    <Tooltip title="수정" arrow>
-                      <IconButton
-                        size="small"
-                        onClick={() => openEditDialog(stat)}
-                        sx={{ color: '#3b82f6' }}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
+                      <Tooltip title="수정" arrow>
+                        <IconButton
+                          size="small"
+                          onClick={() => openEditDialog(stat)}
+                          sx={{ color: '#3b82f6' }}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </Tooltip>
                   </TableCell>
                   
                   {/* 삭제 칼럼 */}
                   <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb' }}>
-                    <Tooltip title="삭제" arrow>
-                      <IconButton
-                        size="small"
-                        onClick={() => deleteStatistics(stat.year)}
-                        sx={{ color: '#ef4444' }}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
+                      <Tooltip title="삭제" arrow>
+                        <IconButton
+                          size="small"
+                          onClick={() => deleteStatistics(stat.year)}
+                          sx={{ color: '#ef4444' }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
                   </TableCell>
                 </TableRow>
               ))}
@@ -777,12 +816,19 @@ const StatisticsPage = () => {
         <Paper sx={{ width: '100%', mt: 3, p: 2, boxSizing: 'border-box' }}>
         <div className="w-full p-4 bg-gradient-to-br from-white to-blue-50 rounded-2xl shadow-lg border border-blue-100" style={{ boxSizing: 'border-box' }}>
           {/* 헤더 */}
-          <div className="flex items-center" style={{ marginBottom: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
             <FormControl size="small" sx={{ width: 120 }}>
               <InputLabel sx={{ fontSize: '12px', fontWeight: '600', color: '#374151' }}>년도</InputLabel>
               <Select
-                value={chartBaseYear}
-                onChange={(e) => setChartBaseYear(e.target.value)}
+                              value={chartBaseYear}
+              onChange={(e) => {
+                const year = e.target.value;
+                setChartBaseYear(year);
+                // 년도 변경 시 월별/연령대별 통계도 새로 로드
+                if (year) {
+                  fetchMonthlyAgeStats(year);
+                }
+              }}
                 sx={{
                   height: '36px',
                   borderRadius: '12px',
@@ -819,18 +865,16 @@ const StatisticsPage = () => {
                   ))}
               </Select>
             </FormControl>
+            <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#374151', fontSize: '18px', flex: 1, textAlign: 'center' }}>
+              년도별 등록자/수료자 현황
+            </Typography>
+            <div style={{ width: '120px' }}></div>
           </div>
 
           {/* 차트 영역 */}
           <Box sx={{ height: 400, backgroundColor: 'white', borderRadius: 2, p: 2, border: '1px solid #e5e7eb' }}>
             {(() => {
               const chartData = prepareChartData();
-              console.log('차트 렌더링 체크:', { 
-                statisticsLength: statistics.length, 
-                chartBaseYear, 
-                chartDataLength: chartData.length,
-                chartData 
-              });
               return chartData.length > 0;
             })() ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -969,6 +1013,312 @@ const StatisticsPage = () => {
         </div>
         </Paper>
       )}
+      
+      {/* 월별/연령대별 통계 표 */}
+      <Box sx={{ mt: 4 }}>
+        <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', fontWeight: 'bold' }}>
+          2025년 새가족 등록현황 보고서
+        </Typography>
+        
+        <Box sx={{ overflowX: 'auto' }}>
+          <TableContainer component={Paper} sx={{ boxShadow: 3 }}>
+            <Table size="small" sx={{ minWidth: 1200 }}>
+              <TableHead>
+                {/* 메인 헤더 */}
+                <TableRow>
+                  <TableCell 
+                    sx={{ 
+                      minWidth: 120, 
+                      backgroundColor: '#f5f5f5', 
+                      fontWeight: 'bold',
+                      border: '1px solid #ddd'
+                    }}
+                  >
+                    연령대
+                  </TableCell>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                    <TableCell 
+                      key={month} 
+                      colSpan={2}
+                      sx={{ 
+                        textAlign: 'center', 
+                        backgroundColor: '#e3f2fd', 
+                        fontWeight: 'bold',
+                        border: '1px solid #ddd'
+                      }}
+                    >
+                      {month}월
+                    </TableCell>
+                  ))}
+                  <TableCell 
+                    sx={{ 
+                      textAlign: 'center', 
+                      backgroundColor: '#e8f5e8', 
+                      fontWeight: 'bold',
+                      border: '1px solid #ddd'
+                    }}
+                  >
+                    초신자 합계
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      textAlign: 'center', 
+                      backgroundColor: '#e8f5e8', 
+                      fontWeight: 'bold',
+                      border: '1px solid #ddd'
+                    }}
+                  >
+                    전입신자 합계
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      textAlign: 'center', 
+                      backgroundColor: '#e8f5e8', 
+                      fontWeight: 'bold',
+                      border: '1px solid #ddd'
+                    }}
+                  >
+                    합계
+                  </TableCell>
+                </TableRow>
+                
+                {/* 서브 헤더 */}
+                <TableRow>
+                  <TableCell 
+                    sx={{ 
+                      backgroundColor: '#f5f5f5', 
+                      border: '1px solid #ddd'
+                    }}
+                  />
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                    <React.Fragment key={month}>
+                      <TableCell 
+                        sx={{ 
+                          textAlign: 'center', 
+                          backgroundColor: '#f3e5f5', 
+                          border: '1px solid #ddd'
+                        }}
+                      >
+                        초신자
+                      </TableCell>
+                      <TableCell 
+                        sx={{ 
+                          textAlign: 'center', 
+                          backgroundColor: '#f3e5f5', 
+                          border: '1px solid #ddd'
+                        }}
+                      >
+                        전입신자
+                      </TableCell>
+                    </React.Fragment>
+                  ))}
+                  <TableCell 
+                    sx={{ 
+                      textAlign: 'center', 
+                      backgroundColor: '#f3e5f5', 
+                      border: '1px solid #ddd'
+                    }}
+                  >
+                    초신자
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      textAlign: 'center', 
+                      backgroundColor: '#f3e5f5', 
+                      border: '1px solid #ddd'
+                    }}
+                  >
+                    전입신자
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      textAlign: 'center', 
+                      backgroundColor: '#f3e5f5', 
+                      border: '1px solid #ddd'
+                    }}
+                  >
+                    전체
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              
+              <TableBody>
+                {/* 연령대별 행 */}
+                {[
+                  { key: '10s', label: '10대', birthYear: '2006~2015' },
+                  { key: '20s', label: '20대', birthYear: '1996~2005' },
+                  { key: '30s', label: '30대', birthYear: '1986~1995' },
+                  { key: '40s', label: '40대', birthYear: '1976~1985' },
+                  { key: '50s', label: '50대', birthYear: '1966~1975' },
+                  { key: '60s', label: '60대', birthYear: '1956~1965' },
+                  { key: '70s_plus', label: '70대 이상', birthYear: '~1955' }
+                ].map(ageGroup => (
+                  <TableRow key={ageGroup.key}>
+                    <TableCell 
+                      sx={{ 
+                        backgroundColor: '#f5f5f5', 
+                        fontWeight: 'bold',
+                        border: '1px solid #ddd'
+                      }}
+                    >
+                      {ageGroup.label}<br/>({ageGroup.birthYear})
+                    </TableCell>
+                    
+                    {/* 월별 데이터 */}
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                      <React.Fragment key={month}>
+                        <TableCell 
+                          sx={{ 
+                            textAlign: 'center', 
+                            border: '1px solid #ddd',
+                            backgroundColor: monthlyAgeStats[month]?.초신자?.[ageGroup.key] > 0 ? '#fff3e0' : '#ffffff'
+                          }}
+                          title={`${month}월 ${ageGroup.label} 초신자: ${monthlyAgeStats[month]?.초신자?.[ageGroup.key] || 0}`}
+                        >
+                          {monthlyAgeStats[month]?.초신자?.[ageGroup.key] || 0}
+                        </TableCell>
+                        <TableCell 
+                          sx={{ 
+                            textAlign: 'center', 
+                            border: '1px solid #ddd',
+                            backgroundColor: monthlyAgeStats[month]?.전입신자?.[ageGroup.key] > 0 ? '#fff3e0' : '#ffffff'
+                          }}
+                          title={`${month}월 ${ageGroup.label} 전입신자: ${monthlyAgeStats[month]?.전입신자?.[ageGroup.key] || 0}`}
+                        >
+                          {monthlyAgeStats[month]?.전입신자?.[ageGroup.key] || 0}
+                        </TableCell>
+                      </React.Fragment>
+                    ))}
+                    
+                    {/* 초신자 합계 */}
+                    <TableCell 
+                      sx={{ 
+                        textAlign: 'center', 
+                        backgroundColor: '#e8f5e8', 
+                        fontWeight: 'bold',
+                        border: '1px solid #ddd'
+                      }}
+                    >
+                      {Object.values(monthlyAgeStats).reduce((sum, monthData) => 
+                        sum + (monthData.초신자?.[ageGroup.key] || 0), 0
+                      )}
+                    </TableCell>
+                    
+                    {/* 전입신자 합계 */}
+                    <TableCell 
+                      sx={{ 
+                        textAlign: 'center', 
+                        backgroundColor: '#e8f5e8', 
+                        fontWeight: 'bold',
+                        border: '1px solid #ddd'
+                      }}
+                    >
+                      {Object.values(monthlyAgeStats).reduce((sum, monthData) => 
+                        sum + (monthData.전입신자?.[ageGroup.key] || 0), 0
+                      )}
+                    </TableCell>
+                    
+                    {/* 전체 합계 */}
+                    <TableCell 
+                      sx={{ 
+                        textAlign: 'center', 
+                        backgroundColor: '#e8f5e8', 
+                        fontWeight: 'bold',
+                        border: '1px solid #ddd'
+                      }}
+                    >
+                      {Object.values(monthlyAgeStats).reduce((sum, monthData) => 
+                        sum + (monthData.초신자?.[ageGroup.key] || 0) + (monthData.전입신자?.[ageGroup.key] || 0), 0
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                
+                {/* 합계 행 */}
+                <TableRow>
+                  <TableCell 
+                    sx={{ 
+                      backgroundColor: '#f5f5f5', 
+                      fontWeight: 'bold',
+                      border: '1px solid #ddd'
+                    }}
+                  >
+                    합계
+                  </TableCell>
+                  
+                  {/* 월별 합계 */}
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                    <React.Fragment key={month}>
+                      <TableCell 
+                        sx={{ 
+                          textAlign: 'center', 
+                          backgroundColor: '#e8f5e8', 
+                          fontWeight: 'bold',
+                          border: '1px solid #ddd'
+                        }}
+                      >
+                        {monthlyAgeStats[month]?.초신자?.total || 0}
+                      </TableCell>
+                      <TableCell 
+                        sx={{ 
+                          textAlign: 'center', 
+                          backgroundColor: '#e8f5e8', 
+                          fontWeight: 'bold',
+                          border: '1px solid #ddd'
+                        }}
+                      >
+                        {monthlyAgeStats[month]?.전입신자?.total || 0}
+                      </TableCell>
+                    </React.Fragment>
+                  ))}
+                  
+                  {/* 초신자 합계 */}
+                  <TableCell 
+                    sx={{ 
+                      textAlign: 'center', 
+                      backgroundColor: '#e8f5e8', 
+                      fontWeight: 'bold',
+                      border: '1px solid #ddd'
+                    }}
+                  >
+                    {Object.values(monthlyAgeStats).reduce((sum, monthData) => 
+                      sum + (monthData.초신자?.total || 0), 0
+                    )}
+                  </TableCell>
+                  
+                  {/* 전입신자 합계 */}
+                  <TableCell 
+                    sx={{ 
+                      textAlign: 'center', 
+                      backgroundColor: '#e8f5e8', 
+                      fontWeight: 'bold',
+                      border: '1px solid #ddd'
+                    }}
+                  >
+                    {Object.values(monthlyAgeStats).reduce((sum, monthData) => 
+                      sum + (monthData.전입신자?.total || 0), 0
+                    )}
+                  </TableCell>
+                  
+                  {/* 전체 합계 */}
+                  <TableCell 
+                    sx={{ 
+                      textAlign: 'center', 
+                      backgroundColor: '#e8f5e8', 
+                      fontWeight: 'bold',
+                      border: '1px solid #ddd'
+                    }}
+                  >
+                    {Object.values(monthlyAgeStats).reduce((sum, monthData) => 
+                      sum + (monthData.초신자?.total || 0) + (monthData.전입신자?.total || 0), 0
+                    )}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
+      </Box>
 
       {/* 통계 추가/수정 다이얼로그 */}
       <Dialog 
@@ -1004,7 +1354,7 @@ const StatisticsPage = () => {
             </Box>
             <Box>
               <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1f2937' }}>
-                {editingStat ? `${editingStat.year}년 통계 수정` : '새 통계 추가'}
+          {editingStat ? `${editingStat.year}년 통계 수정` : '새 통계 추가'}
               </Typography>
               <Typography variant="body2" sx={{ color: '#6b7280', mt: 0.5 }}>
                 {editingStat ? '통계 데이터를 수정합니다' : '새로운 년도 통계를 추가합니다'}
@@ -1020,26 +1370,54 @@ const StatisticsPage = () => {
               <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#374151', mb: 1 }}>
                 년도
               </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
               <TextField
                 fullWidth
                 type="number"
                 value={formData.year}
                 onChange={(e) => handleFormChange('year', parseInt(e.target.value))}
                 disabled={!!editingStat}
-                placeholder="예: 2024"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#3b82f6'
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#3b82f6',
-                      borderWidth: 2
-                    }
-                  }
-                }}
+                    placeholder="예: 2024"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#3b82f6'
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#3b82f6',
+                          borderWidth: 2
+                        }
+                      }
+                    }}
               />
+            </Grid>
+                <Grid item xs={6} sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Button
+                    variant="contained"
+                    onClick={generateStatistics}
+                    sx={{
+                      px: 3,
+                      py: 1.5,
+                      background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                      color: 'white',
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      boxShadow: '0 4px 6px -1px rgba(245, 158, 11, 0.3)',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
+                        boxShadow: '0 10px 15px -3px rgba(245, 158, 11, 0.4)',
+                        transform: 'translateY(-1px)'
+                      },
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    통계 생성
+                  </Button>
+            </Grid>
+              </Grid>
             </Paper>
             
             {/* 초신자 섹션 */}
@@ -1062,13 +1440,13 @@ const StatisticsPage = () => {
               </Box>
               
               <Grid container spacing={2}>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="등록 수"
-                    type="number"
-                    value={formData.new_comer_registration}
-                    onChange={(e) => handleFormChange('new_comer_registration', parseInt(e.target.value) || 0)}
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="등록 수"
+                type="number"
+                value={formData.new_comer_registration}
+                onChange={(e) => handleFormChange('new_comer_registration', parseInt(e.target.value) || 0)}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 2,
@@ -1081,15 +1459,15 @@ const StatisticsPage = () => {
                         }
                       }
                     }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="전년도 수료"
-                    type="number"
-                    value={formData.new_comer_graduate_prev_year}
-                    onChange={(e) => handleFormChange('new_comer_graduate_prev_year', parseInt(e.target.value) || 0)}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="전년도 수료"
+                type="number"
+                value={formData.new_comer_graduate_prev_year}
+                onChange={(e) => handleFormChange('new_comer_graduate_prev_year', parseInt(e.target.value) || 0)}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 2,
@@ -1102,15 +1480,15 @@ const StatisticsPage = () => {
                         }
                       }
                     }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="올해 수료"
-                    type="number"
-                    value={formData.new_comer_graduate_current_year}
-                    onChange={(e) => handleFormChange('new_comer_graduate_current_year', parseInt(e.target.value) || 0)}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="올해 수료"
+                type="number"
+                value={formData.new_comer_graduate_current_year}
+                onChange={(e) => handleFormChange('new_comer_graduate_current_year', parseInt(e.target.value) || 0)}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 2,
@@ -1123,15 +1501,15 @@ const StatisticsPage = () => {
                         }
                       }
                     }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="교육 중"
-                    type="number"
-                    value={formData.new_comer_education_in_progress}
-                    onChange={(e) => handleFormChange('new_comer_education_in_progress', parseInt(e.target.value) || 0)}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="교육 중"
+                type="number"
+                value={formData.new_comer_education_in_progress}
+                onChange={(e) => handleFormChange('new_comer_education_in_progress', parseInt(e.target.value) || 0)}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 2,
@@ -1144,15 +1522,15 @@ const StatisticsPage = () => {
                         }
                       }
                     }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="교육 중단"
-                    type="number"
-                    value={formData.new_comer_education_discontinued}
-                    onChange={(e) => handleFormChange('new_comer_education_discontinued', parseInt(e.target.value) || 0)}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="교육 중단"
+                type="number"
+                value={formData.new_comer_education_discontinued}
+                onChange={(e) => handleFormChange('new_comer_education_discontinued', parseInt(e.target.value) || 0)}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 2,
@@ -1165,15 +1543,15 @@ const StatisticsPage = () => {
                         }
                       }
                     }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="교육 합계"
-                    type="number"
-                    value={formData.new_comer_education_total}
-                    InputProps={{ readOnly: true }}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="교육 합계"
+                type="number"
+                value={formData.new_comer_education_total}
+                InputProps={{ readOnly: true }}
                     sx={{
                       backgroundColor: '#f8fafc',
                       '& .MuiOutlinedInput-root': {
@@ -1181,9 +1559,9 @@ const StatisticsPage = () => {
                         backgroundColor: '#f8fafc'
                       }
                     }}
-                  />
-                </Grid>
-              </Grid>
+              />
+            </Grid>
+            </Grid>
             </Paper>
 
             {/* 전입신자 섹션 */}
@@ -1206,13 +1584,13 @@ const StatisticsPage = () => {
               </Box>
               
               <Grid container spacing={2}>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="등록 수"
-                    type="number"
-                    value={formData.transfer_believer_registration}
-                    onChange={(e) => handleFormChange('transfer_believer_registration', parseInt(e.target.value) || 0)}
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="등록 수"
+                type="number"
+                value={formData.transfer_believer_registration}
+                onChange={(e) => handleFormChange('transfer_believer_registration', parseInt(e.target.value) || 0)}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 2,
@@ -1225,15 +1603,15 @@ const StatisticsPage = () => {
                         }
                       }
                     }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="전년도 수료"
-                    type="number"
-                    value={formData.transfer_believer_graduate_prev_year}
-                    onChange={(e) => handleFormChange('transfer_believer_graduate_prev_year', parseInt(e.target.value) || 0)}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="전년도 수료"
+                type="number"
+                value={formData.transfer_believer_graduate_prev_year}
+                onChange={(e) => handleFormChange('transfer_believer_graduate_prev_year', parseInt(e.target.value) || 0)}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 2,
@@ -1246,15 +1624,15 @@ const StatisticsPage = () => {
                         }
                       }
                     }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="올해 수료"
-                    type="number"
-                    value={formData.transfer_believer_graduate_current_year}
-                    onChange={(e) => handleFormChange('transfer_believer_graduate_current_year', parseInt(e.target.value) || 0)}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="올해 수료"
+                type="number"
+                value={formData.transfer_believer_graduate_current_year}
+                onChange={(e) => handleFormChange('transfer_believer_graduate_current_year', parseInt(e.target.value) || 0)}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 2,
@@ -1267,15 +1645,15 @@ const StatisticsPage = () => {
                         }
                       }
                     }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="교육 중"
-                    type="number"
-                    value={formData.transfer_believer_education_in_progress}
-                    onChange={(e) => handleFormChange('transfer_believer_education_in_progress', parseInt(e.target.value) || 0)}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="교육 중"
+                type="number"
+                value={formData.transfer_believer_education_in_progress}
+                onChange={(e) => handleFormChange('transfer_believer_education_in_progress', parseInt(e.target.value) || 0)}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 2,
@@ -1288,15 +1666,15 @@ const StatisticsPage = () => {
                         }
                       }
                     }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="교육 중단"
-                    type="number"
-                    value={formData.transfer_believer_education_discontinued}
-                    onChange={(e) => handleFormChange('transfer_believer_education_discontinued', parseInt(e.target.value) || 0)}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="교육 중단"
+                type="number"
+                value={formData.transfer_believer_education_discontinued}
+                onChange={(e) => handleFormChange('transfer_believer_education_discontinued', parseInt(e.target.value) || 0)}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 2,
@@ -1309,15 +1687,15 @@ const StatisticsPage = () => {
                         }
                       }
                     }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="교육 합계"
-                    type="number"
-                    value={formData.transfer_believer_education_total}
-                    InputProps={{ readOnly: true }}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="교육 합계"
+                type="number"
+                value={formData.transfer_believer_education_total}
+                InputProps={{ readOnly: true }}
                     sx={{
                       backgroundColor: '#f8fafc',
                       '& .MuiOutlinedInput-root': {
@@ -1325,9 +1703,9 @@ const StatisticsPage = () => {
                         backgroundColor: '#f8fafc'
                       }
                     }}
-                  />
-                </Grid>
-              </Grid>
+              />
+            </Grid>
+            </Grid>
             </Paper>
 
             {/* 합계 섹션 */}
@@ -1356,13 +1734,13 @@ const StatisticsPage = () => {
               </Box>
               
               <Grid container spacing={2}>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="등록 합계"
-                    type="number"
-                    value={formData.total_registration}
-                    InputProps={{ readOnly: true }}
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="등록 합계"
+                type="number"
+                value={formData.total_registration}
+                InputProps={{ readOnly: true }}
                     sx={{
                       backgroundColor: '#f0fdf4',
                       '& .MuiOutlinedInput-root': {
@@ -1377,15 +1755,15 @@ const StatisticsPage = () => {
                         fontWeight: 600
                       }
                     }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="수료 합계"
-                    type="number"
-                    value={formData.total_graduate}
-                    InputProps={{ readOnly: true }}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="수료 합계"
+                type="number"
+                value={formData.total_graduate}
+                InputProps={{ readOnly: true }}
                     sx={{
                       backgroundColor: '#f0fdf4',
                       '& .MuiOutlinedInput-root': {
@@ -1400,15 +1778,15 @@ const StatisticsPage = () => {
                         fontWeight: 600
                       }
                     }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="교육 합계"
-                    type="number"
-                    value={formData.total_education}
-                    InputProps={{ readOnly: true }}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="교육 합계"
+                type="number"
+                value={formData.total_education}
+                InputProps={{ readOnly: true }}
                     sx={{
                       backgroundColor: '#f0fdf4',
                       '& .MuiOutlinedInput-root': {
@@ -1423,9 +1801,9 @@ const StatisticsPage = () => {
                         fontWeight: 600
                       }
                     }}
-                  />
-                </Grid>
-              </Grid>
+              />
+            </Grid>
+          </Grid>
             </Paper>
           </Box>
         </DialogContent>

@@ -1764,7 +1764,9 @@ const NewComerManagementPage = () => {
 
   useEffect(() => {
     fetchCodeData();
-    fetchNewComers(); // 초기 로드시 전체 데이터 가져오기
+    // 초기 로드시 현재년도로 조회
+    const currentYear = new Date().getFullYear().toString();
+    fetchNewComers({ year: currentYear });
     // 초기 교사 목록 로드 (고정값 사용)
     fetchTeachers('새가족위원회', '초신자');
     // 공통파일 이미지 가져오기

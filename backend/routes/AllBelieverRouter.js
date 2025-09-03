@@ -73,10 +73,10 @@ router.get('/all', authenticateToken, async (req, res) => {
       params.push(`%${teacher}%`);
     }
     
-    // 년도 조건
+    // 년도 조건 - year 파라미터를 등록신청일의 년도와 비교
     if (year && year.trim() !== '') {
-      sql += ' AND year = ?';
-      params.push(year);
+      sql += ' AND YEAR(nc.register_date) = ?';
+      params.push(parseInt(year));
     }
     
     // 신자구분 조건 (전체가 아닌 경우에만 필터링)

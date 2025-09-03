@@ -350,6 +350,31 @@ CREATE TABLE `yearly_new_family_statistics` (
   KEY `idx_year` (`year`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
+-- new_comers_monthly_age_statistics table
+CREATE TABLE `new_comers_monthly_age_statistics` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `year` int(4) NOT NULL COMMENT '년도',
+  `department` varchar(50) NOT NULL COMMENT '부서',
+  `month` int(2) NOT NULL COMMENT '등록월 (1-12)',
+  `believer_type` varchar(20) NOT NULL COMMENT '신자 유형 (초신자/전입신자)',
+  `age_group_10s` int(11) DEFAULT 0 COMMENT '10대 (만10세~19세)',
+  `age_group_20s` int(11) DEFAULT 0 COMMENT '20대 (만20세~29세)',
+  `age_group_30s` int(11) DEFAULT 0 COMMENT '30대 (만30세~39세)',
+  `age_group_40s` int(11) DEFAULT 0 COMMENT '40대 (만40세~49세)',
+  `age_group_50s` int(11) DEFAULT 0 COMMENT '50대 (만50세~59세)',
+  `age_group_60s` int(11) DEFAULT 0 COMMENT '60대 (만60세~69세)',
+  `age_group_70s_plus` int(11) DEFAULT 0 COMMENT '70대 이상 (만70세 이상)',
+  `total_count` int(11) DEFAULT 0 COMMENT '총 인원수',
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_year_dept_month_believer` (`year`, `department`, `month`, `believer_type`),
+  KEY `idx_year` (`year`),
+  KEY `idx_department` (`department`),
+  KEY `idx_month` (`month`),
+  KEY `idx_believer_type` (`believer_type`),
+  KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci COMMENT='초신자/전입신자 월별 연령대별 통계';
 -- 기본 데이터 삽입
 -- s_users_seq 데이터
 INSERT INTO s_users_seq (id, seq) VALUES (undefined, undefined);

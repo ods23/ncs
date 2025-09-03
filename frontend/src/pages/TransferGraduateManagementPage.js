@@ -811,7 +811,9 @@ const TransferGraduateManagementPage = () => {
 
   useEffect(() => {
     fetchCodeData();
-    fetchGraduates();
+    // 초기 로드시 현재년도와 전입신자 조건으로 조회
+    const currentYear = new Date().getFullYear().toString();
+    fetchGraduates({ believer_type: '전입신자', year: currentYear });
   }, []);
 
   return (
