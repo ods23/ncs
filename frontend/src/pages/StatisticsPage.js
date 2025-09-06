@@ -496,6 +496,82 @@ const StatisticsPage = () => {
     }).filter(item => item.value > 0); // 0인 항목은 제외
   };
 
+  // 연령대별 막대 차트 데이터 준비
+  const prepareAgeGroupBarData = () => {
+    const baseYear = selectedYear || new Date().getFullYear();
+    
+    const ageGroupLabels = {
+      '10s': '10대',
+      '20s': '20대', 
+      '30s': '30대',
+      '40s': '40대',
+      '50s': '50대',
+      '60s': '60대',
+      '70s_plus': '70대 이상'
+    };
+
+    const getBirthYearRange = (ageGroup, baseYear) => {
+      switch (ageGroup) {
+        case '10s':
+          return `${baseYear - 19}~${baseYear - 10}`;
+        case '20s':
+          return `${baseYear - 29}~${baseYear - 20}`;
+        case '30s':
+          return `${baseYear - 39}~${baseYear - 30}`;
+        case '40s':
+          return `${baseYear - 49}~${baseYear - 40}`;
+        case '50s':
+          return `${baseYear - 59}~${baseYear - 50}`;
+        case '60s':
+          return `${baseYear - 69}~${baseYear - 60}`;
+        case '70s_plus':
+          return `~${baseYear - 70}`;
+        default:
+          return '';
+      }
+    };
+
+    const colors = ['#3b82f6', '#10b981', '#6b7280', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+
+    return ['10s', '20s', '30s', '40s', '50s', '60s', '70s_plus'].map((ageGroup, index) => ({
+      key: ageGroup,
+      name: `${ageGroupLabels[ageGroup]} (${getBirthYearRange(ageGroup, baseYear)})`,
+      color: colors[index]
+    }));
+  };
+
+  // 월별/연령대별 막대 차트 데이터 준비
+  const prepareMonthlyAgeBarData = (startMonth, endMonth) => {
+    if (!monthlyAgeStats || Object.keys(monthlyAgeStats).length === 0) {
+      return [];
+    }
+
+    const ageGroups = ['10s', '20s', '30s', '40s', '50s', '60s', '70s_plus'];
+    const chartData = [];
+
+    for (let month = startMonth; month <= endMonth; month++) {
+      const monthData = monthlyAgeStats[month];
+      if (monthData) {
+        // 각 월별로 연령대별 데이터를 그룹화
+        const monthDataGroup = {
+          monthGroup: `${month}월`,
+          month: month
+        };
+
+        // 각 연령대별 총합 데이터 추가 (초신자 + 전입신자)
+        ageGroups.forEach(ageGroup => {
+          const newComerCount = monthData.초신자?.[ageGroup] || 0;
+          const transferBelieverCount = monthData.전입신자?.[ageGroup] || 0;
+          monthDataGroup[ageGroup] = newComerCount + transferBelieverCount;
+        });
+
+        chartData.push(monthDataGroup);
+      }
+    }
+
+    return chartData;
+  };
+
   // 통계 생성/수정
   const saveStatistics = async () => {
     try {
@@ -1797,6 +1873,117 @@ const StatisticsPage = () => {
                       }}
                     />
                   </PieChart>
+                </ResponsiveContainer>
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+      )}
+
+      {/* 월별/연령대별 막대 차트 */}
+      {Object.keys(monthlyAgeStats).length > 0 && (
+        <Paper sx={{ width: '100%', mt: 3, p: 3, boxShadow: 3 }}>
+          <Typography variant="h6" sx={{ mb: 3, textAlign: 'center', fontWeight: 'bold', color: '#374151' }}>
+            {selectedYear || new Date().getFullYear()}년 초신자 및 전입신자 등록자의 월별/연령대별 현황
+          </Typography>
+          
+          <Grid container spacing={3}>
+            {/* 1월-6월 막대 차트 */}
+            <Grid item xs={12}>
+              <Box sx={{ 
+                p: 2, 
+                backgroundColor: 'white', 
+                borderRadius: 2, 
+                border: '1px solid #e5e7eb',
+                height: 400
+              }}>
+                <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', fontWeight: 'bold', color: '#1f2937' }}>
+                  1월 ~ 6월 초신자/전입신자 등록자의 연령별 현황
+                </Typography>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={prepareMonthlyAgeBarData(1, 6)}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="monthGroup" 
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      axisLine={{ stroke: '#d1d5db' }}
+                      tickLine={{ stroke: '#d1d5db' }}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      axisLine={{ stroke: '#d1d5db' }}
+                      tickLine={{ stroke: '#d1d5db' }}
+                    />
+                    <RechartsTooltip 
+                      formatter={(value, name) => [`${value}명`, name]}
+                      labelFormatter={(label) => label}
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                    <Legend />
+                    {prepareAgeGroupBarData().map((ageGroup, index) => (
+                      <Bar 
+                        key={ageGroup.key}
+                        dataKey={ageGroup.key}
+                        name={ageGroup.name}
+                        fill={ageGroup.color}
+                      />
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+              </Box>
+            </Grid>
+
+            {/* 7월-12월 막대 차트 */}
+            <Grid item xs={12}>
+              <Box sx={{ 
+                p: 2, 
+                backgroundColor: 'white', 
+                borderRadius: 2, 
+                border: '1px solid #e5e7eb',
+                height: 400
+              }}>
+                <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', fontWeight: 'bold', color: '#1f2937' }}>
+                  7월 ~ 12월 초신자/전입신자 등록자의 연령별 현황
+                </Typography>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={prepareMonthlyAgeBarData(7, 12)}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="monthGroup" 
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      axisLine={{ stroke: '#d1d5db' }}
+                      tickLine={{ stroke: '#d1d5db' }}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      axisLine={{ stroke: '#d1d5db' }}
+                      tickLine={{ stroke: '#d1d5db' }}
+                    />
+                    <RechartsTooltip 
+                      formatter={(value, name) => [`${value}명`, name]}
+                      labelFormatter={(label) => label}
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                    <Legend />
+                    {prepareAgeGroupBarData().map((ageGroup, index) => (
+                      <Bar 
+                        key={ageGroup.key}
+                        dataKey={ageGroup.key}
+                        name={ageGroup.name}
+                        fill={ageGroup.color}
+                      />
+                    ))}
+                  </BarChart>
                 </ResponsiveContainer>
               </Box>
             </Grid>
