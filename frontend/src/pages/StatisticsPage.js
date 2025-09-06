@@ -1027,11 +1027,14 @@ const StatisticsPage = () => {
                 {/* 메인 헤더 */}
                 <TableRow>
                   <TableCell 
+                    rowSpan={2}
                     sx={{ 
                       minWidth: 120, 
                       backgroundColor: '#f5f5f5', 
                       fontWeight: 'bold',
-                      border: '1px solid #ddd'
+                      border: '1px solid #ddd',
+                      textAlign: 'center',
+                      verticalAlign: 'middle'
                     }}
                   >
                     연령대
@@ -1051,31 +1054,37 @@ const StatisticsPage = () => {
                     </TableCell>
                   ))}
                   <TableCell 
+                    rowSpan={2}
                     sx={{ 
                       textAlign: 'center', 
                       backgroundColor: '#e8f5e8', 
                       fontWeight: 'bold',
-                      border: '1px solid #ddd'
+                      border: '1px solid #ddd',
+                      verticalAlign: 'middle'
                     }}
                   >
-                    초신자 합계
+                    초신자합계
                   </TableCell>
                   <TableCell 
+                    rowSpan={2}
                     sx={{ 
                       textAlign: 'center', 
                       backgroundColor: '#e8f5e8', 
                       fontWeight: 'bold',
-                      border: '1px solid #ddd'
+                      border: '1px solid #ddd',
+                      verticalAlign: 'middle'
                     }}
                   >
-                    전입신자 합계
+                    전입신자합계
                   </TableCell>
                   <TableCell 
+                    rowSpan={2}
                     sx={{ 
                       textAlign: 'center', 
                       backgroundColor: '#e8f5e8', 
                       fontWeight: 'bold',
-                      border: '1px solid #ddd'
+                      border: '1px solid #ddd',
+                      verticalAlign: 'middle'
                     }}
                   >
                     합계
@@ -1084,12 +1093,6 @@ const StatisticsPage = () => {
                 
                 {/* 서브 헤더 */}
                 <TableRow>
-                  <TableCell 
-                    sx={{ 
-                      backgroundColor: '#f5f5f5', 
-                      border: '1px solid #ddd'
-                    }}
-                  />
                   {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
                     <React.Fragment key={month}>
                       <TableCell 
@@ -1112,33 +1115,6 @@ const StatisticsPage = () => {
                       </TableCell>
                     </React.Fragment>
                   ))}
-                  <TableCell 
-                    sx={{ 
-                      textAlign: 'center', 
-                      backgroundColor: '#f3e5f5', 
-                      border: '1px solid #ddd'
-                    }}
-                  >
-                    초신자
-                  </TableCell>
-                  <TableCell 
-                    sx={{ 
-                      textAlign: 'center', 
-                      backgroundColor: '#f3e5f5', 
-                      border: '1px solid #ddd'
-                    }}
-                  >
-                    전입신자
-                  </TableCell>
-                  <TableCell 
-                    sx={{ 
-                      textAlign: 'center', 
-                      backgroundColor: '#f3e5f5', 
-                      border: '1px solid #ddd'
-                    }}
-                  >
-                    전체
-                  </TableCell>
                 </TableRow>
               </TableHead>
               

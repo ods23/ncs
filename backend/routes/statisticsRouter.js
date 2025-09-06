@@ -567,17 +567,7 @@ router.post('/generate', async (req, res) => {
         AND education_type = '교육중단'
     `, [year]);
 
-    // 디버깅을 위한 로그 추가
-    console.log('newComerCount:', newComerCount);
-    console.log('transferBelieverCount:', transferBelieverCount);
-    console.log('newComerGraduatePrev:', newComerGraduatePrev);
-    console.log('newComerGraduateCurrent:', newComerGraduateCurrent);
-    console.log('transferBelieverGraduatePrev:', transferBelieverGraduatePrev);
-    console.log('transferBelieverGraduateCurrent:', transferBelieverGraduateCurrent);
-    console.log('newComerEducationInProgress:', newComerEducationInProgress);
-    console.log('newComerEducationDiscontinued:', newComerEducationDiscontinued);
-    console.log('transferBelieverEducationInProgress:', transferBelieverEducationInProgress);
-    console.log('transferBelieverEducationDiscontinued:', transferBelieverEducationDiscontinued);
+
     
     // 데이터 집계 - 개별 쿼리 결과를 직접 사용
     const newComerData = {
@@ -604,7 +594,6 @@ router.post('/generate', async (req, res) => {
 
     // 기존 데이터 확인
     const [existingData] = await conn.query('SELECT * FROM yearly_new_family_statistics WHERE year = ?', [year]);
-    console.log('existingData:', existingData);
     
     if (existingData && Object.keys(existingData).length > 0) {
       // 기존 데이터 업데이트
@@ -689,38 +678,7 @@ router.post('/generate', async (req, res) => {
     // 4. 월별/연령대별 통계 생성
     console.log('=== 월별/연령대별 통계 생성 시작 ===');
     
-    // 디버깅: 기본 데이터 확인
-    const [totalCount] = await conn.query(`
-      SELECT COUNT(*) as total FROM new_comers 
-      WHERE department = '새가족위원회' AND YEAR(register_date) = ?
-    `, [year]);
-    console.log(`${year}년 새가족위원회 총 등록자 수:`, totalCount.total);
-    
-    // 디버깅: 월별 데이터 확인
-    const [monthlyCount] = await conn.query(`
-      SELECT MONTH(register_date) as month, COUNT(*) as count 
-      FROM new_comers 
-      WHERE department = '새가족위원회' AND YEAR(register_date) = ?
-      GROUP BY MONTH(register_date)
-      ORDER BY month
-    `, [year]);
-    console.log(`${year}년 월별 등록자 수:`, monthlyCount);
-    
-    // 디버깅: 연령대별 테스트
-    const [ageTest] = await conn.query(`
-      SELECT 
-        name,
-        birth_date,
-        TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) as age,
-        CASE 
-          WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 30 AND 39 THEN '30s'
-          ELSE 'other'
-        END as age_group
-      FROM new_comers 
-      WHERE department = '새가족위원회' AND YEAR(register_date) = ?
-      LIMIT 5
-    `, [year]);
-    console.log('연령대 계산 테스트:', ageTest);
+
     
     // 기존 월별/연령대별 통계 데이터 삭제 (해당 년도, 부서 기준)
     await conn.query('DELETE FROM new_comers_monthly_age_statistics WHERE year = ? AND department = ?', [year, '새가족위원회']);
@@ -728,8 +686,6 @@ router.post('/generate', async (req, res) => {
     
     // 1~12월까지 각 월별로 통계 생성
     for (let month = 1; month <= 12; month++) {
-      console.log(`${month}월 통계 생성 중...`);
-      
       // 초신자 월별/연령대별 통계
       const newComerMonthlyStats = await conn.query(`
         SELECT 
@@ -753,48 +709,7 @@ router.post('/generate', async (req, res) => {
         GROUP BY age_group
       `, [year, month]);
       
-      console.log(`${month}월 초신자 통계 쿼리 결과:`, newComerMonthlyStats);
-      
-      // 디버깅: 원본 데이터 확인
-      const [debugData] = await conn.query(`
-        SELECT name, birth_date, register_date, believer_type,
-               TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) as age
-        FROM new_comers 
-        WHERE YEAR(register_date) = ? 
-          AND MONTH(register_date) = ?
-          AND department = '새가족위원회'
-          AND believer_type = '초신자'
-        LIMIT 3
-      `, [year, month]);
-      console.log(`${month}월 초신자 디버그 데이터:`, debugData);
-      
-      // 디버깅: 40대 데이터 특별 확인 (8월인 경우)
-      if (month === 8) {
-        const [age40Data] = await conn.query(`
-          SELECT name, birth_date, register_date, believer_type,
-                 TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) as age
-          FROM new_comers 
-          WHERE YEAR(register_date) = ? 
-            AND MONTH(register_date) = ?
-            AND department = '새가족위원회'
-            AND believer_type = '초신자'
-            AND TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 40 AND 49
-        `, [year, month]);
-        console.log(`${month}월 40대 초신자 특별 확인:`, age40Data);
-        
-        // 디버깅: 전체 데이터 확인
-        const [allData] = await conn.query(`
-          SELECT name, birth_date, register_date, believer_type,
-                 TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) as age
-          FROM new_comers 
-          WHERE YEAR(register_date) = ? 
-            AND MONTH(register_date) = ?
-            AND department = '새가족위원회'
-            AND believer_type = '초신자'
-          ORDER BY age
-        `, [year, month]);
-        console.log(`${month}월 전체 초신자 데이터:`, allData);
-      }
+
       
       // 전입신자 월별/연령대별 통계
       const transferBelieverMonthlyStats = await conn.query(`
@@ -819,8 +734,6 @@ router.post('/generate', async (req, res) => {
         GROUP BY age_group
       `, [year, month]);
       
-      console.log(`${month}월 전입신자 통계 쿼리 결과:`, transferBelieverMonthlyStats);
-      
       // 초신자 데이터를 연령대별로 정리
       const newComerAgeStats = {
         '10s': 0, '20s': 0, '30s': 0, '40s': 0, '50s': 0, '60s': 0, '70s_plus': 0
@@ -837,15 +750,11 @@ router.post('/generate', async (req, res) => {
         }
       }
       
-      console.log(`${month}월 초신자 통계 배열 변환 결과:`, statsArray);
-      
       statsArray.forEach(stat => {
         if (stat && stat.age_group && stat.age_group !== 'unknown') {
           newComerAgeStats[stat.age_group] = parseInt(stat.count) || 0;
         }
       });
-      
-      console.log(`${month}월 초신자 연령대별 정리 결과:`, newComerAgeStats);
       
       // 전입신자 데이터를 연령대별로 정리
       const transferBelieverAgeStats = {
@@ -863,15 +772,11 @@ router.post('/generate', async (req, res) => {
         }
       }
       
-      console.log(`${month}월 전입신자 통계 배열 변환 결과:`, transferStatsArray);
-      
       transferStatsArray.forEach(stat => {
         if (stat && stat.age_group && stat.age_group !== 'unknown') {
           transferBelieverAgeStats[stat.age_group] = parseInt(stat.count) || 0;
         }
       });
-      
-      console.log(`${month}월 전입신자 연령대별 정리 결과:`, transferBelieverAgeStats);
       
       // 초신자 월별/연령대별 통계 저장
       const newComerTotal = Object.values(newComerAgeStats).reduce((sum, count) => sum + count, 0);
@@ -901,7 +806,6 @@ router.post('/generate', async (req, res) => {
         transferBelieverAgeStats['50s'], transferBelieverAgeStats['60s'], transferBelieverAgeStats['70s_plus'], transferBelieverTotal
       ]);
       
-      console.log(`${month}월 통계 생성 완료 - 초신자: ${newComerTotal}명, 전입신자: ${transferBelieverTotal}명`);
     }
     
     console.log('=== 월별/연령대별 통계 생성 완료 ===');
@@ -946,27 +850,10 @@ router.get('/monthly-age', authenticateToken, async (req, res) => {
       ORDER BY month ASC, believer_type ASC
     `;
     
-    // 디버깅: 전체 테이블 데이터 확인
-    const debugQuery = `SELECT COUNT(*) as total_count FROM new_comers_monthly_age_statistics WHERE year = ?`;
-    const [debugResult] = await conn.query(debugQuery, [year]);
-    console.log('=== 디버깅: 전체 테이블 데이터 확인 ===');
-    console.log(`${year}년 전체 데이터 개수:`, debugResult.total_count);
-    
     const queryResult = await conn.query(query, [year, department || '새가족위원회']);
-    console.log('=== 데이터베이스 쿼리 결과 ===');
-    console.log('쿼리 파라미터:', { year, department: department || '새가족위원회' });
-    console.log('queryResult 타입:', typeof queryResult);
-    console.log('queryResult 길이:', queryResult.length);
-    console.log('queryResult[0] 타입:', typeof queryResult[0]);
     
     // queryResult 자체가 rows 배열이므로 직접 사용
     const rowsArray = queryResult;
-    console.log('rowsArray 타입:', typeof rowsArray);
-    console.log('rowsArray 길이:', rowsArray.length);
-    
-    console.log('처리된 rowsArray 타입:', typeof rowsArray);
-    console.log('rowsArray 길이:', rowsArray.length);
-    console.log('rowsArray 내용 (처음 3개):', rowsArray.slice(0, 3));
     
 
 
@@ -981,16 +868,10 @@ router.get('/monthly-age', authenticateToken, async (req, res) => {
       };
     }
     
-    // 데이터 채우기
-    console.log('=== 데이터 처리 시작 ===');
-    console.log('처리할 총 행 개수:', rowsArray.length);
-    
     rowsArray.forEach((row, index) => {
       // 데이터 타입 명시적 변환
       const month = parseInt(row.month, 10);  // 문자열을 숫자로 변환
       const believerType = row.believer_type;
-      
-      console.log(`[${index + 1}/${rowsArray.length}] 처리 중: month=${month}, believerType=${believerType}`);
       
       ageGroups.forEach(ageGroup => {
         const fieldName = `age_group_${ageGroup}`;
@@ -1000,8 +881,6 @@ router.get('/monthly-age', authenticateToken, async (req, res) => {
       
       monthlyData[month][believerType].total = parseInt(row.total_count, 10) || 0;  // 숫자로 변환
     });
-    
-    console.log('=== 데이터 처리 완료 ===');
     
     res.json(monthlyData);
     
