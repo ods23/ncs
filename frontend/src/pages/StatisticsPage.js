@@ -48,7 +48,10 @@ import {
   Tooltip as RechartsTooltip,
   Legend,
   ResponsiveContainer,
-  LabelList
+  LabelList,
+  PieChart,
+  Pie,
+  Cell
 } from 'recharts';
 
 const StatisticsPage = () => {
@@ -240,6 +243,107 @@ const StatisticsPage = () => {
     return chartData;
   };
 
+  // 월별 등록자 현황 데이터 준비
+  const prepareMonthlyData = () => {
+    if (!monthlyAgeStats || Object.keys(monthlyAgeStats).length === 0) {
+      return [];
+    }
+
+    const monthlyData = [];
+    for (let month = 1; month <= 12; month++) {
+      const monthData = monthlyAgeStats[month];
+      if (monthData) {
+        const total = (monthData.초신자?.total || 0) + (monthData.전입신자?.total || 0);
+        monthlyData.push({
+          month: `${month}월`,
+          value: total
+        });
+      } else {
+        monthlyData.push({
+          month: `${month}월`,
+          value: 0
+        });
+      }
+    }
+    return monthlyData;
+  };
+
+  // 연령대별 비율 데이터 준비
+  const prepareAgeGroupData = () => {
+    if (!monthlyAgeStats || Object.keys(monthlyAgeStats).length === 0) {
+      return [];
+    }
+
+    const ageGroups = ['10s', '20s', '30s', '40s', '50s', '60s', '70s_plus'];
+    const ageGroupTotals = {};
+
+    // 각 연령대별 총합 계산
+    ageGroups.forEach(ageGroup => {
+      let total = 0;
+      for (let month = 1; month <= 12; month++) {
+        const monthData = monthlyAgeStats[month];
+        if (monthData) {
+          total += (monthData.초신자?.[ageGroup] || 0) + (monthData.전입신자?.[ageGroup] || 0);
+        }
+      }
+      ageGroupTotals[ageGroup] = total;
+    });
+
+    // 전체 합계 계산
+    const grandTotal = Object.values(ageGroupTotals).reduce((sum, count) => sum + count, 0);
+
+    // 기준년도 가져오기 (selectedYear 또는 현재년도)
+    const baseYear = selectedYear || new Date().getFullYear();
+
+    // 비율 계산 및 데이터 생성
+    const ageGroupLabels = {
+      '10s': '10대',
+      '20s': '20대', 
+      '30s': '30대',
+      '40s': '40대',
+      '50s': '50대',
+      '60s': '60대',
+      '70s_plus': '70대 이상'
+    };
+
+    // 기준년도에 따른 출생년도 범위 계산
+    const getBirthYearRange = (ageGroup, baseYear) => {
+      switch (ageGroup) {
+        case '10s':
+          return `${baseYear - 19}~${baseYear - 10}`;
+        case '20s':
+          return `${baseYear - 29}~${baseYear - 20}`;
+        case '30s':
+          return `${baseYear - 39}~${baseYear - 30}`;
+        case '40s':
+          return `${baseYear - 49}~${baseYear - 40}`;
+        case '50s':
+          return `${baseYear - 59}~${baseYear - 50}`;
+        case '60s':
+          return `${baseYear - 69}~${baseYear - 60}`;
+        case '70s_plus':
+          return `~${baseYear - 70}`;
+        default:
+          return '';
+      }
+    };
+
+    const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#FF6384'];
+
+    return ageGroups.map((ageGroup, index) => {
+      const count = ageGroupTotals[ageGroup];
+      const percentage = grandTotal > 0 ? Math.round((count / grandTotal) * 100) : 0;
+      const birthYearRange = getBirthYearRange(ageGroup, baseYear);
+      
+      return {
+        name: `${ageGroupLabels[ageGroup]} (${birthYearRange})`,
+        value: count,
+        percentage: percentage,
+        color: colors[index % colors.length]
+      };
+    }).filter(item => item.value > 0); // 0인 항목은 제외
+  };
+
   // 통계 생성/수정
   const saveStatistics = async () => {
     try {
@@ -415,6 +519,17 @@ const StatisticsPage = () => {
   const filteredStatistics = selectedYear 
     ? statistics.filter(stat => stat.year.toString().includes(selectedYear))
     : statistics;
+
+  // 년도 필터 변경 시 월별/연령대별 통계 로드
+  useEffect(() => {
+    if (selectedYear) {
+      fetchMonthlyAgeStats(selectedYear);
+    } else {
+      // 전체 선택 시 현재 년도로 로드
+      const currentYear = new Date().getFullYear();
+      fetchMonthlyAgeStats(currentYear);
+    }
+  }, [selectedYear]);
 
   return (
     <Box sx={{ p: 3 }}>
@@ -1017,7 +1132,7 @@ const StatisticsPage = () => {
       {/* 월별/연령대별 통계 표 */}
       <Box sx={{ mt: 4 }}>
         <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', fontWeight: 'bold' }}>
-          2025년 새가족 등록현황 보고서
+          {selectedYear || new Date().getFullYear()}년 새가족 등록현황 보고서
         </Typography>
         
         <Box sx={{ overflowX: 'auto' }}>
@@ -1120,15 +1235,42 @@ const StatisticsPage = () => {
               
               <TableBody>
                 {/* 연령대별 행 */}
-                {[
-                  { key: '10s', label: '10대', birthYear: '2006~2015' },
-                  { key: '20s', label: '20대', birthYear: '1996~2005' },
-                  { key: '30s', label: '30대', birthYear: '1986~1995' },
-                  { key: '40s', label: '40대', birthYear: '1976~1985' },
-                  { key: '50s', label: '50대', birthYear: '1966~1975' },
-                  { key: '60s', label: '60대', birthYear: '1956~1965' },
-                  { key: '70s_plus', label: '70대 이상', birthYear: '~1955' }
-                ].map(ageGroup => (
+                {(() => {
+                  // 기준년도 가져오기 (selectedYear 또는 현재년도)
+                  const baseYear = selectedYear || new Date().getFullYear();
+                  
+                  // 기준년도에 따른 출생년도 범위 계산
+                  const getBirthYearRange = (ageGroup, baseYear) => {
+                    switch (ageGroup) {
+                      case '10s':
+                        return `${baseYear - 19}~${baseYear - 10}`;
+                      case '20s':
+                        return `${baseYear - 29}~${baseYear - 20}`;
+                      case '30s':
+                        return `${baseYear - 39}~${baseYear - 30}`;
+                      case '40s':
+                        return `${baseYear - 49}~${baseYear - 40}`;
+                      case '50s':
+                        return `${baseYear - 59}~${baseYear - 50}`;
+                      case '60s':
+                        return `${baseYear - 69}~${baseYear - 60}`;
+                      case '70s_plus':
+                        return `~${baseYear - 70}`;
+                      default:
+                        return '';
+                    }
+                  };
+
+                  return [
+                    { key: '10s', label: '10대', birthYear: getBirthYearRange('10s', baseYear) },
+                    { key: '20s', label: '20대', birthYear: getBirthYearRange('20s', baseYear) },
+                    { key: '30s', label: '30대', birthYear: getBirthYearRange('30s', baseYear) },
+                    { key: '40s', label: '40대', birthYear: getBirthYearRange('40s', baseYear) },
+                    { key: '50s', label: '50대', birthYear: getBirthYearRange('50s', baseYear) },
+                    { key: '60s', label: '60대', birthYear: getBirthYearRange('60s', baseYear) },
+                    { key: '70s_plus', label: '70대 이상', birthYear: getBirthYearRange('70s_plus', baseYear) }
+                  ];
+                })().map(ageGroup => (
                   <TableRow key={ageGroup.key}>
                     <TableCell 
                       sx={{ 
@@ -1295,6 +1437,119 @@ const StatisticsPage = () => {
           </TableContainer>
         </Box>
       </Box>
+
+      {/* 월별/연령대별 통계 차트 */}
+      {Object.keys(monthlyAgeStats).length > 0 && (
+        <Paper sx={{ width: '100%', mt: 3, p: 3, boxShadow: 3 }}>
+          <Typography variant="h6" sx={{ mb: 3, textAlign: 'center', fontWeight: 'bold', color: '#374151' }}>
+            {selectedYear || new Date().getFullYear()}년 새가족 등록현황 분석
+          </Typography>
+          
+          <Grid container spacing={3}>
+            {/* 월별 등록자 현황 막대 차트 */}
+            <Grid item xs={12} md={6}>
+              <Box sx={{ 
+                p: 2, 
+                backgroundColor: 'white', 
+                borderRadius: 2, 
+                border: '1px solid #e5e7eb',
+                height: 400
+              }}>
+                <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', fontWeight: 'bold', color: '#1f2937' }}>
+                  월별 전체 등록자 현황
+                </Typography>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={prepareMonthlyData()}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="month" 
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      axisLine={{ stroke: '#d1d5db' }}
+                      tickLine={{ stroke: '#d1d5db' }}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      axisLine={{ stroke: '#d1d5db' }}
+                      tickLine={{ stroke: '#d1d5db' }}
+                    />
+                    <RechartsTooltip 
+                      formatter={(value) => [value, '등록자 수']}
+                      labelFormatter={(label) => label}
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                    <Bar 
+                      dataKey="value" 
+                      fill="#3b82f6" 
+                      radius={[4, 4, 0, 0]}
+                    >
+                      <LabelList 
+                        dataKey="value" 
+                        position="top" 
+                        style={{ 
+                          fill: '#1e40af', 
+                          fontSize: '11px', 
+                          fontWeight: 'bold'
+                        }}
+                        formatter={(value) => value > 0 ? value : ''}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </Box>
+            </Grid>
+
+            {/* 연령대별 비율 파이 차트 */}
+            <Grid item xs={12} md={6}>
+              <Box sx={{ 
+                p: 2, 
+                backgroundColor: 'white', 
+                borderRadius: 2, 
+                border: '1px solid #e5e7eb',
+                height: 400
+              }}>
+                <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', fontWeight: 'bold', color: '#1f2937' }}>
+                  연령별 전체 등록자 비율
+                </Typography>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={prepareAgeGroupData()}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percentage }) => `${name}: ${percentage}%`}
+                      outerRadius={120}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {prepareAgeGroupData().map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip 
+                      formatter={(value, name, props) => [
+                        `${value}명 (${props.payload.percentage}%)`, 
+                        '등록자 수'
+                      ]}
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+      )}
 
       {/* 통계 추가/수정 다이얼로그 */}
       <Dialog 
