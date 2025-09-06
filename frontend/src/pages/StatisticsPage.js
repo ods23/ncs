@@ -1668,16 +1668,16 @@ const StatisticsPage = () => {
 
       {/* 월별/연령대별 통계 차트 */}
       {Object.keys(monthlyAgeStats).length > 0 && (
-        <Paper sx={{ width: '100%', mt: 3, p: 3, boxShadow: 3 }}>
-          <Typography variant="h6" sx={{ mb: 3, textAlign: 'center', fontWeight: 'bold', color: '#374151' }}>
+        <Paper sx={{ width: '98%', mt: 3, p: 2, boxShadow: 2, mx: 'auto' }}>
+          <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', fontWeight: 'bold', color: '#374151' }}>
             {selectedYear || new Date().getFullYear()}년 새가족 등록현황 분석
           </Typography>
           
-          <Grid container spacing={3}>
+          <Grid container spacing={2}>
             {/* 월별 등록자 현황 막대 차트 */}
             <Grid item xs={12} md={6}>
               <Box sx={{ 
-                p: 2, 
+                p: 1.5, 
                 backgroundColor: 'white', 
                 borderRadius: 2, 
                 border: '1px solid #e5e7eb',
@@ -1734,7 +1734,7 @@ const StatisticsPage = () => {
             {/* 연령대별 비율 파이 차트 */}
             <Grid item xs={12} md={6}>
               <Box sx={{ 
-                p: 2, 
+                p: 1.5, 
                 backgroundColor: 'white', 
                 borderRadius: 2, 
                 border: '1px solid #e5e7eb',
@@ -1781,16 +1781,16 @@ const StatisticsPage = () => {
 
       {/* 초신자/전입신자 분리 연령대별 통계 차트 */}
       {Object.keys(monthlyAgeStats).length > 0 && (
-        <Paper sx={{ width: '100%', mt: 3, p: 3, boxShadow: 3 }}>
-          <Typography variant="h6" sx={{ mb: 3, textAlign: 'center', fontWeight: 'bold', color: '#374151' }}>
+        <Paper sx={{ width: '98%', mt: 3, p: 2, boxShadow: 2, mx: 'auto' }}>
+          <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', fontWeight: 'bold', color: '#374151' }}>
             {selectedYear || new Date().getFullYear()}년 초신자 및 전입신자 등록자의 연령대별 현황
           </Typography>
           
-          <Grid container spacing={3}>
+          <Grid container spacing={2}>
             {/* 초신자 연령대별 비율 파이 차트 */}
             <Grid item xs={12} md={6}>
               <Box sx={{ 
-                p: 2, 
+                p: 1.5, 
                 backgroundColor: 'white', 
                 borderRadius: 2, 
                 border: '1px solid #e5e7eb',
@@ -1835,7 +1835,7 @@ const StatisticsPage = () => {
             {/* 전입신자 연령대별 비율 파이 차트 */}
             <Grid item xs={12} md={6}>
               <Box sx={{ 
-                p: 2, 
+                p: 1.5, 
                 backgroundColor: 'white', 
                 borderRadius: 2, 
                 border: '1px solid #e5e7eb',
@@ -1882,16 +1882,16 @@ const StatisticsPage = () => {
 
       {/* 월별/연령대별 막대 차트 */}
       {Object.keys(monthlyAgeStats).length > 0 && (
-        <Paper sx={{ width: '100%', mt: 3, p: 3, boxShadow: 3 }}>
-          <Typography variant="h6" sx={{ mb: 3, textAlign: 'center', fontWeight: 'bold', color: '#374151' }}>
+        <Paper sx={{ width: '98%', mt: 3, p: 2, boxShadow: 2, mx: 'auto' }}>
+          <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', fontWeight: 'bold', color: '#374151' }}>
             {selectedYear || new Date().getFullYear()}년 초신자 및 전입신자 등록자의 월별/연령대별 현황
           </Typography>
           
-          <Grid container spacing={3}>
+          <Grid container spacing={2}>
             {/* 1월-6월 막대 차트 */}
             <Grid item xs={12}>
               <Box sx={{ 
-                p: 2, 
+                p: 1.5, 
                 backgroundColor: 'white', 
                 borderRadius: 2, 
                 border: '1px solid #e5e7eb',
@@ -1901,7 +1901,15 @@ const StatisticsPage = () => {
                   1월 ~ 6월 초신자/전입신자 등록자의 연령별 현황
                 </Typography>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={prepareMonthlyAgeBarData(1, 6)}>
+                  <BarChart 
+                    data={prepareMonthlyAgeBarData(1, 6)}
+                    margin={{
+                      top: 20,
+                      right: 30,
+                      left: 20,
+                      bottom: 60
+                    }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis 
                       dataKey="monthGroup" 
@@ -1924,7 +1932,11 @@ const StatisticsPage = () => {
                         boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
                       }}
                     />
-                    <Legend />
+                    <Legend 
+                      wrapperStyle={{
+                        paddingTop: '5px'
+                      }}
+                    />
                     {prepareAgeGroupBarData().map((ageGroup, index) => (
                       <Bar 
                         key={ageGroup.key}
@@ -1941,7 +1953,7 @@ const StatisticsPage = () => {
             {/* 7월-12월 막대 차트 */}
             <Grid item xs={12}>
               <Box sx={{ 
-                p: 2, 
+                p: 1.5, 
                 backgroundColor: 'white', 
                 borderRadius: 2, 
                 border: '1px solid #e5e7eb',
@@ -1951,7 +1963,15 @@ const StatisticsPage = () => {
                   7월 ~ 12월 초신자/전입신자 등록자의 연령별 현황
                 </Typography>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={prepareMonthlyAgeBarData(7, 12)}>
+                  <BarChart 
+                    data={prepareMonthlyAgeBarData(7, 12)}
+                    margin={{
+                      top: 20,
+                      right: 30,
+                      left: 20,
+                      bottom: 60
+                    }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis 
                       dataKey="monthGroup" 
@@ -1974,7 +1994,11 @@ const StatisticsPage = () => {
                         boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
                       }}
                     />
-                    <Legend />
+                    <Legend 
+                      wrapperStyle={{
+                        paddingTop: '5px'
+                      }}
+                    />
                     {prepareAgeGroupBarData().map((ageGroup, index) => (
                       <Bar 
                         key={ageGroup.key}
