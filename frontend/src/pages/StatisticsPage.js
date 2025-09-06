@@ -344,6 +344,158 @@ const StatisticsPage = () => {
     }).filter(item => item.value > 0); // 0인 항목은 제외
   };
 
+  // 초신자 연령대별 비율 데이터 준비
+  const prepareNewComerAgeGroupData = () => {
+    if (!monthlyAgeStats || Object.keys(monthlyAgeStats).length === 0) {
+      return [];
+    }
+
+    const ageGroups = ['10s', '20s', '30s', '40s', '50s', '60s', '70s_plus'];
+    const ageGroupTotals = {};
+
+    // 각 연령대별 초신자 총합 계산
+    ageGroups.forEach(ageGroup => {
+      let total = 0;
+      for (let month = 1; month <= 12; month++) {
+        const monthData = monthlyAgeStats[month];
+        if (monthData) {
+          total += (monthData.초신자?.[ageGroup] || 0);
+        }
+      }
+      ageGroupTotals[ageGroup] = total;
+    });
+
+    // 초신자 전체 합계 계산
+    const grandTotal = Object.values(ageGroupTotals).reduce((sum, count) => sum + count, 0);
+
+    // 기준년도 가져오기 (selectedYear 또는 현재년도)
+    const baseYear = selectedYear || new Date().getFullYear();
+
+    // 비율 계산 및 데이터 생성
+    const ageGroupLabels = {
+      '10s': '10대',
+      '20s': '20대', 
+      '30s': '30대',
+      '40s': '40대',
+      '50s': '50대',
+      '60s': '60대',
+      '70s_plus': '70대 이상'
+    };
+
+    // 기준년도에 따른 출생년도 범위 계산
+    const getBirthYearRange = (ageGroup, baseYear) => {
+      switch (ageGroup) {
+        case '10s':
+          return `${baseYear - 19}~${baseYear - 10}`;
+        case '20s':
+          return `${baseYear - 29}~${baseYear - 20}`;
+        case '30s':
+          return `${baseYear - 39}~${baseYear - 30}`;
+        case '40s':
+          return `${baseYear - 49}~${baseYear - 40}`;
+        case '50s':
+          return `${baseYear - 59}~${baseYear - 50}`;
+        case '60s':
+          return `${baseYear - 69}~${baseYear - 60}`;
+        case '70s_plus':
+          return `~${baseYear - 70}`;
+        default:
+          return '';
+      }
+    };
+
+    const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#FF6384'];
+
+    return ageGroups.map((ageGroup, index) => {
+      const count = ageGroupTotals[ageGroup];
+      const percentage = grandTotal > 0 ? Math.round((count / grandTotal) * 100) : 0;
+      const birthYearRange = getBirthYearRange(ageGroup, baseYear);
+      
+      return {
+        name: `${ageGroupLabels[ageGroup]} (${birthYearRange})`,
+        value: count,
+        percentage: percentage,
+        color: colors[index % colors.length]
+      };
+    }).filter(item => item.value > 0); // 0인 항목은 제외
+  };
+
+  // 전입신자 연령대별 비율 데이터 준비
+  const prepareTransferBelieverAgeGroupData = () => {
+    if (!monthlyAgeStats || Object.keys(monthlyAgeStats).length === 0) {
+      return [];
+    }
+
+    const ageGroups = ['10s', '20s', '30s', '40s', '50s', '60s', '70s_plus'];
+    const ageGroupTotals = {};
+
+    // 각 연령대별 전입신자 총합 계산
+    ageGroups.forEach(ageGroup => {
+      let total = 0;
+      for (let month = 1; month <= 12; month++) {
+        const monthData = monthlyAgeStats[month];
+        if (monthData) {
+          total += (monthData.전입신자?.[ageGroup] || 0);
+        }
+      }
+      ageGroupTotals[ageGroup] = total;
+    });
+
+    // 전입신자 전체 합계 계산
+    const grandTotal = Object.values(ageGroupTotals).reduce((sum, count) => sum + count, 0);
+
+    // 기준년도 가져오기 (selectedYear 또는 현재년도)
+    const baseYear = selectedYear || new Date().getFullYear();
+
+    // 비율 계산 및 데이터 생성
+    const ageGroupLabels = {
+      '10s': '10대',
+      '20s': '20대', 
+      '30s': '30대',
+      '40s': '40대',
+      '50s': '50대',
+      '60s': '60대',
+      '70s_plus': '70대 이상'
+    };
+
+    // 기준년도에 따른 출생년도 범위 계산
+    const getBirthYearRange = (ageGroup, baseYear) => {
+      switch (ageGroup) {
+        case '10s':
+          return `${baseYear - 19}~${baseYear - 10}`;
+        case '20s':
+          return `${baseYear - 29}~${baseYear - 20}`;
+        case '30s':
+          return `${baseYear - 39}~${baseYear - 30}`;
+        case '40s':
+          return `${baseYear - 49}~${baseYear - 40}`;
+        case '50s':
+          return `${baseYear - 59}~${baseYear - 50}`;
+        case '60s':
+          return `${baseYear - 69}~${baseYear - 60}`;
+        case '70s_plus':
+          return `~${baseYear - 70}`;
+        default:
+          return '';
+      }
+    };
+
+    const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#FF6384'];
+
+    return ageGroups.map((ageGroup, index) => {
+      const count = ageGroupTotals[ageGroup];
+      const percentage = grandTotal > 0 ? Math.round((count / grandTotal) * 100) : 0;
+      const birthYearRange = getBirthYearRange(ageGroup, baseYear);
+      
+      return {
+        name: `${ageGroupLabels[ageGroup]} (${birthYearRange})`,
+        value: count,
+        percentage: percentage,
+        color: colors[index % colors.length]
+      };
+    }).filter(item => item.value > 0); // 0인 항목은 제외
+  };
+
   // 통계 생성/수정
   const saveStatistics = async () => {
     try {
@@ -1535,6 +1687,107 @@ const StatisticsPage = () => {
                       formatter={(value, name, props) => [
                         `${value}명 (${props.payload.percentage}%)`, 
                         '등록자 수'
+                      ]}
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+      )}
+
+      {/* 초신자/전입신자 분리 연령대별 통계 차트 */}
+      {Object.keys(monthlyAgeStats).length > 0 && (
+        <Paper sx={{ width: '100%', mt: 3, p: 3, boxShadow: 3 }}>
+          <Typography variant="h6" sx={{ mb: 3, textAlign: 'center', fontWeight: 'bold', color: '#374151' }}>
+            {selectedYear || new Date().getFullYear()}년 초신자 및 전입신자 등록자의 연령대별 현황
+          </Typography>
+          
+          <Grid container spacing={3}>
+            {/* 초신자 연령대별 비율 파이 차트 */}
+            <Grid item xs={12} md={6}>
+              <Box sx={{ 
+                p: 2, 
+                backgroundColor: 'white', 
+                borderRadius: 2, 
+                border: '1px solid #e5e7eb',
+                height: 400
+              }}>
+                <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', fontWeight: 'bold', color: '#3b82f6' }}>
+                  초신자 등록자 비율
+                </Typography>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={prepareNewComerAgeGroupData()}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percentage }) => `${name}: ${percentage}%`}
+                      outerRadius={120}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {prepareNewComerAgeGroupData().map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip 
+                      formatter={(value, name, props) => [
+                        `${value}명 (${props.payload.percentage}%)`, 
+                        '초신자 수'
+                      ]}
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Box>
+            </Grid>
+
+            {/* 전입신자 연령대별 비율 파이 차트 */}
+            <Grid item xs={12} md={6}>
+              <Box sx={{ 
+                p: 2, 
+                backgroundColor: 'white', 
+                borderRadius: 2, 
+                border: '1px solid #e5e7eb',
+                height: 400
+              }}>
+                <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', fontWeight: 'bold', color: '#8b5cf6' }}>
+                  전입신자 등록자 비율
+                </Typography>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={prepareTransferBelieverAgeGroupData()}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percentage }) => `${name}: ${percentage}%`}
+                      outerRadius={120}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {prepareTransferBelieverAgeGroupData().map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip 
+                      formatter={(value, name, props) => [
+                        `${value}명 (${props.payload.percentage}%)`, 
+                        '전입신자 수'
                       ]}
                       contentStyle={{
                         backgroundColor: 'white',
