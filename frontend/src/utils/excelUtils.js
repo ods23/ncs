@@ -82,9 +82,24 @@ export function convertDateField(value) {
     
     // YYYY/MM/DD, YYYY.MM.DD, YYYY-MM-DD 등 다양한 형식 처리
     const datePatterns = [
-      /^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/,  // YYYY/MM/DD, YYYY-MM-DD, YYYY.MM.DD
-      /^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/,  // MM/DD/YYYY, DD/MM/YYYY
-      /^(\d{4})(\d{2})(\d{2})$/                        // YYYYMMDD
+      /^(\d{4})-(\d{1,2})-(\d{1,2})$/,                // YYYY-MM-DD (하이픈으로 구분, 한자리 허용)
+      /^(\d{4})\.(\d{1,2})\.(\d{1,2})$/,              // YYYY.MM.DD (점으로 구분, 한자리 허용)
+      /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/,              // YYYY/MM/DD (슬래시로 구분, 한자리 허용)
+      /^(\d{4})(\d{2})(\d{2})$/,                       // YYYYMMDD
+      /^(\d{2})(\d{2})(\d{2})$/,                       // YYMMDD (2자리 년도)
+      /^(\d{6})$/,                                     // YYMMDD (6자리 숫자)
+      /^(\d{8})$/,                                     // YYYYMMDD (8자리 숫자)
+      /^(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일$/,       // YYYY년 MM월 DD일
+      /^(\d{1,2})월\s*(\d{1,2})일\s*(\d{4})년$/,       // MM월 DD일 YYYY년
+      /^(\d{4})-(\d{1,2})-(\d{1,2})\s+\d{1,2}:\d{2}:\d{2}$/,  // YYYY-MM-DD HH:MM:SS
+      /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/,              // MM.DD.YYYY (점으로 구분)
+      /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/,              // MM/DD/YYYY (슬래시로 구분)
+      /^(\d{1,2})-(\d{1,2})-(\d{4})$/,                // MM-DD-YYYY (하이픈으로 구분)
+      /^(\d{4})-(\d{2})-(\d{2})$/,                    // YYYY-MM-DD (2자리 고정)
+      /^(\d{4})\.(\d{2})\.(\d{2})$/,                  // YYYY.MM.DD (2자리 고정)
+      /^(\d{4})\/(\d{2})\/(\d{2})$/,                  // YYYY/MM/DD (2자리 고정)
+      /^(\d{6})-01-01$/,                               // YYMMDD-01-01 (XLSX가 잘못 파싱한 형식)
+      /^(\d{8})-01-01$/                                // YYYYMMDD-01-01 (XLSX가 잘못 파싱한 형식)
     ];
     
     for (let i = 0; i < datePatterns.length; i++) {
@@ -92,10 +107,63 @@ export function convertDateField(value) {
       if (match) {
         let year, month, day;
         
-        if (i === 0 || i === 2) { // YYYY/MM/DD 또는 YYYYMMDD 형식
+        if (i === 0) { // YYYY-MM-DD (하이픈으로 구분, 한자리 허용)
           [, year, month, day] = match;
-        } else { // MM/DD/YYYY 형식 (일반적으로 미국식)
+        } else if (i === 1) { // YYYY.MM.DD (점으로 구분, 한자리 허용)
+          [, year, month, day] = match;
+        } else if (i === 2) { // YYYY/MM/DD (슬래시로 구분, 한자리 허용)
+          [, year, month, day] = match;
+        } else if (i === 3) { // YYYYMMDD 형식
+          [, year, month, day] = match;
+        } else if (i === 4) { // YYMMDD 형식 (2자리 년도)
+          [, year, month, day] = match;
+          // 2자리 년도를 4자리로 변환 (00-30은 2000년대, 31-99는 1900년대)
+          const fullYear = parseInt(year);
+          year = fullYear <= 30 ? `20${year.padStart(2, '0')}` : `19${year.padStart(2, '0')}`;
+        } else if (i === 5) { // YYMMDD (6자리 숫자)
+          const fullValue = match[1];
+          year = fullValue.substring(0, 2);
+          month = fullValue.substring(2, 4);
+          day = fullValue.substring(4, 6);
+          // 2자리 년도를 4자리로 변환
+          const fullYear = parseInt(year);
+          year = fullYear <= 30 ? `20${year.padStart(2, '0')}` : `19${year.padStart(2, '0')}`;
+        } else if (i === 6) { // YYYYMMDD (8자리 숫자)
+          const fullValue = match[1];
+          year = fullValue.substring(0, 4);
+          month = fullValue.substring(4, 6);
+          day = fullValue.substring(6, 8);
+        } else if (i === 7) { // YYYY년 MM월 DD일
+          [, year, month, day] = match;
+        } else if (i === 8) { // MM월 DD일 YYYY년
           [, month, day, year] = match;
+        } else if (i === 9) { // YYYY-MM-DD HH:MM:SS
+          [, year, month, day] = match;
+        } else if (i === 10) { // MM.DD.YYYY (점으로 구분)
+          [, month, day, year] = match;
+        } else if (i === 11) { // MM/DD/YYYY (슬래시로 구분)
+          [, month, day, year] = match;
+        } else if (i === 12) { // MM-DD-YYYY (하이픈으로 구분)
+          [, month, day, year] = match;
+        } else if (i === 13) { // YYYY-MM-DD (2자리 고정)
+          [, year, month, day] = match;
+        } else if (i === 14) { // YYYY.MM.DD (2자리 고정)
+          [, year, month, day] = match;
+        } else if (i === 15) { // YYYY/MM/DD (2자리 고정)
+          [, year, month, day] = match;
+        } else if (i === 16) { // YYMMDD-01-01 (XLSX가 잘못 파싱한 형식)
+          const fullValue = match[1];
+          year = fullValue.substring(0, 2);
+          month = fullValue.substring(2, 4);
+          day = fullValue.substring(4, 6);
+          // 2자리 년도를 4자리로 변환
+          const fullYear = parseInt(year);
+          year = fullYear <= 30 ? `20${year.padStart(2, '0')}` : `19${year.padStart(2, '0')}`;
+        } else if (i === 17) { // YYYYMMDD-01-01 (XLSX가 잘못 파싱한 형식)
+          const fullValue = match[1];
+          year = fullValue.substring(0, 4);
+          month = fullValue.substring(4, 6);
+          day = fullValue.substring(6, 8);
         }
         
         // 날짜 유효성 검증

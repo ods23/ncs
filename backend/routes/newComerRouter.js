@@ -766,7 +766,7 @@ router.post('/upload', authenticateToken, async (req, res) => {
         const row = excelData[i];
         
         // NFC 정규화 및 날짜 변환 적용
-        const processedRow = processExcelData(row, ['생년월일', '등록신청일', '양육시작일', '교육시작일', '양육종료일', '교육기간', '새생명전략', 'birth_date', 'register_date', 'education_start_date', 'education_end_date', 'new_life_strategy_date']);
+        const processedRow = processExcelData(row, ['생년월일', '등록신청일', '양육시작일', '교육시작일', '양육종료일', '교육기간', '새생명전략']);
         
         // 한글 헤더와 영문 필드명 매핑
         const mappedRow = {
@@ -776,16 +776,16 @@ router.post('/upload', authenticateToken, async (req, res) => {
           name: processedRow['이름'] || processedRow.name,
           gender: processedRow['성별'] || processedRow.gender,
           marital_status: processedRow['결혼'] || processedRow.marital_status,
-          birth_date: convertDateField(processedRow['생년월일'] || processedRow.birth_date),
+          birth_date: processedRow['생년월일'] || processedRow.birth_date,
           address: processedRow['주소'] || processedRow.address,
           phone: processedRow['전화번호'] || processedRow['전화'] || processedRow.phone,
           teacher: processedRow['양육교사'] || processedRow['담당교사'] || processedRow.teacher,
-          register_date: convertDateField(processedRow['등록신청일'] || processedRow.register_date),
-          education_start_date: convertDateField(processedRow['양육시작일'] || processedRow['교육시작일'] || processedRow.education_start_date),
-          education_end_date: convertDateField(processedRow['양육종료일'] || processedRow['교육기간'] || processedRow.education_end_date),
+          register_date: processedRow['등록신청일'] || processedRow.register_date,
+          education_start_date: processedRow['양육시작일'] || processedRow['교육시작일'] || processedRow.education_start_date,
+          education_end_date: processedRow['양육종료일'] || processedRow['교육기간'] || processedRow.education_end_date,
           affiliation_org: processedRow['편입기관'] || processedRow.affiliation_org,
           belong: processedRow['소속'] || processedRow.belong,
-          new_life_strategy_date: convertDateField(processedRow['새생명전략'] || processedRow.new_life_strategy_date),
+          new_life_strategy_date: processedRow['새생명전략'] || processedRow.new_life_strategy_date,
           identity_verified: processedRow['본인확인'] || processedRow.identity_verified || 0,
           prev_church: processedRow['이전교회'] || processedRow.prev_church || '',
           comment: processedRow['비고'] || processedRow.comment || '',
@@ -829,13 +829,13 @@ router.post('/upload', authenticateToken, async (req, res) => {
           INSERT INTO new_comers (
             department, believer_type, education_type, year, name, gender, marital_status,
             birth_date, address, phone, teacher, register_date, education_start_date,
-                    education_end_date, affiliation_org, belong, new_life_strategy_date,
-        identity_verified, prev_church, comment, graduate_transfer_status, number, file_id
-          ) VALUES (?, '초신자', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            education_end_date, affiliation_org, belong, new_life_strategy_date,
+            identity_verified, prev_church, comment, graduate_transfer_status, number, file_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
         
         const insertParams = [
-          mappedRow.department, mappedRow.education_type, mappedRow.year,
+          mappedRow.department, '초신자', mappedRow.education_type, mappedRow.year,
           mappedRow.name, mappedRow.gender, mappedRow.marital_status, mappedRow.birth_date,
           mappedRow.address, mappedRow.phone, mappedRow.teacher, mappedRow.register_date,
           mappedRow.education_start_date, mappedRow.education_end_date, mappedRow.affiliation_org,
