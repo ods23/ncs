@@ -17,6 +17,9 @@ const Header = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // PDF 모드 확인 (URL에 token 파라미터가 있으면 PDF 모드)
+  const isPdfMode = new URLSearchParams(window.location.search).has('token');
   const [adminAnchorEl, setAdminAnchorEl] = useState(null);
   const [myPageAnchorEl, setMyPageAnchorEl] = useState(null);
   const [userMenus, setUserMenus] = useState([]);
@@ -173,6 +176,11 @@ const Header = () => {
   }, [location.pathname]);
 
   const menuItems = [];
+
+  // PDF 모드일 때는 헤더를 렌더링하지 않음
+  if (isPdfMode) {
+    return null;
+  }
 
   return (
     <AppBar 

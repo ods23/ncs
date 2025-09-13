@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  DialogContentText,
   TextField,
   IconButton,
   Tooltip,
@@ -28,6 +29,7 @@ import {
   Select,
   MenuItem
 } from '@mui/material';
+import * as XLSX from 'xlsx';
 import {
   Refresh as RefreshIcon,
   Add as AddIcon,
@@ -37,7 +39,10 @@ import {
   TrendingUp as TrendingUpIcon,
   People as PeopleIcon,
   School as SchoolIcon,
-  CheckCircle as CheckCircleIcon
+  CheckCircle as CheckCircleIcon,
+  AutoAwesome as AutoAwesomeIcon,
+  FileDownload as FileDownloadIcon,
+  PictureAsPdf as PdfIcon
 } from '@mui/icons-material';
 import {
   BarChart,
@@ -59,9 +64,16 @@ const StatisticsPage = () => {
   const [loading, setLoading] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingStat, setEditingStat] = useState(null);
-  const [selectedYear, setSelectedYear] = useState('');
-  const [chartBaseYear, setChartBaseYear] = useState('');
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [yearRange, setYearRange] = useState(7); // 년도 범위 (기본 7년)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [departments, setDepartments] = useState([]);
+  const [generateConfirmOpen, setGenerateConfirmOpen] = useState(false);
+  
+  // PDF 다운로드 옵션 다이얼로그 상태
+  const [pdfOptionsOpen, setPdfOptionsOpen] = useState(false);
+  const [pdfOrientation, setPdfOrientation] = useState('portrait'); // 'portrait' 또는 'landscape'
   const [formData, setFormData] = useState({
     year: '',
     new_comer_registration: 0,
@@ -83,11 +95,101 @@ const StatisticsPage = () => {
     total_education: 0
   });
 
+  // URL 파라미터 읽기
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const year = urlParams.get('year');
+    const department = urlParams.get('department');
+    const yearRange = urlParams.get('yearRange');
+    const orientation = urlParams.get('orientation');
+    const token = urlParams.get('token');
+
+    if (year) setSelectedYear(year);
+    if (department) setSelectedDepartment(department);
+    if (yearRange) setYearRange(parseInt(yearRange));
+    if (orientation) setPdfOrientation(orientation);
+
+    // JWT 토큰이 URL 파라미터로 전달된 경우 localStorage에 설정 (새로고침 없이)
+    if (token) {
+      localStorage.setItem('token', token);
+      console.log('URL 파라미터에서 토큰 설정 완료');
+      // 새로고침하지 않고 현재 상태 유지
+    }
+  }, []);
+
+  // PDF 모드 확인 (URL에 token 파라미터가 있으면 PDF 모드)
+  const isPdfMode = new URLSearchParams(window.location.search).has('token');
+
+  // 부서 목록 로드
+  const loadDepartments = async () => {
+    try {
+      // 먼저 부서 그룹 ID를 찾기
+      const groupsResponse = await fetch('/api/code-groups', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (groupsResponse.ok) {
+        const groupsData = await groupsResponse.json();
+        const departmentGroup = groupsData.find(group => 
+          group.group_code === 'DEPARTMENT' || 
+          group.group_name === '부서' || 
+          group.group_code === '부서'
+        );
+        
+        if (departmentGroup) {
+          // 부서 그룹의 상세 코드 가져오기
+          const detailsResponse = await fetch(`/api/code-details?group_id=${departmentGroup.id}`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+          
+          if (detailsResponse.ok) {
+            const detailsData = await detailsResponse.json();
+            setDepartments(detailsData);
+            
+            // 첫 번째 부서를 기본값으로 설정
+            if (detailsData.length > 0 && !selectedDepartment) {
+              setSelectedDepartment(detailsData[0].code_name);
+            }
+          } else {
+            console.error('부서 상세 코드 로드 실패');
+          }
+        } else {
+          console.error('부서 그룹을 찾을 수 없습니다');
+        }
+      } else {
+        console.error('코드 그룹 로드 실패');
+      }
+    } catch (error) {
+      console.error('부서 목록 로드 실패:', error);
+    }
+  };
+
   // 통계 데이터 로드
   const loadStatistics = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/statistics', {
+      let url = '/api/statistics';
+      const params = new URLSearchParams();
+      
+      if (selectedYear) {
+        params.append('year', selectedYear);
+      }
+      if (selectedDepartment) {
+        params.append('department', selectedDepartment);
+      }
+      if (yearRange) {
+        params.append('yearRange', yearRange);
+      }
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -107,17 +209,34 @@ const StatisticsPage = () => {
     }
   };
 
-  // 통계 자동 생성
-  const generateStatistics = async () => {
-    try {
-      const currentYear = new Date().getFullYear();
+  // 통계 생성 확인 팝업 열기
+  const handleGenerateClick = () => {
+    // 조회조건 검증
+    if (!selectedYear || selectedYear.trim() === '') {
+      showSnackbar('년도를 선택해주세요.', 'error');
+      return;
+    }
+    
+    if (!selectedDepartment || selectedDepartment.trim() === '') {
+      showSnackbar('부서를 선택해주세요.', 'error');
+      return;
+    }
+
+    const year = parseInt(selectedYear);
       
       // 2025년 이후부터만 생성 가능
-      if (formData.year < 2025) {
+    if (year < 2025) {
         showSnackbar('2025년 이후부터 통계를 생성할 수 있습니다.', 'error');
         return;
       }
 
+    // 확인 팝업 표시
+    setGenerateConfirmOpen(true);
+  };
+
+  // 통계 자동 생성
+  const generateStatistics = async () => {
+    try {
       showSnackbar('통계 생성 중...', 'info');
       
       const response = await fetch('/api/statistics/generate', {
@@ -127,7 +246,8 @@ const StatisticsPage = () => {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
-          year: formData.year
+          year: parseInt(selectedYear),
+          department: selectedDepartment
         })
       });
       
@@ -135,14 +255,158 @@ const StatisticsPage = () => {
         const data = await response.json();
         showSnackbar(data.message, 'success');
         loadStatistics(); // 통계 데이터 새로고침
-        fetchMonthlyAgeStats(formData.year); // 월별/연령대별 통계도 새로고침
-        setOpenDialog(false); // 통계 생성 완료 후 팝업 닫기
+        fetchMonthlyAgeStats(parseInt(selectedYear)); // 월별/연령대별 통계도 새로고침
+        setGenerateConfirmOpen(false); // 팝업 닫기
       } else {
-        throw new Error('통계 생성에 실패했습니다.');
+        const errorData = await response.json();
+        throw new Error(errorData.message || '통계 생성에 실패했습니다.');
       }
     } catch (error) {
       console.error('통계 생성 실패:', error);
-      showSnackbar('통계 생성에 실패했습니다.', 'error');
+      showSnackbar(error.message || '통계 생성에 실패했습니다.', 'error');
+    }
+  };
+
+  // 엑셀 다운로드
+  const handleExcelDownload = () => {
+    try {
+      if (statistics.length === 0) {
+        showSnackbar('다운로드할 데이터가 없습니다.', 'warning');
+        return;
+      }
+
+      // 엑셀 데이터 준비
+      const excelData = statistics.map((stat, index) => ({
+        '순번': index + 1,
+        '년도': stat.year,
+        '부서': stat.department || '새가족위원회',
+        '초신자등록': stat.new_comer_registration || 0,
+        '전입신자등록': stat.transfer_believer_registration || 0,
+        '등록전체합계': stat.total_registration || 0,
+        '초신자전년도수료': stat.new_comer_graduate_prev_year || 0,
+        '초신자올해수료': stat.new_comer_graduate_current_year || 0,
+        '초신자수료합계': stat.new_comer_graduate_total || 0,
+        '전입신자전년도수료': stat.transfer_believer_graduate_prev_year || 0,
+        '전입신자올해수료': stat.transfer_believer_graduate_current_year || 0,
+        '전입신자수료합계': stat.transfer_believer_graduate_total || 0,
+        '수료전체합계': stat.total_graduate || 0,
+        '초신자교육중': stat.new_comer_education_in_progress || 0,
+        '초신자교육중단': stat.new_comer_education_discontinued || 0,
+        '초신자교육합계': stat.new_comer_education_total || 0,
+        '전입신자교육중': stat.transfer_believer_education_in_progress || 0,
+        '전입신자교육중단': stat.transfer_believer_education_discontinued || 0,
+        '전입신자교육합계': stat.transfer_believer_education_total || 0,
+        '교육전체합계': stat.total_education || 0,
+        '생성일시': stat.created_at ? new Date(stat.created_at).toLocaleString('ko-KR') : '',
+        '수정일시': stat.updated_at ? new Date(stat.updated_at).toLocaleString('ko-KR') : ''
+      }));
+
+      // 워크북 생성
+      const wb = XLSX.utils.book_new();
+      
+      // 워크시트 생성
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      
+      // 컬럼 너비 자동 조정
+      const colWidths = [
+        { wch: 5 },   // 순번
+        { wch: 8 },   // 년도
+        { wch: 15 },  // 부서
+        { wch: 12 },  // 초신자등록
+        { wch: 12 },  // 전입신자등록
+        { wch: 12 },  // 등록전체합계
+        { wch: 15 },  // 초신자전년도수료
+        { wch: 15 },  // 초신자올해수료
+        { wch: 15 },  // 초신자수료합계
+        { wch: 15 },  // 전입신자전년도수료
+        { wch: 15 },  // 전입신자올해수료
+        { wch: 15 },  // 전입신자수료합계
+        { wch: 12 },  // 수료전체합계
+        { wch: 12 },  // 초신자교육중
+        { wch: 12 },  // 초신자교육중단
+        { wch: 12 },  // 초신자교육합계
+        { wch: 12 },  // 전입신자교육중
+        { wch: 12 },  // 전입신자교육중단
+        { wch: 12 },  // 전입신자교육합계
+        { wch: 12 },  // 교육전체합계
+        { wch: 20 },  // 생성일시
+        { wch: 20 }   // 수정일시
+      ];
+      ws['!cols'] = colWidths;
+      
+      // 워크북에 워크시트 추가
+      XLSX.utils.book_append_sheet(wb, ws, '새가족등록현황보고');
+      
+      // 파일명 생성
+      const currentDate = new Date().toISOString().split('T')[0];
+      const yearFilter = selectedYear ? `_${selectedYear}년` : '';
+      const departmentFilter = selectedDepartment ? `_${selectedDepartment}` : '';
+      const fileName = `새가족등록현황보고${yearFilter}${departmentFilter}_${currentDate}.xlsx`;
+      
+      // 엑셀 파일 다운로드
+      XLSX.writeFile(wb, fileName);
+      
+      showSnackbar('엑셀 파일이 다운로드되었습니다.', 'success');
+      console.log('엑셀 다운로드 완료:', excelData.length, '건');
+    } catch (error) {
+      console.error('엑셀 다운로드 오류:', error);
+      showSnackbar('엑셀 다운로드 중 오류가 발생했습니다.', 'error');
+    }
+  };
+
+
+  // PDF 다운로드 옵션 열기
+  const handlePdfDownloadClick = () => {
+    if (statistics.length === 0) {
+      showSnackbar('다운로드할 데이터가 없습니다.', 'warning');
+      return;
+    }
+    setPdfOptionsOpen(true);
+  };
+
+  // PDF 다운로드 실행 (서버사이드 - 기존 PDFKit 사용)
+  const handlePdfDownload = async () => {
+    try {
+      setPdfOptionsOpen(false);
+
+      const response = await fetch('/api/statistics/pdf-screen', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          year: selectedYear,
+          department: selectedDepartment,
+          yearRange: yearRange,
+          orientation: pdfOrientation
+        })
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        
+        const currentDate = new Date().toISOString().split('T')[0];
+        const yearFilter = selectedYear ? `_${selectedYear}년` : '';
+        const departmentFilter = selectedDepartment ? `_${selectedDepartment}` : '';
+        const fileName = `새가족등록현황보고${yearFilter}${departmentFilter}_${currentDate}.pdf`;
+        
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        showSnackbar('PDF 다운로드가 완료되었습니다.', 'success');
+      } else {
+        throw new Error('PDF 생성 실패');
+      }
+    } catch (error) {
+      console.error('PDF 다운로드 오류:', error);
+      showSnackbar('PDF 다운로드 중 오류가 발생했습니다.', 'error');
     }
   };
 
@@ -153,10 +417,12 @@ const StatisticsPage = () => {
     try {
       console.log('=== 월별/연령대별 통계 조회 시작 ===');
       console.log('조회할 년도:', year);
+      console.log('선택된 부서:', selectedDepartment);
       console.log('현재 localStorage 토큰:', localStorage.getItem('token') ? '있음' : '없음');
       
 
-      const url = `/api/statistics/monthly-age?year=${year}&department=새가족위원회`;
+      const department = selectedDepartment || '새가족위원회';
+      const url = `/api/statistics/monthly-age?year=${year}&department=${encodeURIComponent(department)}`;
       console.log('API URL:', url);
       
       const response = await fetch(url, {
@@ -201,44 +467,38 @@ const StatisticsPage = () => {
     }
   };
 
-  // 차트 데이터 준비 함수 - 기준년도 기준으로 7년치 표시
+  // 서버에서 이미 필터링된 데이터를 사용
+  const getFilteredStatistics = () => {
+    return statistics;
+  };
+
+  // 차트 데이터 준비 함수 - 서버에서 필터링된 데이터를 사용
   const prepareChartData = () => {
-    if (!chartBaseYear || statistics.length === 0) {
+    if (!selectedYear || statistics.length === 0) {
       return [];
     }
     
-    const baseYear = parseInt(chartBaseYear);
+    // 서버에서 이미 필터링된 데이터를 사용하여 차트 데이터 생성
     const chartData = [];
     
-    // 기준년도 기준으로 7년치 데이터 생성 (기준년도-6년 ~ 기준년도)
-    for (let i = 0; i < 7; i++) {
-      const year = baseYear - 6 + i; // 기준년도에서 6년 전부터 시작
-      const yearStr = year.toString();
+    // 통계 데이터를 년도 순으로 정렬
+    const sortedStats = [...statistics].sort((a, b) => parseInt(a.year) - parseInt(b.year));
+    
+    sortedStats.forEach(stat => {
+      const yearStr = stat.year.toString();
       
-      // 해당 년도의 통계 데이터 찾기
-      const yearData = statistics.find(stat => parseInt(stat.year) === year);
-      
-      if (yearData) {
         // 등록 합계 계산
-        const registrationTotal = yearData.total_registration || 0;
+      const registrationTotal = stat.total_registration || 0;
         
         // 수료 합계 계산
-        const completionTotal = yearData.total_graduate || 0;
+      const completionTotal = stat.total_graduate || 0;
         
         chartData.push({
           year: yearStr,
           등록자: registrationTotal,
           수료자: completionTotal
         });
-      } else {
-        // 데이터가 없는 경우 0으로 표시
-        chartData.push({
-          year: yearStr,
-          등록자: 0,
-          수료자: 0
-        });
-      }
-    }
+    });
     
     return chartData;
   };
@@ -721,6 +981,7 @@ const StatisticsPage = () => {
 
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
+    loadDepartments();
     loadStatistics();
     // 현재년도로 월별/연령대별 통계도 로드
     const currentYear = new Date().getFullYear();
@@ -733,22 +994,24 @@ const StatisticsPage = () => {
   }, []);
 
   // 통계 데이터가 로드되면 차트 기준 년도 설정
+
+  // 년도별 및 부서별 필터링 (현재 사용하지 않음 - 표는 전체 데이터 표시)
+  // const filteredStatistics = statistics.filter(stat => {
+  //   const yearMatch = !selectedYear || selectedYear.trim() === '' || stat.year.toString().includes(selectedYear);
+  //   const departmentMatch = !selectedDepartment || stat.department === selectedDepartment;
+  //   return yearMatch && departmentMatch;
+  // });
+
+  // 년도 또는 부서 필터 변경 시 통계 다시 로드 (debounce 적용)
   useEffect(() => {
-    if (statistics.length > 0) {
-      // 가장 최근 년도를 기준 년도로 설정
-      const years = statistics.map(stat => parseInt(stat.year)).sort((a, b) => b - a);
-      if (years.length > 0) {
-        setChartBaseYear(years[0].toString());
-      }
-    }
-  }, [statistics]);
+    const timer = setTimeout(() => {
+      loadStatistics();
+    }, 500); // 500ms 지연
 
-  // 년도별 필터링
-  const filteredStatistics = selectedYear 
-    ? statistics.filter(stat => stat.year.toString().includes(selectedYear))
-    : statistics;
+    return () => clearTimeout(timer);
+  }, [selectedYear, selectedDepartment]);
 
-  // 년도 필터 변경 시 월별/연령대별 통계 로드
+  // 년도 및 부서 필터 변경 시 월별/연령대별 통계 로드
   useEffect(() => {
     if (selectedYear) {
       fetchMonthlyAgeStats(selectedYear);
@@ -757,18 +1020,168 @@ const StatisticsPage = () => {
       const currentYear = new Date().getFullYear();
       fetchMonthlyAgeStats(currentYear);
     }
-  }, [selectedYear]);
+  }, [selectedYear, selectedDepartment]);
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 3, pt: isPdfMode ? 3 : 3 }}>
 
       {/* 조회조건, 버튼 및 요약 카드 */}
+      {!isPdfMode && (
       <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center' }}>
-        <FormControl size="small" sx={{ width: 120 }}>
-          <InputLabel sx={{ fontSize: '12px', fontWeight: '600', color: '#374151' }}>년도</InputLabel>
-          <Select
+        <Tooltip title="엑셀 다운로드" arrow placement="top">
+          <IconButton
+            onClick={handleExcelDownload}
+            size="small"
+            sx={{
+              background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+              color: 'white',
+              width: 36,
+              height: 36,
+              borderRadius: '12px',
+              boxShadow: '0 4px 6px -1px rgba(5, 150, 105, 0.3), 0 2px 4px -1px rgba(5, 150, 105, 0.2)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #047857 0%, #065f46 100%)',
+                transform: 'translateY(-2px) scale(1.05)',
+                boxShadow: '0 10px 15px -3px rgba(5, 150, 105, 0.4), 0 4px 6px -2px rgba(5, 150, 105, 0.3)'
+              },
+              '&:active': {
+                transform: 'translateY(0) scale(0.98)'
+              }
+            }}
+          >
+            <FileDownloadIcon sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Tooltip>
+
+        <Tooltip title="PDF 다운로드" arrow placement="top">
+          <IconButton
+            onClick={handlePdfDownloadClick}
+            size="small"
+            sx={{
+              background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+              color: 'white',
+              width: 36,
+              height: 36,
+              borderRadius: '12px',
+              boxShadow: '0 4px 6px -1px rgba(220, 38, 38, 0.3), 0 2px 4px -1px rgba(220, 38, 38, 0.2)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #b91c1c 0%, #991b1b 100%)',
+                transform: 'translateY(-2px) scale(1.05)',
+                boxShadow: '0 10px 15px -3px rgba(220, 38, 38, 0.4), 0 4px 6px -2px rgba(220, 38, 38, 0.3)'
+              },
+              '&:active': {
+                transform: 'translateY(0) scale(0.98)'
+              }
+            }}
+          >
+            <PdfIcon sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Tooltip>
+        
+        <TextField
+          size="small"
+          label="년도"
             value={selectedYear}
-            onChange={(e) => setSelectedYear(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            // 숫자만 입력 허용 (최대 4자리)
+            if (value === '' || /^\d{1,4}$/.test(value)) {
+              setSelectedYear(value);
+            }
+          }}
+          onKeyPress={(e) => {
+            if (e.key === 'Enter') {
+              loadStatistics();
+            }
+          }}
+          placeholder="년도를 입력하세요"
+          type="text"
+          inputProps={{
+            maxLength: 4,
+            pattern: '[0-9]{4}'
+          }}
+          helperText={selectedYear && (selectedYear.length !== 4 || parseInt(selectedYear) < 2000 || parseInt(selectedYear) > 2100) ? '4자리 년도를 입력하세요 (2000-2100)' : ''}
+          error={selectedYear && (selectedYear.length !== 4 || parseInt(selectedYear) < 2000 || parseInt(selectedYear) > 2100)}
+          sx={{
+            width: 140,
+            '& .MuiInputLabel-root': {
+              fontSize: '12px',
+              fontWeight: '600',
+              color: '#374151'
+            },
+            '& .MuiOutlinedInput-root': {
+              height: '36px',
+              borderRadius: '12px',
+              background: 'rgba(255, 255, 255, 0.8)',
+              backdropFilter: 'blur(10px)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#3b82f6',
+                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.1)'
+                }
+              },
+              '&.Mui-focused': {
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#3b82f6',
+                  boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                }
+              }
+            },
+            '& .MuiFormHelperText-root': {
+              fontSize: '10px',
+              marginTop: '2px'
+            }
+          }}
+        />
+
+        <TextField
+          size="small"
+          label="년도 범위"
+          type="number"
+          value={yearRange}
+          onChange={(e) => setYearRange(parseInt(e.target.value) || 1)}
+          inputProps={{ min: 1, max: 20 }}
+          sx={{
+            width: 140,
+            '& .MuiInputLabel-root': {
+              fontSize: '12px',
+              fontWeight: '600',
+              color: '#374151'
+            },
+            '& .MuiOutlinedInput-root': {
+              height: '36px',
+              borderRadius: '12px',
+              background: 'rgba(255, 255, 255, 0.8)',
+              backdropFilter: 'blur(10px)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#3b82f6',
+                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.1)'
+                }
+              },
+              '&.Mui-focused': {
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#3b82f6',
+                  boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                }
+              }
+            },
+            '& .MuiFormHelperText-root': {
+              fontSize: '10px',
+              marginTop: '2px'
+            }
+          }}
+        />
+
+        <FormControl size="small" sx={{ width: 150 }}>
+          <InputLabel sx={{ fontSize: '12px', fontWeight: '600', color: '#374151' }}>부서</InputLabel>
+          <Select
+            value={selectedDepartment}
+            onChange={(e) => setSelectedDepartment(e.target.value)}
             sx={{
               height: '36px',
               borderRadius: '12px',
@@ -786,9 +1199,8 @@ const StatisticsPage = () => {
               }
             }}
           >
-            <MenuItem value="">전체</MenuItem>
-            {Array.from(new Set(statistics.map(stat => stat.year))).sort((a, b) => b - a).map(year => (
-              <MenuItem key={year} value={year}>{year}년</MenuItem>
+            {departments.map(dept => (
+              <MenuItem key={dept.id} value={dept.code_name}>{dept.code_name}</MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -852,6 +1264,32 @@ const StatisticsPage = () => {
           </IconButton>
         </Tooltip>
 
+        <Tooltip title="통계 생성" arrow placement="top">
+          <IconButton
+            onClick={handleGenerateClick}
+            size="small"
+            sx={{
+              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+              color: 'white',
+              width: 36,
+              height: 36,
+              borderRadius: '12px',
+              boxShadow: '0 4px 6px -1px rgba(245, 158, 11, 0.3), 0 2px 4px -1px rgba(245, 158, 11, 0.2)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
+                transform: 'translateY(-2px) scale(1.05)',
+                boxShadow: '0 10px 15px -3px rgba(245, 158, 11, 0.4), 0 4px 6px -2px rgba(245, 158, 11, 0.3)'
+              },
+              '&:active': {
+                transform: 'translateY(0) scale(0.98)'
+              }
+            }}
+          >
+            <AutoAwesomeIcon sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Tooltip>
+
         {/* 요약 카드들 */}
         <Box sx={{ display: 'flex', gap: 2, flex: 1 }}>
           {/* 총 등록 카드 */}
@@ -875,7 +1313,7 @@ const StatisticsPage = () => {
             <Box sx={{ textAlign: 'center', flex: 1 }}>
               <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '16px' }}>총 등록</Typography>
               <Typography variant="h4" sx={{ fontWeight: 'bold', fontSize: '22px', lineHeight: 1 }}>
-                    {filteredStatistics.reduce((sum, stat) => sum + stat.total_registration, 0)}
+                    {statistics.reduce((sum, stat) => sum + stat.total_registration, 0)}
                   </Typography>
                 </Box>
             <PeopleIcon sx={{ fontSize: 20, opacity: 0.8, color: '#93c5fd' }} />
@@ -902,7 +1340,7 @@ const StatisticsPage = () => {
             <Box sx={{ textAlign: 'center', flex: 1 }}>
               <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '16px' }}>총 수료</Typography>
               <Typography variant="h4" sx={{ fontWeight: 'bold', fontSize: '22px', lineHeight: 1 }}>
-                    {filteredStatistics.reduce((sum, stat) => sum + stat.total_graduate, 0)}
+                    {statistics.reduce((sum, stat) => sum + stat.total_graduate, 0)}
                   </Typography>
                 </Box>
             <CheckCircleIcon sx={{ fontSize: 20, opacity: 0.8, color: '#86efac' }} />
@@ -929,27 +1367,50 @@ const StatisticsPage = () => {
             <Box sx={{ textAlign: 'center', flex: 1 }}>
               <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '16px' }}>관리 년도</Typography>
               <Typography variant="h4" sx={{ fontWeight: 'bold', fontSize: '22px', lineHeight: 1 }}>
-                {filteredStatistics.length}
+                {statistics.length}
                   </Typography>
                 </Box>
             <TrendingUpIcon sx={{ fontSize: 20, opacity: 0.8, color: '#c4b5fd' }} />
               </Box>
                 </Box>
               </Box>
+      )}
 
-      {/* 통계 테이블 */}
+      {/* 통계 콘텐츠 전체 영역 */}
+      <div id="statistics-content">
+      {/* 1페이지: 새가족 등록현황보고 + 등록자/수료자 현황 차트 */}
+      <div style={{ pageBreakAfter: 'always' }}>
+        {/* 통계 테이블 */}
+        {getFilteredStatistics().length > 0 && (
       <Paper sx={{ width: '100%', overflow: 'auto' }}>
-        <TableContainer sx={{ maxHeight: 600 }}>
-          <Table stickyHeader sx={{ border: '1px solid #e5e7eb' }}>
+        {/* 테이블 타이틀 */}
+        <Box sx={{ 
+          p: 2, 
+          backgroundColor: '#f8fafc', 
+          borderBottom: '2px solid #e5e7eb',
+          textAlign: 'center'
+        }}>
+          <Typography variant="h5" sx={{ 
+            fontWeight: 'bold', 
+            fontSize: '20px', 
+            color: '#1f2937',
+            letterSpacing: '0.5px'
+          }}>
+            {selectedYear && selectedDepartment ? `${selectedYear}년 ${selectedDepartment} 등록현황보고` : '새가족 등록현황보고'}
+          </Typography>
+        </Box>
+        
+        <TableContainer sx={{ maxHeight: 1000 }}>
+          <Table stickyHeader sx={{ border: '1px solid #e5e7eb', '& .MuiTableCell-root': { py: 0.5 } }}>
             <TableHead>
               {/* 메인 헤더 행 */}
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, border: '1px solid #e5e7eb', borderRight: '3px solid #6b7280' }} rowSpan={3}>년도</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, border: '1px solid #e5e7eb', borderRight: '3px solid #1e40af' }} colSpan={3}>등록</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, border: '1px solid #e5e7eb', borderRight: '3px solid #059669' }} colSpan={7}>수료</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b' }} colSpan={7}>교육</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }} rowSpan={3}>수정</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 1, border: '1px solid #e5e7eb' }} rowSpan={3}>삭제</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #6b7280' }} rowSpan={3}>년도</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #1e40af' }} colSpan={3}>등록</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #059669' }} colSpan={7}>수료</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b' }} colSpan={7}>교육</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }} rowSpan={3}>수정</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb' }} rowSpan={3}>삭제</TableCell>
               </TableRow>
               
               {/* 서브 헤더 행 */}
@@ -990,10 +1451,10 @@ const StatisticsPage = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredStatistics.map((stat) => (
+              {getFilteredStatistics().map((stat) => (
                 <TableRow key={stat.year} hover>
                   {/* 년도 */}
-                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#dbeafe', textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '3px solid #6b7280' }}>
+                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#dbeafe', textAlign: 'center', py: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #6b7280' }}>
                     {stat.year}
                   </TableCell>
                   
@@ -1149,67 +1610,338 @@ const StatisticsPage = () => {
                   </TableCell>
                 </TableRow>
               ))}
+              
+              {/* 합계 행 */}
+              {getFilteredStatistics().length > 0 && (
+                <TableRow sx={{ backgroundColor: '#f8fafc', '&:hover': { backgroundColor: '#f1f5f9' } }}>
+                  {/* 년도 */}
+                  <TableCell sx={{ 
+                    fontWeight: 'bold', 
+                    backgroundColor: '#e2e8f0', 
+                    textAlign: 'center', 
+                    border: '1px solid #e5e7eb', 
+                    borderRight: '3px solid #6b7280',
+                    fontSize: '14px',
+                    color: '#1e293b'
+                  }}>
+                    합계
+                  </TableCell>
+                  
+                  {/* 등록 섹션 */}
+                  <TableCell sx={{ 
+                    textAlign: 'center', 
+                    border: '1px solid #e5e7eb', 
+                    borderRight: '1px solid #94a3b8',
+                    fontWeight: 'bold',
+                    backgroundColor: '#fef3c7'
+                  }}>
+                    <Chip 
+                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_registration || 0), 0)}
+                      size="small"
+                      sx={{ 
+                        backgroundColor: '#fef3c7', 
+                        color: '#92400e',
+                        fontWeight: 'bold',
+                        fontSize: '12px'
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ 
+                    textAlign: 'center', 
+                    border: '1px solid #e5e7eb', 
+                    borderRight: '1px solid #94a3b8',
+                    fontWeight: 'bold',
+                    backgroundColor: '#fef3c7'
+                  }}>
+                    <Chip 
+                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_registration || 0), 0)}
+                      size="small"
+                      sx={{ 
+                        backgroundColor: '#fef3c7', 
+                        color: '#92400e',
+                        fontWeight: 'bold',
+                        fontSize: '12px'
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ 
+                    textAlign: 'center', 
+                    border: '1px solid #e5e7eb', 
+                    borderRight: '3px solid #1e40af',
+                    fontWeight: 'bold',
+                    backgroundColor: '#dbeafe',
+                    color: '#1e40af',
+                    fontSize: '14px'
+                  }}>
+                    {getFilteredStatistics().reduce((sum, stat) => sum + (stat.total_registration || 0), 0)}
+                  </TableCell>
+                  
+                  {/* 수료 섹션 */}
+                  <TableCell sx={{ 
+                    textAlign: 'center', 
+                    border: '1px solid #e5e7eb', 
+                    borderRight: '1px solid #94a3b8',
+                    fontWeight: 'bold',
+                    backgroundColor: '#dcfce7'
+                  }}>
+                    <Chip 
+                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_graduate_prev_year || 0), 0)}
+                      size="small"
+                      sx={{ 
+                        backgroundColor: '#dcfce7', 
+                        color: '#166534',
+                        fontWeight: 'bold',
+                        fontSize: '12px'
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ 
+                    textAlign: 'center', 
+                    border: '1px solid #e5e7eb', 
+                    borderRight: '1px solid #94a3b8',
+                    fontWeight: 'bold',
+                    backgroundColor: '#dcfce7'
+                  }}>
+                    <Chip 
+                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_graduate_current_year || 0), 0)}
+                      size="small"
+                      sx={{ 
+                        backgroundColor: '#dcfce7', 
+                        color: '#166534',
+                        fontWeight: 'bold',
+                        fontSize: '12px'
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ 
+                    textAlign: 'center', 
+                    border: '1px solid #e5e7eb', 
+                    borderRight: '1px solid #94a3b8',
+                    fontWeight: 'bold',
+                    backgroundColor: '#dcfce7'
+                  }}>
+                    <Chip 
+                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_graduate_total || 0), 0)}
+                      size="small"
+                      sx={{ 
+                        backgroundColor: '#dcfce7', 
+                        color: '#166534',
+                        fontWeight: 'bold',
+                        fontSize: '12px'
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ 
+                    textAlign: 'center', 
+                    border: '1px solid #e5e7eb', 
+                    borderRight: '1px solid #94a3b8',
+                    fontWeight: 'bold',
+                    backgroundColor: '#dcfce7'
+                  }}>
+                    <Chip 
+                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_graduate_prev_year || 0), 0)}
+                      size="small"
+                      sx={{ 
+                        backgroundColor: '#dcfce7', 
+                        color: '#166534',
+                        fontWeight: 'bold',
+                        fontSize: '12px'
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ 
+                    textAlign: 'center', 
+                    border: '1px solid #e5e7eb', 
+                    borderRight: '1px solid #94a3b8',
+                    fontWeight: 'bold',
+                    backgroundColor: '#dcfce7'
+                  }}>
+                    <Chip 
+                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_graduate_current_year || 0), 0)}
+                      size="small"
+                      sx={{ 
+                        backgroundColor: '#dcfce7', 
+                        color: '#166534',
+                        fontWeight: 'bold',
+                        fontSize: '12px'
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ 
+                    textAlign: 'center', 
+                    border: '1px solid #e5e7eb', 
+                    borderRight: '1px solid #94a3b8',
+                    fontWeight: 'bold',
+                    backgroundColor: '#dcfce7'
+                  }}>
+                    <Chip 
+                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_graduate_total || 0), 0)}
+                      size="small"
+                      sx={{ 
+                        backgroundColor: '#dcfce7', 
+                        color: '#166534',
+                        fontWeight: 'bold',
+                        fontSize: '12px'
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ 
+                    textAlign: 'center', 
+                    border: '1px solid #e5e7eb', 
+                    borderRight: '3px solid #059669',
+                    fontWeight: 'bold',
+                    backgroundColor: '#bbf7d0',
+                    color: '#059669',
+                    fontSize: '14px'
+                  }}>
+                    {getFilteredStatistics().reduce((sum, stat) => sum + (stat.total_graduate || 0), 0)}
+                  </TableCell>
+                  
+                  {/* 교육 섹션 */}
+                  <TableCell sx={{ 
+                    textAlign: 'center', 
+                    border: '1px solid #e5e7eb', 
+                    borderRight: '1px solid #94a3b8',
+                    fontWeight: 'bold',
+                    backgroundColor: '#fef3c7'
+                  }}>
+                    <Chip 
+                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_education_in_progress || 0), 0)}
+                      size="small"
+                      sx={{ 
+                        backgroundColor: '#fef3c7', 
+                        color: '#92400e',
+                        fontWeight: 'bold',
+                        fontSize: '12px'
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ 
+                    textAlign: 'center', 
+                    border: '1px solid #e5e7eb', 
+                    borderRight: '1px solid #94a3b8',
+                    fontWeight: 'bold',
+                    backgroundColor: '#fef3c7'
+                  }}>
+                    <Chip 
+                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_education_discontinued || 0), 0)}
+                      size="small"
+                      sx={{ 
+                        backgroundColor: '#fef3c7', 
+                        color: '#92400e',
+                        fontWeight: 'bold',
+                        fontSize: '12px'
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ 
+                    textAlign: 'center', 
+                    border: '1px solid #e5e7eb', 
+                    borderRight: '1px solid #94a3b8',
+                    fontWeight: 'bold',
+                    backgroundColor: '#fef3c7'
+                  }}>
+                    <Chip 
+                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_education_total || 0), 0)}
+                      size="small"
+                      sx={{ 
+                        backgroundColor: '#fef3c7', 
+                        color: '#92400e',
+                        fontWeight: 'bold',
+                        fontSize: '12px'
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ 
+                    textAlign: 'center', 
+                    border: '1px solid #e5e7eb', 
+                    borderRight: '1px solid #94a3b8',
+                    fontWeight: 'bold',
+                    backgroundColor: '#fef3c7'
+                  }}>
+                    <Chip 
+                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_education_in_progress || 0), 0)}
+                      size="small"
+                      sx={{ 
+                        backgroundColor: '#fef3c7', 
+                        color: '#92400e',
+                        fontWeight: 'bold',
+                        fontSize: '12px'
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ 
+                    textAlign: 'center', 
+                    border: '1px solid #e5e7eb', 
+                    borderRight: '1px solid #94a3b8',
+                    fontWeight: 'bold',
+                    backgroundColor: '#fef3c7'
+                  }}>
+                    <Chip 
+                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_education_discontinued || 0), 0)}
+                      size="small"
+                      sx={{ 
+                        backgroundColor: '#fef3c7', 
+                        color: '#92400e',
+                        fontWeight: 'bold',
+                        fontSize: '12px'
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ 
+                    textAlign: 'center', 
+                    border: '1px solid #e5e7eb', 
+                    borderRight: '1px solid #94a3b8',
+                    fontWeight: 'bold',
+                    backgroundColor: '#fef3c7'
+                  }}>
+                    <Chip 
+                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_education_total || 0), 0)}
+                      size="small"
+                      sx={{ 
+                        backgroundColor: '#fef3c7', 
+                        color: '#92400e',
+                        fontWeight: 'bold',
+                        fontSize: '12px'
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ 
+                    textAlign: 'center', 
+                    border: '1px solid #e5e7eb', 
+                    borderRight: '3px solid #f59e0b',
+                    fontWeight: 'bold',
+                    backgroundColor: '#fed7aa',
+                    color: '#f59e0b',
+                    fontSize: '14px'
+                  }}>
+                    {getFilteredStatistics().reduce((sum, stat) => sum + (stat.total_education || 0), 0)}
+                  </TableCell>
+                  
+                  {/* 수정/삭제 버튼 (합계 행에는 없음) */}
+                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
+                    -
+                  </TableCell>
+                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb' }}>
+                    -
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </TableContainer>
       </Paper>
+        )}
 
       {/* 년도별 등록/수료 현황 차트 */}
-      {statistics.length > 0 && (
+        {getFilteredStatistics().length > 0 && (
         <Paper sx={{ width: '100%', mt: 3, p: 2, boxSizing: 'border-box' }}>
         <div className="w-full p-4 bg-gradient-to-br from-white to-blue-50 rounded-2xl shadow-lg border border-blue-100" style={{ boxSizing: 'border-box' }}>
           {/* 헤더 */}
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <FormControl size="small" sx={{ width: 120 }}>
-              <InputLabel sx={{ fontSize: '12px', fontWeight: '600', color: '#374151' }}>년도</InputLabel>
-              <Select
-                              value={chartBaseYear}
-              onChange={(e) => {
-                const year = e.target.value;
-                setChartBaseYear(year);
-                // 년도 변경 시 월별/연령대별 통계도 새로 로드
-                if (year) {
-                  fetchMonthlyAgeStats(year);
-                }
-              }}
-                sx={{
-                  height: '36px',
-                  borderRadius: '12px',
-                  background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(0,0,0,0.1)',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    borderColor: '#3b82f6',
-                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.1)'
-                  },
-                  '&.Mui-focused': {
-                    borderColor: '#3b82f6',
-                    boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)'
-                  },
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    border: 'none'
-                  },
-                  '& .MuiSelect-select': {
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    color: '#374151',
-                    padding: '8px 12px'
-                  }
-                }}
-              >
-                {statistics
-                  .map(stat => parseInt(stat.year))
-                  .sort((a, b) => b - a)
-                  .map(year => (
-                    <MenuItem key={year} value={year.toString()}>
-                      {year}년
-                    </MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
+            <div style={{ width: '120px' }}></div>
             <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#374151', fontSize: '18px', flex: 1, textAlign: 'center' }}>
-              년도별 등록자/수료자 현황
+              {selectedYear && selectedDepartment ? `${selectedYear}년 기준 ${selectedDepartment}의 등록자/수료자 현황` : '년도별 등록자/수료자 현황'}
             </Typography>
             <div style={{ width: '120px' }}></div>
           </div>
@@ -1345,7 +2077,7 @@ const StatisticsPage = () => {
                   차트 데이터를 불러오는 중...
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  기준 년도: {chartBaseYear || '설정되지 않음'}
+                  기준 년도: {selectedYear || '설정되지 않음'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   통계 데이터: {statistics.length}개
@@ -1356,11 +2088,14 @@ const StatisticsPage = () => {
         </div>
         </Paper>
       )}
+      </div>
       
+      {/* 2페이지: 월별/연령대별 통계 표 + 등록현황 분석 */}
+      <div style={{ pageBreakAfter: 'always' }}>
       {/* 월별/연령대별 통계 표 */}
       <Box sx={{ mt: 4 }}>
         <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', fontWeight: 'bold' }}>
-          {selectedYear || new Date().getFullYear()}년 새가족 등록현황 보고서
+          {selectedYear && selectedDepartment ? `${selectedYear}년 ${selectedDepartment}의 등록현황보고` : `${selectedYear || new Date().getFullYear()}년 새가족 등록현황 보고서`}
         </Typography>
         
         <Box sx={{ overflowX: 'auto' }}>
@@ -1670,7 +2405,7 @@ const StatisticsPage = () => {
       {Object.keys(monthlyAgeStats).length > 0 && (
         <Paper sx={{ width: '98%', mt: 3, p: 2, boxShadow: 2, mx: 'auto' }}>
           <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', fontWeight: 'bold', color: '#374151' }}>
-            {selectedYear || new Date().getFullYear()}년 새가족 등록현황 분석
+            {selectedYear && selectedDepartment ? `${selectedYear}년 ${selectedDepartment}의 등록현황 분석` : `${selectedYear || new Date().getFullYear()}년 새가족 등록현황 분석`}
           </Typography>
           
           <Grid container spacing={2}>
@@ -1779,11 +2514,15 @@ const StatisticsPage = () => {
         </Paper>
       )}
 
+      </div>
+      
+      {/* 3페이지: 연령대별 현황 + 월별/연령대별 현황 */}
+      <div>
       {/* 초신자/전입신자 분리 연령대별 통계 차트 */}
       {Object.keys(monthlyAgeStats).length > 0 && (
         <Paper sx={{ width: '98%', mt: 3, p: 2, boxShadow: 2, mx: 'auto' }}>
           <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', fontWeight: 'bold', color: '#374151' }}>
-            {selectedYear || new Date().getFullYear()}년 초신자 및 전입신자 등록자의 연령대별 현황
+            {selectedYear && selectedDepartment ? `${selectedYear}년 ${selectedDepartment}의 초신자 및 전입신자의 등록자의 연령대별 현황` : `${selectedYear || new Date().getFullYear()}년 초신자 및 전입신자 등록자의 연령대별 현황`}
           </Typography>
           
           <Grid container spacing={2}>
@@ -1884,7 +2623,7 @@ const StatisticsPage = () => {
       {Object.keys(monthlyAgeStats).length > 0 && (
         <Paper sx={{ width: '98%', mt: 3, p: 2, boxShadow: 2, mx: 'auto' }}>
           <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', fontWeight: 'bold', color: '#374151' }}>
-            {selectedYear || new Date().getFullYear()}년 초신자 및 전입신자 등록자의 월별/연령대별 현황
+            {selectedYear && selectedDepartment ? `${selectedYear}년 ${selectedDepartment}의 초신자 및 전입신자 등록자의 월별/연령대별 현황` : `${selectedYear || new Date().getFullYear()}년 초신자 및 전입신자 등록자의 월별/연령대별 현황`}
           </Typography>
           
           <Grid container spacing={2}>
@@ -2087,30 +2826,6 @@ const StatisticsPage = () => {
                       }
                     }}
               />
-            </Grid>
-                <Grid item xs={6} sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Button
-                    variant="contained"
-                    onClick={generateStatistics}
-                    sx={{
-                      px: 3,
-                      py: 1.5,
-                      background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                      color: 'white',
-                      borderRadius: 2,
-                      textTransform: 'none',
-                      fontWeight: 600,
-                      boxShadow: '0 4px 6px -1px rgba(245, 158, 11, 0.3)',
-                      '&:hover': {
-                        background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
-                        boxShadow: '0 10px 15px -3px rgba(245, 158, 11, 0.4)',
-                        transform: 'translateY(-1px)'
-                      },
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    통계 생성
-                  </Button>
             </Grid>
               </Grid>
             </Paper>
@@ -2552,6 +3267,236 @@ const StatisticsPage = () => {
         </DialogActions>
       </Dialog>
 
+      {/* 통계 생성 확인 팝업 */}
+      <Dialog
+        open={generateConfirmOpen}
+        onClose={() => setGenerateConfirmOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            border: '1px solid #e5e7eb'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          textAlign: 'center', 
+          fontSize: '20px', 
+          fontWeight: 'bold', 
+          color: '#1f2937',
+          pb: 1,
+          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+          color: 'white',
+          borderRadius: '12px 12px 0 0'
+        }}>
+          통계 생성 확인
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3, pb: 2 }}>
+          <DialogContentText sx={{ 
+            textAlign: 'center', 
+            fontSize: '16px', 
+            color: '#374151',
+            mb: 2
+          }}>
+            <strong>{selectedYear}년 {selectedDepartment} 부서</strong>의 통계를 생성하시겠습니까?
+          </DialogContentText>
+          <DialogContentText sx={{ 
+            textAlign: 'center', 
+            fontSize: '14px', 
+            color: '#6b7280',
+            mb: 1
+          }}>
+            이 작업은 기존 통계 데이터를 업데이트할 수 있습니다.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ 
+          justifyContent: 'center', 
+          gap: 2, 
+          pb: 3, 
+          px: 3 
+        }}>
+          <Button
+            onClick={() => setGenerateConfirmOpen(false)}
+            variant="outlined"
+            sx={{
+              px: 3,
+              py: 1.5,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 500,
+              borderColor: '#d1d5db',
+              color: '#6b7280',
+              '&:hover': {
+                borderColor: '#9ca3af',
+                backgroundColor: '#f9fafb'
+              }
+            }}
+          >
+            취소
+          </Button>
+          <Button
+            onClick={generateStatistics}
+            variant="contained"
+            sx={{
+              px: 3,
+              py: 1.5,
+              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+              color: 'white',
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 500,
+              boxShadow: '0 4px 6px -1px rgba(245, 158, 11, 0.3)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
+                boxShadow: '0 10px 15px -3px rgba(245, 158, 11, 0.4)',
+                transform: 'translateY(-1px)'
+              },
+              transition: 'all 0.2s ease'
+            }}
+          >
+            생성
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* PDF 다운로드 옵션 다이얼로그 */}
+      <Dialog
+        open={pdfOptionsOpen}
+        onClose={() => setPdfOptionsOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            border: '1px solid #e5e7eb'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          textAlign: 'center', 
+          fontSize: '20px', 
+          fontWeight: 'bold', 
+          color: '#1f2937',
+          pb: 1,
+          background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+          color: 'white',
+          borderRadius: '12px 12px 0 0'
+        }}>
+          PDF 다운로드 옵션
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3, pb: 2 }}>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: '#374151' }}>
+              용지 방향
+            </Typography>
+            <FormControl component="fieldset">
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <Box 
+                  sx={{ 
+                    flex: 1, 
+                    p: 2, 
+                    border: pdfOrientation === 'portrait' ? '2px solid #dc2626' : '2px solid #e5e7eb',
+                    borderRadius: 2,
+                    cursor: 'pointer',
+                    backgroundColor: pdfOrientation === 'portrait' ? '#fef2f2' : '#f9fafb',
+                    transition: 'all 0.2s'
+                  }}
+                  onClick={() => setPdfOrientation('portrait')}
+                >
+                  <Box sx={{ textAlign: 'center' }}>
+                    <Box sx={{ 
+                      width: 40, 
+                      height: 60, 
+                      border: '2px solid #374151', 
+                      mx: 'auto', 
+                      mb: 1,
+                      borderRadius: 1
+                    }} />
+                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>세로</Typography>
+                  </Box>
+                </Box>
+                <Box 
+                  sx={{ 
+                    flex: 1, 
+                    p: 2, 
+                    border: pdfOrientation === 'landscape' ? '2px solid #dc2626' : '2px solid #e5e7eb',
+                    borderRadius: 2,
+                    cursor: 'pointer',
+                    backgroundColor: pdfOrientation === 'landscape' ? '#fef2f2' : '#f9fafb',
+                    transition: 'all 0.2s'
+                  }}
+                  onClick={() => setPdfOrientation('landscape')}
+                >
+                  <Box sx={{ textAlign: 'center' }}>
+                    <Box sx={{ 
+                      width: 60, 
+                      height: 40, 
+                      border: '2px solid #374151', 
+                      mx: 'auto', 
+                      mb: 1,
+                      borderRadius: 1
+                    }} />
+                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>가로</Typography>
+                  </Box>
+                </Box>
+              </Box>
+            </FormControl>
+          </Box>
+
+        </DialogContent>
+        <DialogActions sx={{ 
+          justifyContent: 'center', 
+          gap: 2, 
+          pb: 3, 
+          px: 3 
+        }}>
+          <Button
+            onClick={() => setPdfOptionsOpen(false)}
+            variant="outlined"
+            sx={{
+              px: 3,
+              py: 1.5,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 500,
+              borderColor: '#d1d5db',
+              color: '#6b7280',
+              '&:hover': {
+                borderColor: '#9ca3af',
+                backgroundColor: '#f9fafb'
+              }
+            }}
+          >
+            취소
+          </Button>
+          <Button
+            onClick={handlePdfDownload}
+            variant="contained"
+            sx={{
+              px: 3,
+              py: 1.5,
+              background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+              color: 'white',
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 500,
+              boxShadow: '0 4px 6px -1px rgba(220, 38, 38, 0.3)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #b91c1c 0%, #991b1b 100%)',
+                boxShadow: '0 10px 15px -3px rgba(220, 38, 38, 0.4)',
+                transform: 'translateY(-1px)'
+              },
+              transition: 'all 0.2s ease'
+            }}
+          >
+            PDF 생성
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* 스낵바 */}
       <Snackbar
         open={snackbar.open}
@@ -2566,6 +3511,8 @@ const StatisticsPage = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+      </div> {/* 3페이지 닫기 */}
+      </div> {/* statistics-content 닫기 */}
     </Box>
   );
 };

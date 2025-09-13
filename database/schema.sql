@@ -326,6 +326,7 @@ CREATE TABLE `user_menus` (
 CREATE TABLE `yearly_new_family_statistics` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `year` int(4) NOT NULL COMMENT '년도',
+  `department` varchar(50) NOT NULL DEFAULT '새가족위원회' COMMENT '부서',
   `new_comer_registration` int(11) DEFAULT 0 COMMENT '초신자등록',
   `transfer_believer_registration` int(11) DEFAULT 0 COMMENT '전입신자등록',
   `total_registration` int(11) DEFAULT 0 COMMENT '등록전체합계',
@@ -346,8 +347,9 @@ CREATE TABLE `yearly_new_family_statistics` (
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_year` (`year`),
-  KEY `idx_year` (`year`)
+  UNIQUE KEY `unique_year_department` (`year`, `department`),
+  KEY `idx_year` (`year`),
+  KEY `idx_department` (`department`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 -- new_comers_monthly_age_statistics table

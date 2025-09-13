@@ -19,11 +19,11 @@ const pool = mariadb.createPool({
     timezone: '+09:00'
 });
 
-// 한국 이름 생성 함수
-function generateKoreanName(gender) {
-    const surnames = ['김', '이', '박', '최', '정', '강', '조', '윤', '장', '임', '한', '오', '서', '신', '권', '황', '안', '송', '전', '고'];
-    const maleNames = ['민수', '준호', '성민', '동호', '태호', '현우', '영희', '수정', '지은', '소영', '미영', '철수', '영희', '동현', '성호', '민준', '미경', '지영', '수진', '혜진'];
-    const femaleNames = ['지영', '수진', '혜진', '미영', '지은', '소영', '영희', '수정', '미경', '민수', '준호', '성민', '동호', '태호', '현우', '철수', '영희', '동현', '성호', '민준'];
+// 한국 이름 생성 함수 (2024년용 - 다른 이름들)
+function generateKoreanName2024(gender) {
+    const surnames = ['김', '이', '박', '최', '정', '강', '조', '윤', '장', '임', '한', '오', '서', '신', '권', '황', '안', '송', '전', '고', '문', '양', '배', '허', '유', '노', '백', '남', '심', '주'];
+    const maleNames = ['현수', '민호', '지훈', '성우', '태민', '준영', '동욱', '승현', '재현', '민재', '지호', '준서', '시우', '하준', '지우', '서준', '도윤', '예준', '주원', '지안'];
+    const femaleNames = ['서연', '지우', '서윤', '지유', '채원', '지원', '예은', '하은', '지안', '서현', '민지', '지민', '예린', '수아', '지현', '예나', '서영', '하린', '지율', '예지'];
     
     const surname = surnames[Math.floor(Math.random() * surnames.length)];
     const names = gender === '남' ? maleNames : femaleNames;
@@ -84,9 +84,9 @@ function getNextSunday(year, month, day) {
     return date;
 }
 
-// 등록일자 생성 함수 (2025년 일요일)
-function generateRegisterDate() {
-    const year = 2025;
+// 등록일자 생성 함수 (2024년 일요일)
+function generateRegisterDate2024() {
+    const year = 2024;
     const month = Math.floor(Math.random() * 12) + 1;
     const day = Math.floor(Math.random() * 28) + 1;
     
@@ -95,7 +95,7 @@ function generateRegisterDate() {
 }
 
 // 교육 시작일자 생성 함수 (일요일)
-function generateEducationStartDate(registerDate) {
+function generateEducationStartDate2024(registerDate) {
     const register = new Date(registerDate);
     const startDate = new Date(register);
     startDate.setDate(startDate.getDate() + Math.floor(Math.random() * 30) + 7); // 등록일로부터 7-37일 후
@@ -108,8 +108,8 @@ function generateEducationStartDate(registerDate) {
     return startDate.toISOString().split('T')[0];
 }
 
-// 교육 종료일자 생성 함수 (초신자 8주, 전입신자 4주, 일요일)
-function generateEducationEndDate(startDate, believerType) {
+// 교육 종료일자 생성 함수 (초신자 8주, 전입신자 4주, 일요일, 2024년 고정)
+function generateEducationEndDate2024(startDate, believerType) {
     const start = new Date(startDate);
     const endDate = new Date(start);
     
@@ -122,6 +122,9 @@ function generateEducationEndDate(startDate, believerType) {
     const daysUntilSunday = (7 - dayOfWeek) % 7;
     endDate.setDate(endDate.getDate() + daysUntilSunday);
     
+    // 년도를 2024년으로 고정
+    endDate.setFullYear(2024);
+    
     return endDate.toISOString().split('T')[0];
 }
 
@@ -131,7 +134,7 @@ function assignTeacher(teachers, index) {
 }
 
 // 초신자 데이터 생성
-async function generateNewComersData() {
+async function generateNewComersData2024() {
     let conn;
     try {
         conn = await pool.getConnection();
@@ -143,23 +146,23 @@ async function generateNewComersData() {
 
         console.log(`초신자교사 ${newComerTeachers.length}명, 전입신자교사 ${transferTeachers.length}명 확인`);
 
-        // 초신자 100명 데이터 생성
-        console.log('\n=== 초신자 100명 데이터 생성 중... ===');
+        // 초신자 180명 데이터 생성
+        console.log('\n=== 초신자 180명 데이터 생성 중... ===');
         const newComersData = [];
         
-        for (let i = 1; i <= 100; i++) {
+        for (let i = 1; i <= 180; i++) {
             const gender = Math.random() < 0.5 ? '남' : '여';
-            const name = generateKoreanName(gender);
+            const name = generateKoreanName2024(gender);
             const birthDate = generateBirthDate();
-            const registerDate = generateRegisterDate();
-            const educationStartDate = generateEducationStartDate(registerDate);
-            const educationEndDate = generateEducationEndDate(educationStartDate, '초신자');
+            const registerDate = generateRegisterDate2024();
+            const educationStartDate = generateEducationStartDate2024(registerDate);
+            const educationEndDate = generateEducationEndDate2024(educationStartDate, '초신자');
             
             const newComer = {
                 department: '새가족위원회',
                 believer_type: '초신자',
                 education_type: Math.random() < 0.5 ? '수료' : '교육중',
-                year: '2025',
+                year: '2024',
                 name: name,
                 gender: gender,
                 marital_status: Math.random() < 0.6 ? '기혼' : '미혼',
@@ -176,29 +179,29 @@ async function generateNewComersData() {
                 identity_verified: 'Y',
                 prev_church: null,
                 comment: `초신자 ${i}번 - ${name}`,
-                number: `25-${i.toString().padStart(3, '0')}`
+                number: `24-${i.toString().padStart(3, '0')}`
             };
             
             newComersData.push(newComer);
         }
 
-        // 전입신자 100명 데이터 생성
-        console.log('\n=== 전입신자 100명 데이터 생성 중... ===');
+        // 전입신자 361명 데이터 생성
+        console.log('\n=== 전입신자 361명 데이터 생성 중... ===');
         const transferBelieversData = [];
         
-        for (let i = 1; i <= 100; i++) {
+        for (let i = 1; i <= 361; i++) {
             const gender = Math.random() < 0.5 ? '남' : '여';
-            const name = generateKoreanName(gender);
+            const name = generateKoreanName2024(gender);
             const birthDate = generateBirthDate();
-            const registerDate = generateRegisterDate();
-            const educationStartDate = generateEducationStartDate(registerDate);
-            const educationEndDate = generateEducationEndDate(educationStartDate, '전입신자');
+            const registerDate = generateRegisterDate2024();
+            const educationStartDate = generateEducationStartDate2024(registerDate);
+            const educationEndDate = generateEducationEndDate2024(educationStartDate, '전입신자');
             
             const transferBeliever = {
                 department: '새가족위원회',
                 believer_type: '전입신자',
                 education_type: Math.random() < 0.5 ? '수료' : '교육중',
-                year: '2025',
+                year: '2024',
                 name: name,
                 gender: gender,
                 marital_status: Math.random() < 0.6 ? '기혼' : '미혼',
@@ -215,7 +218,7 @@ async function generateNewComersData() {
                 identity_verified: 'Y',
                 prev_church: ['○○교회', '△△교회', '□□교회', '◇◇교회', '◎◎교회'][Math.floor(Math.random() * 5)],
                 comment: `전입신자 ${i}번 - ${name}`,
-                number: `25-${i.toString().padStart(3, '0')}`
+                number: `24-${i.toString().padStart(3, '0')}`
             };
             
             transferBelieversData.push(transferBeliever);
@@ -262,23 +265,23 @@ async function generateNewComersData() {
             ]);
         }
 
-        console.log('✅ 초신자 100명, 전입신자 100명 데이터 생성 완료!');
+        console.log('✅ 초신자 180명, 전입신자 361명 데이터 생성 완료!');
 
-        // 수료자 50명씩 new_comers_graduates 테이블에 추가
+        // 수료자 데이터를 new_comers_graduates 테이블에 추가
         console.log('\n=== 수료자 데이터를 new_comers_graduates 테이블에 추가 중... ===');
         
-        // 초신자 수료자 50명 선택
+        // 초신자 수료자 선택 (90명)
         const newComerGraduates = await conn.query(`
             SELECT * FROM new_comers 
-            WHERE believer_type = '초신자' AND education_type = '수료' 
-            ORDER BY id LIMIT 50
+            WHERE believer_type = '초신자' AND education_type = '수료' AND year = '2024'
+            ORDER BY id LIMIT 90
         `);
 
-        // 전입신자 수료자 50명 선택
+        // 전입신자 수료자 선택 (180명)
         const transferGraduates = await conn.query(`
             SELECT * FROM new_comers 
-            WHERE believer_type = '전입신자' AND education_type = '수료' 
-            ORDER BY id LIMIT 50
+            WHERE believer_type = '전입신자' AND education_type = '수료' AND year = '2024'
+            ORDER BY id LIMIT 180
         `);
 
         console.log(`초신자 수료자 ${newComerGraduates.length}명, 전입신자 수료자 ${transferGraduates.length}명 확인`);
@@ -286,7 +289,10 @@ async function generateNewComersData() {
         // 초신자 수료자 데이터를 new_comers_graduates에 삽입
         for (let i = 0; i < newComerGraduates.length; i++) {
             const graduate = newComerGraduates[i];
-            const graduateNumber = `25-${(i + 1).toString().padStart(3, '0')}`;
+            const graduateNumber = `24-${(i + 1).toString().padStart(3, '0')}`;
+            
+            // 수료일자를 2024년으로 수정
+            const educationEndDate2024 = graduate.education_end_date.replace(/^\d{4}/, '2024');
             
             await conn.query(`
                 INSERT INTO new_comers_graduates (
@@ -299,7 +305,7 @@ async function generateNewComersData() {
                 graduateNumber, graduate.department, graduate.believer_type, graduate.education_type, graduate.year,
                 graduate.name, graduate.gender, graduate.marital_status, graduate.birth_date,
                 graduate.address, graduate.phone, graduate.teacher, graduate.register_date,
-                graduate.education_start_date, graduate.education_end_date, graduate.affiliation_org,
+                graduate.education_start_date, educationEndDate2024, graduate.affiliation_org,
                 graduate.belong, graduate.new_life_strategy_date, graduate.identity_verified,
                 graduate.prev_church, graduate.comment, graduate.id
             ]);
@@ -308,7 +314,11 @@ async function generateNewComersData() {
         // 전입신자 수료자 데이터를 new_comers_graduates에 삽입
         for (let i = 0; i < transferGraduates.length; i++) {
             const graduate = transferGraduates[i];
-            const graduateNumber = `25-${(newComerGraduates.length + i + 1).toString().padStart(3, '0')}`;
+            // 전입신자 수료자는 24-001부터 시작
+            const graduateNumber = `24-${(i + 1).toString().padStart(3, '0')}`;
+            
+            // 수료일자를 2024년으로 수정
+            const educationEndDate2024 = graduate.education_end_date.replace(/^\d{4}/, '2024');
             
             await conn.query(`
                 INSERT INTO new_comers_graduates (
@@ -321,7 +331,7 @@ async function generateNewComersData() {
                 graduateNumber, graduate.department, graduate.believer_type, graduate.education_type, graduate.year,
                 graduate.name, graduate.gender, graduate.marital_status, graduate.birth_date,
                 graduate.address, graduate.phone, graduate.teacher, graduate.register_date,
-                graduate.education_start_date, graduate.education_end_date, graduate.affiliation_org,
+                graduate.education_start_date, educationEndDate2024, graduate.affiliation_org,
                 graduate.belong, graduate.new_life_strategy_date, graduate.identity_verified,
                 graduate.prev_church, graduate.comment, graduate.id
             ]);
@@ -331,13 +341,118 @@ async function generateNewComersData() {
         console.log(`- 초신자 수료자: ${newComerGraduates.length}명`);
         console.log(`- 전입신자 수료자: ${transferGraduates.length}명`);
 
+        // new_comers_education 테이블에 교육 데이터 생성
+        console.log('\n=== new_comers_education 테이블에 교육 데이터 생성 중... ===');
+        
+        // 테이블 구조 확인
+        try {
+            const tableStructure = await conn.query("DESCRIBE new_comers_education");
+            console.log('new_comers_education 테이블 구조:', tableStructure.map(col => col.Field).join(', '));
+        } catch (err) {
+            console.log('new_comers_education 테이블이 존재하지 않거나 접근할 수 없습니다:', err.message);
+        }
+
+        // 모든 초신자와 전입신자 데이터 가져오기
+        const allNewComers = await conn.query(`
+            SELECT id, name, believer_type, education_type, register_date, education_start_date, education_end_date, teacher
+            FROM new_comers 
+            WHERE year = '2024'
+            ORDER BY believer_type, id
+        `);
+
+        console.log(`총 ${allNewComers.length}명의 교육 데이터를 생성합니다.`);
+
+        // new_comers_education 테이블에 데이터 삽입
+        for (const newComer of allNewComers) {
+            try {
+                // 교육 시작일자와 종료일자를 기반으로 주차별 교육일자 생성
+                const startDate = new Date(newComer.education_start_date);
+                const endDate = new Date(newComer.education_end_date);
+                
+                // 초신자는 8주, 전입신자는 4주
+                const totalWeeks = newComer.believer_type === '초신자' ? 8 : 4;
+                
+                // 교육중인 경우 해당 주차까지만 데이터 생성
+                let maxWeeks = totalWeeks;
+                if (newComer.education_type !== '수료') {
+                    // 교육중인 경우: 초신자는 7주차까지만, 전입신자는 3주차까지만 생성
+                    // (초신자 8주차, 전입신자 4주차는 작성하지 않음)
+                    maxWeeks = totalWeeks - 1;
+                    console.log(`교육중 - ID: ${newComer.id}, ${newComer.believer_type}, education_type: ${newComer.education_type}, maxWeeks: ${maxWeeks}`);
+                } else {
+                    console.log(`수료 - ID: ${newComer.id}, ${newComer.believer_type}, education_type: ${newComer.education_type}, maxWeeks: ${maxWeeks}`);
+                }
+                
+                // 주차별 교육일자 생성 (매주 일요일)
+                const weekDates = [];
+                for (let week = 1; week <= maxWeeks; week++) {
+                    const weekDate = new Date(startDate);
+                    weekDate.setDate(weekDate.getDate() + (week - 1) * 7);
+                    
+                    // 일요일로 조정
+                    const dayOfWeek = weekDate.getDay();
+                    const daysUntilSunday = (7 - dayOfWeek) % 7;
+                    weekDate.setDate(weekDate.getDate() + daysUntilSunday);
+                    
+                    weekDates.push(weekDate.toISOString().split('T')[0]);
+                }
+                
+                // 8주차까지의 날짜 배열 생성 (교육중인 경우 maxWeeks까지만)
+                const week1Date = weekDates[0] || null;
+                const week2Date = weekDates[1] || null;
+                const week3Date = weekDates[2] || null;
+                const week4Date = weekDates[3] || null;
+                const week5Date = maxWeeks >= 5 ? weekDates[4] || null : null;
+                const week6Date = maxWeeks >= 6 ? weekDates[5] || null : null;
+                const week7Date = maxWeeks >= 7 ? weekDates[6] || null : null;
+                const week8Date = maxWeeks >= 8 ? weekDates[7] || null : null;
+                
+                await conn.query(`
+                    INSERT INTO new_comers_education (
+                        new_comer_id, week1_date, week2_date, week3_date, week4_date,
+                        week5_date, week6_date, week7_date, week8_date,
+                        week1_comment, week2_comment, week3_comment, week4_comment,
+                        week5_comment, week6_comment, week7_comment, week8_comment,
+                        overall_comment, created_at, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+                `, [
+                    newComer.id,
+                    week1Date, week2Date, week3Date, week4Date,
+                    week5Date, week6Date, week7Date, week8Date,
+                    maxWeeks >= 1 ? `${newComer.believer_type} 1주차 교육` : null,
+                    maxWeeks >= 2 ? `${newComer.believer_type} 2주차 교육` : null,
+                    maxWeeks >= 3 ? `${newComer.believer_type} 3주차 교육` : null,
+                    maxWeeks >= 4 ? `${newComer.believer_type} 4주차 교육` : null,
+                    maxWeeks >= 5 ? `${newComer.believer_type} 5주차 교육` : null,
+                    maxWeeks >= 6 ? `${newComer.believer_type} 6주차 교육` : null,
+                    maxWeeks >= 7 ? `${newComer.believer_type} 7주차 교육` : null,
+                    maxWeeks >= 8 ? `${newComer.believer_type} 8주차 교육` : null,
+                    newComer.education_type === '수료' ? `${newComer.believer_type} 전체 교육 완료` : `${newComer.believer_type} 교육 진행중`
+                ]);
+            } catch (err) {
+                console.log(`교육 데이터 삽입 실패 (ID: ${newComer.id}):`, err.message);
+            }
+        }
+
+        console.log('✅ new_comers_education 테이블 데이터 생성 완료!');
+
         // 최종 통계 출력
-        const totalNewComers = await conn.query("SELECT COUNT(*) as count FROM new_comers WHERE year = '2025'");
-        const totalGraduates = await conn.query("SELECT COUNT(*) as count FROM new_comers_graduates WHERE year = '2025'");
+        const totalNewComers = await conn.query("SELECT COUNT(*) as count FROM new_comers WHERE year = '2024'");
+        const totalGraduates = await conn.query("SELECT COUNT(*) as count FROM new_comers_graduates WHERE year = '2024'");
+        
+        // new_comers_education 테이블 통계
+        let totalEducation = 0;
+        try {
+            const educationCount = await conn.query("SELECT COUNT(*) as count FROM new_comers_education");
+            totalEducation = educationCount[0].count;
+        } catch (err) {
+            console.log('new_comers_education 테이블 통계 조회 실패:', err.message);
+        }
         
         console.log('\n=== 최종 통계 ===');
-        console.log(`2025년 등록 총 인원: ${totalNewComers[0].count}명`);
-        console.log(`2025년 수료 총 인원: ${totalGraduates[0].count}명`);
+        console.log(`2024년 등록 총 인원: ${totalNewComers[0].count}명`);
+        console.log(`2024년 수료 총 인원: ${totalGraduates[0].count}명`);
+        console.log(`2024년 교육 데이터: ${totalEducation}명`);
 
     } catch (err) {
         console.error('❌ 오류 발생:', err);
@@ -347,4 +462,4 @@ async function generateNewComersData() {
     }
 }
 
-generateNewComersData();
+generateNewComersData2024();
