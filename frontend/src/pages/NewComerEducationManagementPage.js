@@ -730,6 +730,11 @@ const NewComerEducationManagementPage = () => {
               return false;
             }
             
+            // 교사상태가 '재직'이 아닌 경우 제외
+            if (user.teacher_status !== '재직') {
+              return false;
+            }
+            
             // 종료일자가 없는 경우 (무기한) 포함
             if (!user.end_date || user.end_date.trim() === '') {
               return true;

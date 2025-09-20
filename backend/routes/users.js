@@ -16,6 +16,7 @@ router.get('/', async (req, res) => {
         role,
         department,
         teacher_type,
+        teacher_status,
         DATE_FORMAT(birth_date, '%Y-%m-%d') as birth_date,
         position,
         work_years,
@@ -53,6 +54,7 @@ router.get('/:id', async (req, res) => {
         role,
         department,
         teacher_type,
+        teacher_status,
         DATE_FORMAT(birth_date, '%Y-%m-%d') as birth_date,
         position,
         work_years,
@@ -92,6 +94,7 @@ router.post('/', async (req, res) => {
       role,
       department,
       teacher_type,
+      teacher_status,
       birth_date,
       position,
       work_years,
@@ -137,11 +140,11 @@ router.post('/', async (req, res) => {
     // 사용자 생성
     const insertResult = await conn.query(
       `INSERT INTO users (
-        name, email, password, phone, role, department, teacher_type, 
+        name, email, password, phone, role, department, teacher_type, teacher_status,
         birth_date, position, work_years, start_date, end_date, provider, provider_id, is_active
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        name, email, hashedPassword, phone, role, department, teacher_type,
+        name, email, hashedPassword, phone, role, department, teacher_type, teacher_status,
         cleanBirthDate, position, cleanWorkYears, finalStartDate, finalEndDate, provider, provider_id, is_active || 1
       ]
     );
@@ -190,6 +193,7 @@ router.put('/:id', async (req, res) => {
       role,
       department,
       teacher_type,
+      teacher_status,
       birth_date,
       position,
       work_years,
@@ -227,13 +231,13 @@ router.put('/:id', async (req, res) => {
     // 비밀번호 처리
     let updateQuery = `
       UPDATE users SET 
-        name = ?, email = ?, phone = ?, role = ?, department = ?, teacher_type = ?,
+        name = ?, email = ?, phone = ?, role = ?, department = ?, teacher_type = ?, teacher_status = ?,
         birth_date = ?, position = ?, work_years = ?, start_date = ?, end_date = ?, 
         provider = ?, provider_id = ?, is_active = ?
       WHERE id = ?
     `;
     let updateParams = [
-      name, email, phone, role, department, teacher_type,
+      name, email, phone, role, department, teacher_type, teacher_status,
       cleanBirthDate, position, cleanWorkYears, cleanStartDate, cleanEndDate, provider, provider_id, is_active, id
     ];
 
@@ -242,13 +246,13 @@ router.put('/:id', async (req, res) => {
       const hashedPassword = await bcrypt.hash(password, 10);
       updateQuery = `
         UPDATE users SET 
-          name = ?, email = ?, password = ?, phone = ?, role = ?, department = ?, teacher_type = ?,
+          name = ?, email = ?, password = ?, phone = ?, role = ?, department = ?, teacher_type = ?, teacher_status = ?,
           birth_date = ?, position = ?, work_years = ?, start_date = ?, end_date = ?, 
           provider = ?, provider_id = ?, is_active = ?
         WHERE id = ?
       `;
       updateParams = [
-        name, email, hashedPassword, phone, role, department, teacher_type,
+        name, email, hashedPassword, phone, role, department, teacher_type, teacher_status,
         cleanBirthDate, position, cleanWorkYears, cleanStartDate, cleanEndDate, provider, provider_id, is_active, id
       ];
     }

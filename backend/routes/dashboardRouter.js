@@ -215,6 +215,31 @@ router.get('/stats', authenticateToken, async (req, res) => {
       return dayA - dayB;
     });
     
+    // 년도별 통계 조회 (현재 년도 기준 10년치)
+    const yearlyQuery = `
+      SELECT 
+        year,
+        new_comer_registration,
+        transfer_believer_registration,
+        new_comer_graduate_total,
+        transfer_believer_graduate_total
+      FROM yearly_new_family_statistics
+      WHERE year >= ? AND year <= ?
+        AND department = '새가족위원회'
+      ORDER BY year ASC
+    `;
+    
+    const yearlyResults = await conn.execute(yearlyQuery, [currentYear - 9, currentYear]);
+    
+    // 년도별 차트용 데이터 변환
+    const yearlyChartData = yearlyResults.map(row => ({
+      year: row.year,
+      newComerRegistration: row.new_comer_registration || 0,
+      transferBelieverRegistration: row.transfer_believer_registration || 0,
+      newComerGraduate: row.new_comer_graduate_total || 0,
+      transferBelieverGraduate: row.transfer_believer_graduate_total || 0
+    }));
+
     // 총계 계산
     const totals = {
       totalNewComerRegistration: chartData.reduce((sum, item) => sum + item.newComerRegistration, 0),
@@ -230,6 +255,7 @@ router.get('/stats', authenticateToken, async (req, res) => {
       year: currentYear,
       chartData,
       dailyChartData,
+      yearlyChartData,
       totals
     });
     

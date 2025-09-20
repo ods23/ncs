@@ -57,7 +57,7 @@ const DashboardPage = () => {
       const data = await response.json();
       setDashboardData(data);
     } catch (err) {
-      console.error('대시보드 데이터 로드 실패:', err);
+      console.error('새가족위원회 현황 데이터 로드 실패:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -73,7 +73,7 @@ const DashboardPage = () => {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Card sx={{ 
-            bgcolor: 'primary.main', 
+            bgcolor: 'success.main', 
             color: 'white',
             transition: 'transform 0.2s',
             '&:hover': { transform: 'translateY(-4px)' }
@@ -96,7 +96,7 @@ const DashboardPage = () => {
         
         <Grid item xs={12} sm={6} md={3}>
           <Card sx={{ 
-            bgcolor: 'success.main', 
+            bgcolor: 'primary.main', 
             color: 'white',
             transition: 'transform 0.2s',
             '&:hover': { transform: 'translateY(-4px)' }
@@ -111,7 +111,7 @@ const DashboardPage = () => {
                     전입신자 등록자
                   </Typography>
                 </Box>
-                <TransferIcon sx={{ fontSize: 40, opacity: 0.8 }} />
+                <PeopleIcon sx={{ fontSize: 40, opacity: 0.8 }} />
               </Box>
             </CardContent>
           </Card>
@@ -119,7 +119,7 @@ const DashboardPage = () => {
         
         <Grid item xs={12} sm={6} md={3}>
           <Card sx={{ 
-            bgcolor: 'warning.main', 
+            bgcolor: 'success.main', 
             color: 'white',
             transition: 'transform 0.2s',
             '&:hover': { transform: 'translateY(-4px)' }
@@ -142,7 +142,7 @@ const DashboardPage = () => {
         
         <Grid item xs={12} sm={6} md={3}>
           <Card sx={{ 
-            bgcolor: 'info.main', 
+            bgcolor: 'primary.main', 
             color: 'white',
             transition: 'transform 0.2s',
             '&:hover': { transform: 'translateY(-4px)' }
@@ -157,11 +157,62 @@ const DashboardPage = () => {
                     전입신자 수료자
                   </Typography>
                 </Box>
-                <TrendingUpIcon sx={{ fontSize: 40, opacity: 0.8 }} />
+                <SchoolIcon sx={{ fontSize: 40, opacity: 0.8 }} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
+      </Grid>
+    );
+  };
+
+  const renderYearlyRegistrationChart = () => {
+    if (!dashboardData || !dashboardData.yearlyChartData) return null;
+
+    return (
+      <Grid item xs={12} md={6}>
+        <Paper sx={{ p: 1, height: '300px' }}>
+          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <PeopleIcon color="primary" />
+            년도별 등록자 현황 (최근 10년)
+          </Typography>
+          <ResponsiveContainer width="100%" height={260}>
+            <LineChart data={dashboardData.yearlyChartData} margin={{ top: 5, right: 20, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="year" 
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip 
+                formatter={(value, name) => [value, name === 'newComerRegistration' ? '초신자' : '전입신자']}
+                labelFormatter={(label) => `${label}년 등록자`}
+              />
+              <Legend 
+                formatter={(value) => value === 'newComerRegistration' ? '초신자' : '전입신자'}
+                wrapperStyle={{ paddingTop: '5px' }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="newComerRegistration" 
+                stroke="#2e7d32" 
+                strokeWidth={3}
+                dot={{ fill: '#2e7d32', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6 }}
+                name="newComerRegistration"
+              />
+              <Line 
+                type="monotone" 
+                dataKey="transferBelieverRegistration" 
+                stroke="#1976d2" 
+                strokeWidth={3}
+                dot={{ fill: '#1976d2', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6 }}
+                name="transferBelieverRegistration"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </Paper>
       </Grid>
     );
   };
@@ -176,8 +227,8 @@ const DashboardPage = () => {
             <PeopleIcon color="primary" />
             월별 등록자 현황 ({dashboardData.year}년)
           </Typography>
-          <ResponsiveContainer width="100%" height={340}>
-            <LineChart data={dashboardData.chartData} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
+          <ResponsiveContainer width="100%" height={360}>
+            <LineChart data={dashboardData.chartData} margin={{ top: 5, right: 20, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="monthName" 
@@ -195,20 +246,71 @@ const DashboardPage = () => {
               <Line 
                 type="monotone" 
                 dataKey="newComerRegistration" 
-                stroke="#1976d2" 
+                stroke="#2e7d32" 
                 strokeWidth={3}
-                dot={{ fill: '#1976d2', strokeWidth: 2, r: 4 }}
+                dot={{ fill: '#2e7d32', strokeWidth: 2, r: 4 }}
                 activeDot={{ r: 6 }}
                 name="newComerRegistration"
               />
               <Line 
                 type="monotone" 
                 dataKey="transferBelieverRegistration" 
+                stroke="#1976d2" 
+                strokeWidth={3}
+                dot={{ fill: '#1976d2', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6 }}
+                name="transferBelieverRegistration"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </Paper>
+      </Grid>
+    );
+  };
+
+  const renderYearlyGraduateChart = () => {
+    if (!dashboardData || !dashboardData.yearlyChartData) return null;
+
+    return (
+      <Grid item xs={12} md={6}>
+        <Paper sx={{ p: 1, height: '300px' }}>
+          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <SchoolIcon color="primary" />
+            년도별 수료자 현황 (최근 10년)
+          </Typography>
+          <ResponsiveContainer width="100%" height={260}>
+            <LineChart data={dashboardData.yearlyChartData} margin={{ top: 5, right: 20, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="year" 
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip 
+                formatter={(value, name) => [value, name === 'newComerGraduate' ? '초신자' : '전입신자']}
+                labelFormatter={(label) => `${label}년 수료자`}
+              />
+              <Legend 
+                formatter={(value) => value === 'newComerGraduate' ? '초신자' : '전입신자'}
+                wrapperStyle={{ paddingTop: '5px' }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="newComerGraduate" 
                 stroke="#2e7d32" 
                 strokeWidth={3}
                 dot={{ fill: '#2e7d32', strokeWidth: 2, r: 4 }}
                 activeDot={{ r: 6 }}
-                name="transferBelieverRegistration"
+                name="newComerGraduate"
+              />
+              <Line 
+                type="monotone" 
+                dataKey="transferBelieverGraduate" 
+                stroke="#1976d2" 
+                strokeWidth={3}
+                dot={{ fill: '#1976d2', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6 }}
+                name="transferBelieverGraduate"
               />
             </LineChart>
           </ResponsiveContainer>
@@ -227,8 +329,8 @@ const DashboardPage = () => {
             <SchoolIcon color="primary" />
             월별 수료자 현황 ({dashboardData.year}년)
           </Typography>
-          <ResponsiveContainer width="100%" height={340}>
-            <LineChart data={dashboardData.chartData} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
+          <ResponsiveContainer width="100%" height={360}>
+            <LineChart data={dashboardData.chartData} margin={{ top: 5, right: 20, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="monthName" 
@@ -246,18 +348,18 @@ const DashboardPage = () => {
               <Line 
                 type="monotone" 
                 dataKey="newComerGraduate" 
-                stroke="#1976d2" 
+                stroke="#2e7d32" 
                 strokeWidth={3}
-                dot={{ fill: '#1976d2', strokeWidth: 2, r: 4 }}
+                dot={{ fill: '#2e7d32', strokeWidth: 2, r: 4 }}
                 activeDot={{ r: 6 }}
                 name="newComerGraduate"
               />
               <Line 
                 type="monotone" 
                 dataKey="transferBelieverGraduate" 
-                stroke="#2e7d32" 
+                stroke="#1976d2" 
                 strokeWidth={3}
-                dot={{ fill: '#2e7d32', strokeWidth: 2, r: 4 }}
+                dot={{ fill: '#1976d2', strokeWidth: 2, r: 4 }}
                 activeDot={{ r: 6 }}
                 name="transferBelieverGraduate"
               />
@@ -273,20 +375,20 @@ const DashboardPage = () => {
 
     return (
       <Grid item xs={12}>
-        <Paper sx={{ p: 1, height: '500px' }}>
+        <Paper sx={{ p: 1, height: '540px' }}>
           <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
             <PeopleIcon color="primary" />
             일별 등록자 현황 ({dashboardData.year}년)
           </Typography>
-          <ResponsiveContainer width="100%" height={440}>
-            <LineChart data={dashboardData.dailyChartData} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
+          <ResponsiveContainer width="100%" height={500}>
+            <LineChart data={dashboardData.dailyChartData} margin={{ top: 5, right: 20, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="date" 
                 tick={{ fontSize: 9 }}
                 angle={-45}
                 textAnchor="end"
-                height={100}
+                height={60}
                 interval={0}
               />
               <YAxis tick={{ fontSize: 12 }} />
@@ -301,9 +403,9 @@ const DashboardPage = () => {
               <Line 
                 type="monotone" 
                 dataKey="newComerRegistration" 
-                stroke="#1976d2" 
+                stroke="#2e7d32" 
                 strokeWidth={2}
-                dot={{ fill: '#1976d2', strokeWidth: 2, r: 3 }}
+                dot={{ fill: '#2e7d32', strokeWidth: 2, r: 3 }}
                 activeDot={{ r: 5 }}
                 name="newComerRegistration"
                 connectNulls={false}
@@ -311,9 +413,9 @@ const DashboardPage = () => {
               <Line 
                 type="monotone" 
                 dataKey="transferBelieverRegistration" 
-                stroke="#2e7d32" 
+                stroke="#1976d2" 
                 strokeWidth={2}
-                dot={{ fill: '#2e7d32', strokeWidth: 2, r: 3 }}
+                dot={{ fill: '#1976d2', strokeWidth: 2, r: 3 }}
                 activeDot={{ r: 5 }}
                 name="transferBelieverRegistration"
                 connectNulls={false}
@@ -330,20 +432,20 @@ const DashboardPage = () => {
 
     return (
       <Grid item xs={12}>
-        <Paper sx={{ p: 1, height: '500px' }}>
+        <Paper sx={{ p: 1, height: '540px' }}>
           <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
             <SchoolIcon color="primary" />
             일별 수료자 현황 ({dashboardData.year}년)
           </Typography>
-          <ResponsiveContainer width="100%" height={440}>
-            <LineChart data={dashboardData.dailyChartData} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
+          <ResponsiveContainer width="100%" height={500}>
+            <LineChart data={dashboardData.dailyChartData} margin={{ top: 5, right: 20, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="date" 
                 tick={{ fontSize: 9 }}
                 angle={-45}
                 textAnchor="end"
-                height={100}
+                height={60}
                 interval={0}
               />
               <YAxis tick={{ fontSize: 12 }} />
@@ -358,9 +460,9 @@ const DashboardPage = () => {
               <Line 
                 type="monotone" 
                 dataKey="newComerGraduate" 
-                stroke="#1976d2" 
+                stroke="#2e7d32" 
                 strokeWidth={2}
-                dot={{ fill: '#1976d2', strokeWidth: 2, r: 3 }}
+                dot={{ fill: '#2e7d32', strokeWidth: 2, r: 3 }}
                 activeDot={{ r: 5 }}
                 name="newComerGraduate"
                 connectNulls={false}
@@ -368,9 +470,9 @@ const DashboardPage = () => {
               <Line 
                 type="monotone" 
                 dataKey="transferBelieverGraduate" 
-                stroke="#2e7d32" 
+                stroke="#1976d2" 
                 strokeWidth={2}
-                dot={{ fill: '#2e7d32', strokeWidth: 2, r: 3 }}
+                dot={{ fill: '#1976d2', strokeWidth: 2, r: 3 }}
                 activeDot={{ r: 5 }}
                 name="transferBelieverGraduate"
                 connectNulls={false}
@@ -388,7 +490,7 @@ const DashboardPage = () => {
         <Box sx={{ textAlign: 'center' }}>
           <CircularProgress size={60} />
           <Typography variant="h6" sx={{ mt: 2 }}>
-            대시보드 데이터를 불러오는 중...
+            새가족위원회 현황 데이터를 불러오는 중...
           </Typography>
         </Box>
       </Container>
@@ -408,9 +510,6 @@ const DashboardPage = () => {
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          새가족위원회 대시보드
-        </Typography>
         <Typography variant="body1" color="text.secondary">
           안녕하세요, {user?.name}님! {dashboardData?.year}년 새가족위원회 현황을 확인해보세요.
         </Typography>
@@ -418,10 +517,33 @@ const DashboardPage = () => {
 
       {renderStatsCards()}
 
-      <Grid container spacing={3}>
-        {renderRegistrationChart()}
-        {renderGraduateChart()}
-      </Grid>
+      {/* 년도별 현황 섹션 */}
+      {dashboardData && dashboardData.yearlyChartData && dashboardData.yearlyChartData.length > 0 && (
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h5" gutterBottom sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <TrendingUpIcon color="primary" />
+            년도별 현황 (최근 10년)
+          </Typography>
+          
+          <Grid container spacing={3}>
+            {renderYearlyRegistrationChart()}
+            {renderYearlyGraduateChart()}
+          </Grid>
+        </Box>
+      )}
+
+      {/* 월별 현황 섹션 */}
+      <Box sx={{ mt: 4 }}>
+        <Typography variant="h5" gutterBottom sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <TrendingUpIcon color="primary" />
+          월별 현황 ({dashboardData?.year}년)
+        </Typography>
+        
+        <Grid container spacing={3}>
+          {renderRegistrationChart()}
+          {renderGraduateChart()}
+        </Grid>
+      </Box>
 
       {/* 일별 현황 섹션 */}
       {dashboardData && dashboardData.dailyChartData && dashboardData.dailyChartData.length > 0 && (

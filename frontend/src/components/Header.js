@@ -129,7 +129,7 @@ const Header = () => {
     if (path === '/statistics') return '년도별 새가족 전체 통계';
 
     if (path === '/mypage') return 'MyPage';
-    if (path === '/') return '대시보드';
+    if (path === '/') return '새가족위원회 현황';
     
     // 일반 화면은 화면등록에서 등록된 이름 사용
     console.log('화면등록에서 제목 조회 시도:', path);

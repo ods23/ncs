@@ -192,6 +192,7 @@ const UserRegistrationPage = () => {
     role: '일반',
     department: '',
     teacher_type: '',
+    teacher_status: '',
     position: '',
     start_date: '',
     end_date: '',
@@ -294,6 +295,12 @@ const UserRegistrationPage = () => {
           { value: '담당목사', label: '담당목사' },
           { value: '위원장', label: '위원장' },
           { value: '부위원장', label: '부위원장' }
+        ],
+        '교사상태': [
+          { value: 'ACTIVE', label: '활성' },
+          { value: 'INACTIVE', label: '비활성' },
+          { value: 'SUSPENDED', label: '정지' },
+          { value: 'RETIRED', label: '은퇴' }
         ],
         '직분': [
           { value: '목사', label: '목사' },
@@ -458,6 +465,23 @@ const UserRegistrationPage = () => {
     { 
       field: 'teacher_type', 
       headerName: '교사', 
+      width: 120, 
+      minWidth: 100,
+      maxWidth: 150,
+      resizable: true,
+      sortable: true, 
+      filter: true, 
+      editable: false,
+      cellStyle: { 
+        borderRight: '1px solid #f1f3f4',
+        fontSize: '14px',
+        lineHeight: '20px'
+      },
+      headerClass: 'ag-header-cell-separator'
+    },
+    { 
+      field: 'teacher_status', 
+      headerName: '교사상태', 
       width: 120, 
       minWidth: 100,
       maxWidth: 150,
@@ -1007,6 +1031,7 @@ const UserRegistrationPage = () => {
             'role': '역할',
             'department': '부서',
             'teacher_type': '교사',
+            'teacher_status': '교사상태',
             'position': '직책',
             'birth_date': '생년월일',
             'start_date': '시작일자',
@@ -1103,6 +1128,7 @@ const UserRegistrationPage = () => {
           role: row['역할'] || row['role'] || '일반',
           department: row['부서'] || row['department'] || '',
           teacher_type: row['교사'] || row['teacher_type'] || '',
+          teacher_status: row['교사상태'] || row['teacher_status'] || '',
           position: row['직책'] || row['position'] || '',
           start_date: convertDateField(row['시작일자'] || row['시작일'] || row['start_date']) || '',
           end_date: convertDateField(row['종료일자'] || row['종료일'] || row['end_date']) || '',
@@ -1772,6 +1798,41 @@ const UserRegistrationPage = () => {
                     {option.label}
                   </MenuItem>
                 ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth>
+              <InputLabel sx={{ fontWeight: '600', color: '#374151' }}>교사상태</InputLabel>
+              <Select
+                value={formData.teacher_status}
+                onChange={(e) => setFormData({...formData, teacher_status: e.target.value})}
+                label="교사상태"
+                disabled={formData.is_active === 0}
+                sx={{
+                  borderRadius: '12px',
+                  background: 'rgba(255, 255, 255, 0.8)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(0,0,0,0.1)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    borderColor: '#3b82f6',
+                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.1)'
+                  },
+                  '&.Mui-focused': {
+                    borderColor: '#3b82f6',
+                    boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                  }
+                }}
+              >
+                <MenuItem value="">선택하세요</MenuItem>
+                {codeData['교사상태'] && codeData['교사상태'].length > 0 ? (
+                  codeData['교사상태'].map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem value="" disabled>교사상태 코드를 불러오는 중...</MenuItem>
+                )}
               </Select>
             </FormControl>
             <FormControl fullWidth>

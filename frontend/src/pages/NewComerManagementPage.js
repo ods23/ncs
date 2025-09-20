@@ -2008,7 +2008,7 @@ const NewComerManagementPage = () => {
         
         const teachersData = usersData
           .filter(user => {
-            console.log('사용자 체크:', user.name, 'is_active:', user.is_active, 'department:', user.department, 'end_date:', user.end_date);
+            console.log('사용자 체크:', user.name, 'is_active:', user.is_active, 'department:', user.department, 'end_date:', user.end_date, 'teacher_status:', user.teacher_status);
             
             // 활성화되지 않은 사용자 제외
             if (user.is_active !== 1) {
@@ -2019,6 +2019,12 @@ const NewComerManagementPage = () => {
             // 부서가 새가족위원회가 아닌 경우 제외
             if (user.department !== '새가족위원회') {
               console.log('새가족위원회가 아님:', user.name, 'department:', user.department);
+              return false;
+            }
+            
+            // 교사상태가 '재직'이 아닌 경우 제외
+            if (user.teacher_status !== '재직') {
+              console.log('재직이 아님:', user.name, 'teacher_status:', user.teacher_status);
               return false;
             }
             

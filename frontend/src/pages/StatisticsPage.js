@@ -802,9 +802,23 @@ const StatisticsPage = () => {
   // 합계 자동 계산
   useEffect(() => {
     const totalRegistration = formData.new_comer_registration + formData.transfer_believer_registration;
-    const newComerGraduateTotal = formData.new_comer_graduate_prev_year + formData.new_comer_graduate_current_year;
-    const transferBelieverGraduateTotal = formData.transfer_believer_graduate_prev_year + formData.transfer_believer_graduate_current_year;
+    
+    // 수료합계 계산: 수료합계가 있으면 그것을 사용하고, 없으면 전년도+올해 수료의 합을 사용
+    let newComerGraduateTotal = formData.new_comer_graduate_total;
+    let transferBelieverGraduateTotal = formData.transfer_believer_graduate_total;
+    
+    // 수료합계가 0이거나 없는 경우, 전년도 수료와 올해 수료의 합을 사용
+    if (!newComerGraduateTotal || newComerGraduateTotal === 0) {
+      newComerGraduateTotal = formData.new_comer_graduate_prev_year + formData.new_comer_graduate_current_year;
+    }
+    
+    if (!transferBelieverGraduateTotal || transferBelieverGraduateTotal === 0) {
+      transferBelieverGraduateTotal = formData.transfer_believer_graduate_prev_year + formData.transfer_believer_graduate_current_year;
+    }
+    
+    // 전체 수료합계는 초신자 수료합계 + 전입신자 수료합계
     const totalGraduate = newComerGraduateTotal + transferBelieverGraduateTotal;
+    
     const newComerEducationTotal = formData.new_comer_education_in_progress + formData.new_comer_education_discontinued;
     const transferBelieverEducationTotal = formData.transfer_believer_education_in_progress + formData.transfer_believer_education_discontinued;
     const totalEducation = newComerEducationTotal + transferBelieverEducationTotal;
@@ -824,8 +838,10 @@ const StatisticsPage = () => {
     formData.transfer_believer_registration,
     formData.new_comer_graduate_prev_year,
     formData.new_comer_graduate_current_year,
+    formData.new_comer_graduate_total,
     formData.transfer_believer_graduate_prev_year,
     formData.transfer_believer_graduate_current_year,
+    formData.transfer_believer_graduate_total,
     formData.new_comer_education_in_progress,
     formData.new_comer_education_discontinued,
     formData.transfer_believer_education_in_progress,
@@ -2809,6 +2825,28 @@ const StatisticsPage = () => {
             <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
+                label="수료 합계"
+                type="number"
+                value={formData.new_comer_graduate_total}
+                onChange={(e) => handleFormChange('new_comer_graduate_total', parseInt(e.target.value) || 0)}
+                helperText="수료합계만 알고 있는 경우 입력하세요 (전년도/올해 수료는 0으로 유지)"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#3b82f6'
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#3b82f6',
+                          borderWidth: 2
+                        }
+                      }
+                    }}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
                 label="교육 중"
                 type="number"
                 value={formData.new_comer_education_in_progress}
@@ -2936,6 +2974,28 @@ const StatisticsPage = () => {
                 type="number"
                 value={formData.transfer_believer_graduate_current_year}
                 onChange={(e) => handleFormChange('transfer_believer_graduate_current_year', parseInt(e.target.value) || 0)}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#8b5cf6'
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#8b5cf6',
+                          borderWidth: 2
+                        }
+                      }
+                    }}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="수료 합계"
+                type="number"
+                value={formData.transfer_believer_graduate_total}
+                onChange={(e) => handleFormChange('transfer_believer_graduate_total', parseInt(e.target.value) || 0)}
+                helperText="수료합계만 알고 있는 경우 입력하세요 (전년도/올해 수료는 0으로 유지)"
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 2,
