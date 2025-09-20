@@ -61,6 +61,9 @@ app.use('/api/new-comers', require('./routes/newComerRouter'));           // 초
 app.use('/api/transfer-believers', require('./routes/transferBelieverManagementRouter')); // 전입신자 관리
 app.use('/api/all-believers', require('./routes/AllBelieverRouter'));     // 등록전체조회
 
+// 대시보드 라우터
+app.use('/api/dashboard', require('./routes/dashboardRouter'));
+
 // 기존 라우터들
 app.use('/api/graduates', require('./routes/graduateRouter'));
 app.use('/api/new-comer-graduates', require('./routes/newComerGraduateRouter'));

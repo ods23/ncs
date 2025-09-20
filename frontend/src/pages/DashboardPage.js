@@ -7,420 +7,441 @@ import {
   Grid,
   Card,
   CardContent,
-  Button,
-  Chip,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Divider
+  CircularProgress,
+  Alert
 } from '@mui/material';
 import {
-  CalendarToday as CalendarIcon,
-  TrendingUp as TrendingUpIcon,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
+import {
   People as PeopleIcon,
-  Event as EventIcon,
   School as SchoolIcon,
+  TrendingUp as TrendingUpIcon,
   TransferWithinAStation as TransferIcon
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const DashboardPage = () => {
-  const navigate = useNavigate();
   const { user } = useAuth();
-  const [todayEvents, setTodayEvents] = useState([]);
-  const [upcomingEvents, setUpcomingEvents] = useState([]);
-  const [quickStats, setQuickStats] = useState({
-    newComers: 0,
-    transferBelievers: 0,
-    graduates: 0,
-    totalEvents: 0
-  });
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // 임시 데이터 로드 (실제로는 API에서 가져올 예정)
-    const mockTodayEvents = [
-      {
-        id: 1,
-        title: '새가족 교육',
-        time: '10:00 - 12:00',
-        type: '교육',
-        location: '교육실'
-      },
-      {
-        id: 2,
-        title: '목장 모임',
-        time: '19:00 - 21:00',
-        type: '일반',
-        location: '각 목장'
-      }
-    ];
-
-    const mockUpcomingEvents = [
-      {
-        id: 3,
-        title: '수료식',
-        date: '2024-01-25',
-        type: '행사',
-        location: '대예배실'
-      },
-      {
-        id: 4,
-        title: '새가족 환영회',
-        date: '2024-01-28',
-        type: '행사',
-        location: '대예배실'
-      },
-      {
-        id: 5,
-        title: '목사님과의 만남',
-        date: '2024-01-30',
-        type: '일반',
-        location: '목사님 사무실'
-      }
-    ];
-
-    setTodayEvents(mockTodayEvents);
-    setUpcomingEvents(mockUpcomingEvents);
-    setQuickStats({
-      newComers: 45,
-      transferBelievers: 35,
-      graduates: 20,
-      totalEvents: 8
-    });
+    fetchDashboardData();
   }, []);
 
-  const getEventTypeColor = (type) => {
-    switch (type) {
-      case '교육': return '#388e3c';
-      case '행사': return '#f57c00';
-      case '회의': return '#7b1fa2';
-      default: return '#1976d2';
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch('/api/dashboard/stats', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('데이터를 가져오는데 실패했습니다.');
+      }
+
+      const data = await response.json();
+      setDashboardData(data);
+    } catch (err) {
+      console.error('대시보드 데이터 로드 실패:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const renderQuickStats = () => (
-    <Grid container spacing={3} sx={{ mb: 4 }}>
-      <Grid item xs={12} sm={6} md={3}>
-        <Card sx={{ 
-          bgcolor: 'primary.main', 
-          color: 'white',
-          transition: 'transform 0.2s',
-          '&:hover': { transform: 'translateY(-4px)' }
-        }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Box>
-                <Typography variant="h4" component="div">
-                  {quickStats.newComers}
-                </Typography>
-                <Typography variant="body2">
-                  이번 달 초신자
-                </Typography>
-              </Box>
-              <PeopleIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-            </Box>
-          </CardContent>
-        </Card>
-      </Grid>
-      <Grid item xs={12} sm={6} md={3}>
-        <Card sx={{ 
-          bgcolor: 'success.main', 
-          color: 'white',
-          transition: 'transform 0.2s',
-          '&:hover': { transform: 'translateY(-4px)' }
-        }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Box>
-                <Typography variant="h4" component="div">
-                  {quickStats.transferBelievers}
-                </Typography>
-                <Typography variant="body2">
-                  이번 달 전입신자
-                </Typography>
-              </Box>
-              <TransferIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-            </Box>
-          </CardContent>
-        </Card>
-      </Grid>
-      <Grid item xs={12} sm={6} md={3}>
-        <Card sx={{ 
-          bgcolor: 'warning.main', 
-          color: 'white',
-          transition: 'transform 0.2s',
-          '&:hover': { transform: 'translateY(-4px)' }
-        }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Box>
-                <Typography variant="h4" component="div">
-                  {quickStats.graduates}
-                </Typography>
-                <Typography variant="body2">
-                  이번 달 수료자
-                </Typography>
-              </Box>
-              <SchoolIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-            </Box>
-          </CardContent>
-        </Card>
-      </Grid>
-      <Grid item xs={12} sm={6} md={3}>
-        <Card sx={{ 
-          bgcolor: 'info.main', 
-          color: 'white',
-          transition: 'transform 0.2s',
-          '&:hover': { transform: 'translateY(-4px)' }
-        }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Box>
-                <Typography variant="h4" component="div">
-                  {quickStats.totalEvents}
-                </Typography>
-                <Typography variant="body2">
-                  이번 주 일정
-                </Typography>
-              </Box>
-              <EventIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-            </Box>
-          </CardContent>
-        </Card>
-      </Grid>
-    </Grid>
-  );
+  const renderStatsCards = () => {
+    if (!dashboardData) return null;
 
-  const renderTodaySchedule = () => (
-    <Grid item xs={12} md={6}>
-      <Paper sx={{ p: 3, height: '100%' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <CalendarIcon color="primary" />
-            오늘의 일정
-          </Typography>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => navigate('/schedule')}
-            sx={{ borderRadius: '20px' }}
-          >
-            전체보기
-          </Button>
-        </Box>
-        {todayEvents.length > 0 ? (
-          <List>
-            {todayEvents.map((event, index) => (
-              <React.Fragment key={event.id}>
-                <ListItem sx={{ px: 0 }}>
-                  <ListItemIcon>
-                    <EventIcon sx={{ color: getEventTypeColor(event.type) }} />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={event.title}
-                    secondary={`${event.time} | ${event.location}`}
-                  />
-                  <Chip 
-                    label={event.type} 
-                    size="small" 
-                    sx={{ 
-                      backgroundColor: getEventTypeColor(event.type),
-                      color: 'white'
-                    }} 
-                  />
-                </ListItem>
-                {index < todayEvents.length - 1 && <Divider />}
-              </React.Fragment>
-            ))}
-          </List>
-        ) : (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Typography variant="body2" color="text.secondary">
-              오늘 예정된 일정이 없습니다.
-            </Typography>
-          </Box>
-        )}
-      </Paper>
-    </Grid>
-  );
+    const { totals } = dashboardData;
 
-  const renderUpcomingEvents = () => (
-    <Grid item xs={12} md={6}>
-      <Paper sx={{ p: 3, height: '100%' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <TrendingUpIcon color="primary" />
-            예정된 일정
-          </Typography>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => navigate('/schedule')}
-            sx={{ borderRadius: '20px' }}
-          >
-            전체보기
-          </Button>
-        </Box>
-        {upcomingEvents.length > 0 ? (
-          <List>
-            {upcomingEvents.map((event, index) => (
-              <React.Fragment key={event.id}>
-                <ListItem sx={{ px: 0 }}>
-                  <ListItemIcon>
-                    <EventIcon sx={{ color: getEventTypeColor(event.type) }} />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={event.title}
-                    secondary={`${event.date} | ${event.location}`}
-                  />
-                  <Chip 
-                    label={event.type} 
-                    size="small" 
-                    sx={{ 
-                      backgroundColor: getEventTypeColor(event.type),
-                      color: 'white'
-                    }} 
-                  />
-                </ListItem>
-                {index < upcomingEvents.length - 1 && <Divider />}
-              </React.Fragment>
-            ))}
-          </List>
-        ) : (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Typography variant="body2" color="text.secondary">
-              예정된 일정이 없습니다.
-            </Typography>
-          </Box>
-        )}
-      </Paper>
-    </Grid>
-  );
-
-  const renderQuickActions = () => (
-    <Grid item xs={12}>
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          빠른 메뉴
-        </Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={() => navigate('/schedule')}
-              sx={{ 
-                py: 2, 
-                borderRadius: '12px',
-                borderColor: 'primary.main',
-                color: 'primary.main',
-                '&:hover': {
-                  backgroundColor: 'primary.main',
-                  color: 'white'
-                }
-              }}
-            >
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                <CalendarIcon />
-                <Typography variant="body2">일정 관리</Typography>
+    return (
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            bgcolor: 'primary.main', 
+            color: 'white',
+            transition: 'transform 0.2s',
+            '&:hover': { transform: 'translateY(-4px)' }
+          }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="h4" component="div">
+                    {totals.totalNewComerRegistration}
+                  </Typography>
+                  <Typography variant="body2">
+                    초신자 등록자
+                  </Typography>
+                </Box>
+                <PeopleIcon sx={{ fontSize: 40, opacity: 0.8 }} />
               </Box>
-            </Button>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={() => navigate('/statistics')}
-              sx={{ 
-                py: 2, 
-                borderRadius: '12px',
-                borderColor: 'success.main',
-                color: 'success.main',
-                '&:hover': {
-                  backgroundColor: 'success.main',
-                  color: 'white'
-                }
-              }}
-            >
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                <TrendingUpIcon />
-                <Typography variant="body2">통계 보기</Typography>
-              </Box>
-            </Button>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={() => navigate('/new-comers')}
-              sx={{ 
-                py: 2, 
-                borderRadius: '12px',
-                borderColor: 'warning.main',
-                color: 'warning.main',
-                '&:hover': {
-                  backgroundColor: 'warning.main',
-                  color: 'white'
-                }
-              }}
-            >
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                <PeopleIcon />
-                <Typography variant="body2">초신자 관리</Typography>
-              </Box>
-            </Button>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={() => navigate('/transfer-believers')}
-              sx={{ 
-                py: 2, 
-                borderRadius: '12px',
-                borderColor: 'info.main',
-                color: 'info.main',
-                '&:hover': {
-                  backgroundColor: 'info.main',
-                  color: 'white'
-                }
-              }}
-            >
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                <TransferIcon />
-                <Typography variant="body2">전입신자 관리</Typography>
-              </Box>
-            </Button>
-          </Grid>
+            </CardContent>
+          </Card>
         </Grid>
-      </Paper>
-    </Grid>
-  );
+        
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            bgcolor: 'success.main', 
+            color: 'white',
+            transition: 'transform 0.2s',
+            '&:hover': { transform: 'translateY(-4px)' }
+          }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="h4" component="div">
+                    {totals.totalTransferBelieverRegistration}
+                  </Typography>
+                  <Typography variant="body2">
+                    전입신자 등록자
+                  </Typography>
+                </Box>
+                <TransferIcon sx={{ fontSize: 40, opacity: 0.8 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            bgcolor: 'warning.main', 
+            color: 'white',
+            transition: 'transform 0.2s',
+            '&:hover': { transform: 'translateY(-4px)' }
+          }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="h4" component="div">
+                    {totals.totalNewComerGraduate}
+                  </Typography>
+                  <Typography variant="body2">
+                    초신자 수료자
+                  </Typography>
+                </Box>
+                <SchoolIcon sx={{ fontSize: 40, opacity: 0.8 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            bgcolor: 'info.main', 
+            color: 'white',
+            transition: 'transform 0.2s',
+            '&:hover': { transform: 'translateY(-4px)' }
+          }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="h4" component="div">
+                    {totals.totalTransferBelieverGraduate}
+                  </Typography>
+                  <Typography variant="body2">
+                    전입신자 수료자
+                  </Typography>
+                </Box>
+                <TrendingUpIcon sx={{ fontSize: 40, opacity: 0.8 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    );
+  };
+
+  const renderRegistrationChart = () => {
+    if (!dashboardData) return null;
+
+    return (
+      <Grid item xs={12} md={6}>
+        <Paper sx={{ p: 1, height: '400px' }}>
+          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <PeopleIcon color="primary" />
+            월별 등록자 현황 ({dashboardData.year}년)
+          </Typography>
+          <ResponsiveContainer width="100%" height={340}>
+            <LineChart data={dashboardData.chartData} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="monthName" 
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip 
+                formatter={(value, name) => [value, name === 'newComerRegistration' ? '초신자' : '전입신자']}
+                labelFormatter={(label) => `${label} 등록자`}
+              />
+              <Legend 
+                formatter={(value) => value === 'newComerRegistration' ? '초신자' : '전입신자'}
+                wrapperStyle={{ paddingTop: '5px' }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="newComerRegistration" 
+                stroke="#1976d2" 
+                strokeWidth={3}
+                dot={{ fill: '#1976d2', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6 }}
+                name="newComerRegistration"
+              />
+              <Line 
+                type="monotone" 
+                dataKey="transferBelieverRegistration" 
+                stroke="#2e7d32" 
+                strokeWidth={3}
+                dot={{ fill: '#2e7d32', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6 }}
+                name="transferBelieverRegistration"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </Paper>
+      </Grid>
+    );
+  };
+
+  const renderGraduateChart = () => {
+    if (!dashboardData) return null;
+
+    return (
+      <Grid item xs={12} md={6}>
+        <Paper sx={{ p: 1, height: '400px' }}>
+          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <SchoolIcon color="primary" />
+            월별 수료자 현황 ({dashboardData.year}년)
+          </Typography>
+          <ResponsiveContainer width="100%" height={340}>
+            <LineChart data={dashboardData.chartData} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="monthName" 
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip 
+                formatter={(value, name) => [value, name === 'newComerGraduate' ? '초신자' : '전입신자']}
+                labelFormatter={(label) => `${label} 수료자`}
+              />
+              <Legend 
+                formatter={(value) => value === 'newComerGraduate' ? '초신자' : '전입신자'}
+                wrapperStyle={{ paddingTop: '10px' }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="newComerGraduate" 
+                stroke="#1976d2" 
+                strokeWidth={3}
+                dot={{ fill: '#1976d2', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6 }}
+                name="newComerGraduate"
+              />
+              <Line 
+                type="monotone" 
+                dataKey="transferBelieverGraduate" 
+                stroke="#2e7d32" 
+                strokeWidth={3}
+                dot={{ fill: '#2e7d32', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6 }}
+                name="transferBelieverGraduate"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </Paper>
+      </Grid>
+    );
+  };
+
+  const renderDailyRegistrationChart = () => {
+    if (!dashboardData || !dashboardData.dailyChartData || dashboardData.dailyChartData.length === 0) return null;
+
+    return (
+      <Grid item xs={12}>
+        <Paper sx={{ p: 1, height: '500px' }}>
+          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <PeopleIcon color="primary" />
+            일별 등록자 현황 ({dashboardData.year}년)
+          </Typography>
+          <ResponsiveContainer width="100%" height={440}>
+            <LineChart data={dashboardData.dailyChartData} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="date" 
+                tick={{ fontSize: 9 }}
+                angle={-45}
+                textAnchor="end"
+                height={100}
+                interval={0}
+              />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip 
+                formatter={(value, name) => [value, name === 'newComerRegistration' ? '초신자' : '전입신자']}
+                labelFormatter={(label) => `${label} 등록자`}
+              />
+              <Legend 
+                formatter={(value) => value === 'newComerRegistration' ? '초신자' : '전입신자'}
+                wrapperStyle={{ paddingTop: '0px' }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="newComerRegistration" 
+                stroke="#1976d2" 
+                strokeWidth={2}
+                dot={{ fill: '#1976d2', strokeWidth: 2, r: 3 }}
+                activeDot={{ r: 5 }}
+                name="newComerRegistration"
+                connectNulls={false}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="transferBelieverRegistration" 
+                stroke="#2e7d32" 
+                strokeWidth={2}
+                dot={{ fill: '#2e7d32', strokeWidth: 2, r: 3 }}
+                activeDot={{ r: 5 }}
+                name="transferBelieverRegistration"
+                connectNulls={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </Paper>
+      </Grid>
+    );
+  };
+
+  const renderDailyGraduateChart = () => {
+    if (!dashboardData || !dashboardData.dailyChartData || dashboardData.dailyChartData.length === 0) return null;
+
+    return (
+      <Grid item xs={12}>
+        <Paper sx={{ p: 1, height: '500px' }}>
+          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <SchoolIcon color="primary" />
+            일별 수료자 현황 ({dashboardData.year}년)
+          </Typography>
+          <ResponsiveContainer width="100%" height={440}>
+            <LineChart data={dashboardData.dailyChartData} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="date" 
+                tick={{ fontSize: 9 }}
+                angle={-45}
+                textAnchor="end"
+                height={100}
+                interval={0}
+              />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip 
+                formatter={(value, name) => [value, name === 'newComerGraduate' ? '초신자' : '전입신자']}
+                labelFormatter={(label) => `${label} 수료자`}
+              />
+              <Legend 
+                formatter={(value) => value === 'newComerGraduate' ? '초신자' : '전입신자'}
+                wrapperStyle={{ paddingTop: '0px' }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="newComerGraduate" 
+                stroke="#1976d2" 
+                strokeWidth={2}
+                dot={{ fill: '#1976d2', strokeWidth: 2, r: 3 }}
+                activeDot={{ r: 5 }}
+                name="newComerGraduate"
+                connectNulls={false}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="transferBelieverGraduate" 
+                stroke="#2e7d32" 
+                strokeWidth={2}
+                dot={{ fill: '#2e7d32', strokeWidth: 2, r: 3 }}
+                activeDot={{ r: 5 }}
+                name="transferBelieverGraduate"
+                connectNulls={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </Paper>
+      </Grid>
+    );
+  };
+
+  if (loading) {
+    return (
+      <Container maxWidth="xl" sx={{ mt: 4, mb: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress size={60} />
+          <Typography variant="h6" sx={{ mt: 2 }}>
+            대시보드 데이터를 불러오는 중...
+          </Typography>
+        </Box>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          새가족관리시스템 대시보드
+          새가족위원회 대시보드
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          안녕하세요, {user?.name}님! 오늘도 새가족 관리에 힘써주세요.
+          안녕하세요, {user?.name}님! {dashboardData?.year}년 새가족위원회 현황을 확인해보세요.
         </Typography>
       </Box>
 
-      {renderQuickStats()}
+      {renderStatsCards()}
 
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        {renderTodaySchedule()}
-        {renderUpcomingEvents()}
+      <Grid container spacing={3}>
+        {renderRegistrationChart()}
+        {renderGraduateChart()}
       </Grid>
 
-      {renderQuickActions()}
+      {/* 일별 현황 섹션 */}
+      {dashboardData && dashboardData.dailyChartData && dashboardData.dailyChartData.length > 0 && (
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h5" gutterBottom sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <TrendingUpIcon color="primary" />
+            일별 상세 현황
+          </Typography>
+          
+          <Grid container spacing={3}>
+            {renderDailyRegistrationChart()}
+          </Grid>
+          
+          <Grid container spacing={3} sx={{ mt: 2 }}>
+            {renderDailyGraduateChart()}
+          </Grid>
+        </Box>
+      )}
     </Container>
   );
 };
 
 export default DashboardPage;
-
