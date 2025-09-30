@@ -982,21 +982,21 @@ const TransferGraduateManagementPage = () => {
             onClick={handleSearch}
             size="small"
             sx={{
-              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+              background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
               color: 'white',
               width: 36,
               height: 36,
               borderRadius: '12px',
-              boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.3), 0 2px 4px -1px rgba(59, 130, 246, 0.2)',
+              boxShadow: '0 4px 6px -1px rgba(139, 92, 246, 0.3), 0 2px 4px -1px rgba(139, 92, 246, 0.2)',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': {
-                background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
+                background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
                 transform: 'translateY(-2px) scale(1.05)',
-                boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.4), 0 4px 6px -2px rgba(59, 130, 246, 0.3)'
+                boxShadow: '0 10px 15px -3px rgba(139, 92, 246, 0.4), 0 4px 6px -2px rgba(139, 92, 246, 0.3)'
               },
               '&:active': {
                 transform: 'translateY(0px) scale(1.02)',
-                boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.3)'
+                boxShadow: '0 4px 6px -1px rgba(139, 92, 246, 0.3)'
               }
             }}
           >

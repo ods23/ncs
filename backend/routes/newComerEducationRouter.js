@@ -90,12 +90,15 @@ router.get('/', authenticateToken, async (req, res) => {
       params.push(`%${req.query.believer_name.trim()}%`);
     }
     
-    // 기본 정렬: 양육교사, 교육상태(교육중→수료), 등록신청일 오름차순
+    // 기본 정렬: 양육교사, 교육상태(등록→교사배정→교육중→교육중단→수료), 등록신청일 오름차순
     query += ` ORDER BY nc.teacher ASC, 
                CASE 
-                 WHEN nc.education_type = '교육중' THEN 1 
-                 WHEN nc.education_type = '수료' THEN 2 
-                 ELSE 3 
+                 WHEN nc.education_type = '등록' THEN 1 
+                 WHEN nc.education_type = '교사배정' THEN 2 
+                 WHEN nc.education_type = '교육중' THEN 3 
+                 WHEN nc.education_type = '교육중단' THEN 4 
+                 WHEN nc.education_type = '수료' THEN 5 
+                 ELSE 6 
                END ASC,
                DATE(nc.register_date) ASC`;
     
@@ -657,9 +660,12 @@ router.get('/summary', authenticateToken, async (req, res) => {
              (nc.education_type = '수료' AND YEAR(nc.register_date) = ?))
       ORDER BY nc.teacher ASC, 
                CASE 
-                 WHEN nc.education_type = '교육중' THEN 1 
-                 WHEN nc.education_type = '수료' THEN 2 
-                 ELSE 3 
+                 WHEN nc.education_type = '등록' THEN 1 
+                 WHEN nc.education_type = '교사배정' THEN 2 
+                 WHEN nc.education_type = '교육중' THEN 3 
+                 WHEN nc.education_type = '교육중단' THEN 4 
+                 WHEN nc.education_type = '수료' THEN 5 
+                 ELSE 6 
                END ASC,
                DATE(nc.register_date) ASC
     `;

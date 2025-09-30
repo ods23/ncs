@@ -49,15 +49,20 @@ router.get('/', authenticateToken, async (req, res) => {
     
     const params = [];
     
-    // 년도 필터 - year 파라미터를 등록신청일의 년도와 비교
+    // 년도 필터 - 조회년도 이전 수료 제외, 조회년도 수료 포함
     if (req.query.year && req.query.year.trim() !== '') {
-      query += ` AND YEAR(nc.register_date) = ?`;
-      params.push(parseInt(req.query.year.trim()));
+      const targetYear = parseInt(req.query.year.trim());
+      query += ` AND YEAR(nc.register_date) <= ? 
+                 AND (nc.education_type != '수료' OR nc.education_type IS NULL OR 
+                      (nc.education_type = '수료' AND YEAR(nc.register_date) = ?))`;
+      params.push(targetYear, targetYear);
     } else {
       // 년도가 지정되지 않은 경우 현재 년도로 기본 설정
       const currentYear = new Date().getFullYear();
-      query += ` AND YEAR(nc.register_date) = ?`;
-      params.push(currentYear);
+      query += ` AND YEAR(nc.register_date) <= ? 
+                 AND (nc.education_type != '수료' OR nc.education_type IS NULL OR 
+                      (nc.education_type = '수료' AND YEAR(nc.register_date) = ?))`;
+      params.push(currentYear, currentYear);
     }
     
     // 교육구분 필터
@@ -78,8 +83,17 @@ router.get('/', authenticateToken, async (req, res) => {
       params.push(`%${req.query.believer_name.trim()}%`);
     }
     
-    // 기본 정렬: 양육교사, 등록번호 오름차순
-    query += ` ORDER BY nc.teacher ASC, COALESCE(nc.number, '') ASC`;
+    // 기본 정렬: 양육교사, 교육상태(등록→교사배정→교육중→교육중단→수료), 등록신청일 오름차순
+    query += ` ORDER BY nc.teacher ASC, 
+               CASE 
+                 WHEN nc.education_type = '등록' THEN 1 
+                 WHEN nc.education_type = '교사배정' THEN 2 
+                 WHEN nc.education_type = '교육중' THEN 3 
+                 WHEN nc.education_type = '교육중단' THEN 4 
+                 WHEN nc.education_type = '수료' THEN 5 
+                 ELSE 6 
+               END ASC,
+               DATE(nc.register_date) ASC`;
     
     const rows = await conn.query(query, params);
     
@@ -881,6 +895,85 @@ router.post('/reorder-numbers', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('전입신자 번호 재정렬 실패:', error);
     res.status(500).json({ error: '전입신자 번호 재정렬 중 오류가 발생했습니다.' });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// 전입신자교육 요약 조회
+router.get('/summary', authenticateToken, async (req, res) => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    
+    // 년도 파라미터 확인
+    const year = req.query.year || new Date().getFullYear();
+    
+    // 양육교사별 신자 교육 현황 조회
+    const weekProgressQuery = `
+      SELECT 
+        nc.teacher,
+        nc.name as believer_name,
+        nc.believer_type,
+        nc.education_type,
+        nc.number as registration_number,
+        DATE_FORMAT(nc.register_date, '%Y-%m-%d') as registration_date,
+        CASE 
+          WHEN nc.education_type = '수료' THEN
+            CASE 
+              WHEN nce.week8_date IS NOT NULL THEN DATE_FORMAT(nce.week8_date, '%Y-%m-%d')
+              WHEN nce.week7_date IS NOT NULL THEN DATE_FORMAT(nce.week7_date, '%Y-%m-%d')
+              WHEN nce.week6_date IS NOT NULL THEN DATE_FORMAT(nce.week6_date, '%Y-%m-%d')
+              WHEN nce.week5_date IS NOT NULL THEN DATE_FORMAT(nce.week5_date, '%Y-%m-%d')
+              WHEN nce.week4_date IS NOT NULL THEN DATE_FORMAT(nce.week4_date, '%Y-%m-%d')
+              WHEN nce.week3_date IS NOT NULL THEN DATE_FORMAT(nce.week3_date, '%Y-%m-%d')
+              WHEN nce.week2_date IS NOT NULL THEN DATE_FORMAT(nce.week2_date, '%Y-%m-%d')
+              WHEN nce.week1_date IS NOT NULL THEN DATE_FORMAT(nce.week1_date, '%Y-%m-%d')
+              ELSE NULL
+            END
+          ELSE NULL
+        END as completion_date,
+        CASE 
+          WHEN nce.week8_date IS NOT NULL THEN 8
+          WHEN nce.week7_date IS NOT NULL THEN 7
+          WHEN nce.week6_date IS NOT NULL THEN 6
+          WHEN nce.week5_date IS NOT NULL THEN 5
+          WHEN nce.week4_date IS NOT NULL THEN 4
+          WHEN nce.week3_date IS NOT NULL THEN 3
+          WHEN nce.week2_date IS NOT NULL THEN 2
+          WHEN nce.week1_date IS NOT NULL THEN 1
+          ELSE 0
+        END as current_week
+      FROM new_comers nc
+      LEFT JOIN new_comers_education nce ON nc.id = nce.new_comer_id
+      WHERE nc.department = '새가족위원회' 
+        AND nc.believer_type = '전입신자'
+        AND YEAR(nc.register_date) <= ?
+        AND (nc.education_type != '수료' OR nc.education_type IS NULL OR 
+             (nc.education_type = '수료' AND YEAR(nc.register_date) = ?))
+      ORDER BY nc.teacher ASC, 
+               CASE 
+                 WHEN nc.education_type = '등록' THEN 1 
+                 WHEN nc.education_type = '교사배정' THEN 2 
+                 WHEN nc.education_type = '교육중' THEN 3 
+                 WHEN nc.education_type = '교육중단' THEN 4 
+                 WHEN nc.education_type = '수료' THEN 5 
+                 ELSE 6 
+               END ASC,
+               DATE(nc.register_date) ASC
+    `;
+    
+    const weekProgress = await conn.query(weekProgressQuery, [year, year]);
+    
+    const summary = {
+      year: parseInt(year),
+      weekProgress: weekProgress || []
+    };
+    
+    res.json(summary);
+  } catch (error) {
+    console.error('전입신자교육 요약 조회 오류:', error);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   } finally {
     if (conn) conn.release();
   }
