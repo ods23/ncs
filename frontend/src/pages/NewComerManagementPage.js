@@ -226,13 +226,13 @@ const NewComerManagementPage = () => {
   const columnDefs = [
     {
       headerName: '선택',
-      width: 60,
-      minWidth: 50,
-      maxWidth: 70,
+      width: 80,
+      minWidth: 70,
+      maxWidth: 90,
       sortable: false,
       filter: false,
       checkboxSelection: true,
-      headerCheckboxSelection: true,
+      headerCheckboxSelection: false,
       cellStyle: {
         borderRight: '1px solid #f1f3f4',
         textAlign: 'center',

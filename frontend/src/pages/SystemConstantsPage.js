@@ -66,9 +66,9 @@ const SystemConstantsPage = () => {
   const columnDefs = [
     { 
       headerName: 'No', 
-      width: 50, 
-      minWidth: 50,
-      maxWidth: 60,
+      width: 60, 
+      minWidth: 60,
+      maxWidth: 70,
       sortable: false, 
       filter: false,
       resizable: true,

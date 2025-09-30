@@ -47,9 +47,9 @@ const MenuUserRegistrationPage = () => {
   const menuColumnDefs = [
     { 
       headerName: 'No', 
-      width: 50, 
-      minWidth: 40,
-      maxWidth: 60,
+      width: 60, 
+      minWidth: 60,
+      maxWidth: 70,
       sortable: false, 
       filter: false,
       resizable: true,
@@ -137,9 +137,9 @@ const MenuUserRegistrationPage = () => {
   const userMenuColumnDefs = [
     { 
       headerName: 'No', 
-      width: 50, 
-      minWidth: 40,
-      maxWidth: 60,
+      width: 60, 
+      minWidth: 60,
+      maxWidth: 70,
       sortable: false, 
       filter: false,
       resizable: true,

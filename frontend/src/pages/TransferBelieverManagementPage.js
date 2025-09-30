@@ -216,13 +216,13 @@ const TransferBelieverManagementPage = () => {
   const columnDefs = [
     {
       headerName: '선택',
-      width: 60,
-      minWidth: 50,
-      maxWidth: 70,
+      width: 80,
+      minWidth: 70,
+      maxWidth: 90,
       sortable: false,
       filter: false,
       checkboxSelection: true,
-      headerCheckboxSelection: true,
+      headerCheckboxSelection: false,
       cellStyle: {
         borderRight: '1px solid #f1f3f4',
         textAlign: 'center',
@@ -232,7 +232,12 @@ const TransferBelieverManagementPage = () => {
         justifyContent: 'center',
         height: '100%'
       },
-      headerClass: 'ag-header-cell-separator'
+      headerClass: 'ag-header-cell-separator',
+      headerStyle: {
+        textAlign: 'center',
+        fontWeight: 'bold',
+        fontSize: '14px'
+      }
     },
     {
       headerName: 'No',
