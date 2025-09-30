@@ -23,7 +23,8 @@ import {
   Cancel as CancelIcon,
   Visibility as VisibilityIcon,
   Image as ImageIcon,
-  FileDownload as FileDownloadIcon
+  FileDownload as FileDownloadIcon,
+  Assessment as AssessmentIcon
 } from '@mui/icons-material';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
@@ -50,6 +51,11 @@ const NewComerEducationManagementPage = () => {
   // 다이얼로그 상태
   const [openDialog, setOpenDialog] = useState(false);
   const [editingData, setEditingData] = useState(null);
+  
+  // 요약 다이얼로그 상태
+  const [openSummaryDialog, setOpenSummaryDialog] = useState(false);
+  const [summaryData, setSummaryData] = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
   const [formData, setFormData] = useState({
     id: '',
     teacher: '',
@@ -1463,6 +1469,100 @@ const NewComerEducationManagementPage = () => {
     fetchEducationData({ year: new Date().getFullYear().toString() });
   };
 
+  // 요약 데이터 가져오기
+  const fetchSummaryData = async () => {
+    try {
+      setSummaryLoading(true);
+      const year = searchConditions.year || new Date().getFullYear();
+      const response = await fetch(`/api/new-comer-education/summary?year=${year}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSummaryData(data);
+        setOpenSummaryDialog(true);
+      } else {
+        alert('요약 데이터를 가져오는데 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('요약 데이터 가져오기 오류:', error);
+      alert('요약 데이터를 가져오는데 오류가 발생했습니다.');
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
+  // 요약 데이터 엑셀 다운로드
+  const handleSummaryExcelDownload = () => {
+    try {
+      if (!summaryData || !summaryData.weekProgress || summaryData.weekProgress.length === 0) {
+        alert('다운로드할 데이터가 없습니다.');
+        return;
+      }
+
+      // 양육교사별로 그룹화된 데이터를 평면화
+      const excelData = [];
+      
+      // 양육교사별로 그룹화
+      const groupedByTeacher = summaryData.weekProgress.reduce((acc, student) => {
+        const teacher = student.teacher || '미배정';
+        if (!acc[teacher]) {
+          acc[teacher] = [];
+        }
+        acc[teacher].push(student);
+        return acc;
+      }, {});
+
+      // 엑셀 데이터 생성
+      Object.entries(groupedByTeacher).forEach(([teacher, students]) => {
+        students.forEach((student, index) => {
+          excelData.push({
+            '교사명': index === 0 ? teacher : '', // 첫 번째 행에만 교사명 표시
+            '초신자': `${student.believer_name}(${student.registration_number})`,
+            '교육': student.education_type,
+            '등록신청일': student.registration_date,
+            '주차': student.education_type === '수료' ? student.completion_date : `${student.current_week}주차`
+          });
+        });
+      });
+
+      // 워크북 생성
+      const wb = XLSX.utils.book_new();
+      
+      // 워크시트 생성
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      
+      // 컬럼 너비 자동 조정
+      const colWidths = [
+        { wch: 12 },  // 교사명
+        { wch: 20 },  // 초신자
+        { wch: 10 },  // 교육
+        { wch: 12 },  // 등록신청일
+        { wch: 10 }   // 주차
+      ];
+      ws['!cols'] = colWidths;
+      
+      // 워크북에 워크시트 추가
+      XLSX.utils.book_append_sheet(wb, ws, '양육교사별교육현황');
+      
+      // 파일명 생성
+      const currentYear = summaryData.year || new Date().getFullYear();
+      const currentDate = new Date().toISOString().split('T')[0];
+      const fileName = `양육교사별신자교육현황_${currentYear}년_${currentDate}.xlsx`;
+      
+      // 엑셀 파일 다운로드
+      XLSX.writeFile(wb, fileName);
+
+      console.log('요약 엑셀 다운로드 완료:', excelData.length, '건');
+    } catch (error) {
+      console.error('요약 엑셀 다운로드 오류:', error);
+      alert('엑셀 다운로드 중 오류가 발생했습니다.');
+    }
+  };
+
   useEffect(() => {
     fetchCodeData();
     fetchTeachers();
@@ -1476,6 +1576,39 @@ const NewComerEducationManagementPage = () => {
       <Box sx={{ display: 'flex', gap: 1, mb: 2, mt: -7.5, alignItems: 'center' }}>
         {/* 조회조건 */}
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Tooltip title="교육 요약" arrow placement="top">
+            <IconButton
+              onClick={fetchSummaryData}
+              disabled={summaryLoading}
+              size="small"
+              sx={{
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                color: 'white',
+                width: 36,
+                height: 36,
+                borderRadius: '12px',
+                boxShadow: '0 4px 6px -1px rgba(139, 92, 246, 0.3), 0 2px 4px -1px rgba(139, 92, 246, 0.2)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                  transform: 'translateY(-2px) scale(1.05)',
+                  boxShadow: '0 10px 15px -3px rgba(139, 92, 246, 0.4), 0 4px 6px -2px rgba(139, 92, 246, 0.3)'
+                },
+                '&:active': {
+                  transform: 'translateY(0px) scale(1.02)',
+                  boxShadow: '0 4px 6px -1px rgba(139, 92, 246, 0.3)'
+                },
+                '&:disabled': {
+                  background: 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)',
+                  color: 'white',
+                  transform: 'none',
+                  boxShadow: '0 4px 6px -1px rgba(156, 163, 175, 0.3)'
+                }
+              }}
+            >
+              <AssessmentIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
           <Tooltip title="엑셀 다운로드" arrow placement="top">
             <IconButton
               onClick={handleExcelDownload}
@@ -2131,6 +2264,190 @@ const NewComerEducationManagementPage = () => {
             }}
           >
             저장
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 요약 다이얼로그 */}
+      <Dialog 
+        open={openSummaryDialog} 
+        onClose={() => setOpenSummaryDialog(false)}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: '16px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+          color: 'white',
+          fontWeight: '600',
+          fontSize: '18px'
+        }}>
+          {summaryData ? `${summaryData.year}년 초신자교육 요약` : '초신자교육 요약'}
+        </DialogTitle>
+        
+        <DialogContent sx={{ padding: '20px' }}>
+          {summaryLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+              <Typography variant="h6" color="text.secondary">
+                요약 데이터를 불러오는 중...
+              </Typography>
+            </Box>
+          ) : summaryData && summaryData.weekProgress ? (
+            <Box>
+              {/* 양육교사별 신자 교육 현황 */}
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
+                <Tooltip title="엑셀 다운로드" arrow placement="top">
+                  <IconButton
+                    onClick={() => handleSummaryExcelDownload()}
+                    size="small"
+                    sx={{
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                      color: 'white',
+                      width: 36,
+                      height: 36,
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.3), 0 2px 4px -1px rgba(16, 185, 129, 0.2)',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                        transform: 'translateY(-2px) scale(1.05)',
+                        boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.4), 0 4px 6px -2px rgba(16, 185, 129, 0.3)'
+                      },
+                      '&:active': {
+                        transform: 'translateY(0px) scale(1.02)',
+                        boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.3)'
+                      }
+                    }}
+                  >
+                    <FileDownloadIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+                </Tooltip>
+                <Typography variant="h6" sx={{ fontWeight: '600', color: '#374151' }}>
+                  양육교사별 신자 교육현황({new Date().toISOString().split('T')[0]})
+                </Typography>
+              </Box>
+              
+              {/* 칼럼 헤더 */}
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                p: 2, 
+                backgroundColor: '#f8fafc',
+                border: '1px solid #e5e7eb',
+                borderBottom: 'none',
+                borderRadius: '8px 8px 0 0',
+                fontWeight: '600',
+                fontSize: '14px',
+                color: '#374151',
+                gap: 2
+              }}>
+                <Box sx={{ minWidth: '100px', fontWeight: '700', flex: '0 0 100px' }}>교사명</Box>
+                <Box sx={{ minWidth: '200px', fontWeight: '700', flex: '0 0 200px' }}>초신자</Box>
+                <Box sx={{ minWidth: '60px', fontWeight: '700', flex: '0 0 60px' }}>교육</Box>
+                <Box sx={{ minWidth: '100px', fontWeight: '700', flex: '0 0 100px' }}>등록신청일</Box>
+                <Box sx={{ minWidth: '80px', fontWeight: '700', flex: '0 0 80px' }}>주차</Box>
+              </Box>
+              
+              <Box sx={{ 
+                maxHeight: '500px', 
+                overflowY: 'auto',
+                border: '1px solid #e5e7eb',
+                borderTop: 'none',
+                borderRadius: '0 0 8px 8px'
+              }}>
+                {(() => {
+                  // 양육교사별로 그룹화
+                  const groupedByTeacher = summaryData.weekProgress?.reduce((acc, student) => {
+                    const teacher = student.teacher || '미배정';
+                    if (!acc[teacher]) {
+                      acc[teacher] = [];
+                    }
+                    acc[teacher].push(student);
+                    return acc;
+                  }, {}) || {};
+
+                  return Object.entries(groupedByTeacher).map(([teacher, students]) => (
+                    <Box key={teacher}>
+                      {/* 해당 교사의 신자들 */}
+                      {students.map((student, index) => (
+                        <Box key={index} sx={{ 
+                          p: 2,
+                          borderBottom: '1px solid #f3f4f6',
+                          backgroundColor: '#ffffff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 2
+                        }}>
+                          <Typography variant="body1" sx={{ 
+                            fontWeight: '600',
+                            color: '#1f2937',
+                            flex: '0 0 100px',
+                            fontSize: index === 0 ? '16px' : '14px' // 첫 번째 행만 교사명 크게
+                          }}>
+                            {index === 0 ? teacher : ''}
+                          </Typography>
+                          <Typography variant="body1" sx={{ 
+                            fontWeight: '600',
+                            color: '#374151',
+                            flex: '0 0 200px'
+                          }}>
+                            {student.believer_name}({student.registration_number})
+                          </Typography>
+                          <Typography variant="body2" sx={{ 
+                            color: student.education_type === '수료' ? '#10b981' : '#f59e0b',
+                            fontWeight: '600',
+                            flex: '0 0 60px'
+                          }}>
+                            {student.education_type}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ flex: '0 0 100px' }}>
+                            {student.registration_date}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ flex: '0 0 80px' }}>
+                            {student.education_type === '수료' ? student.completion_date : `${student.current_week}주차`}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  ));
+                })()}
+                
+                {(!summaryData.weekProgress || summaryData.weekProgress.length === 0) && (
+                  <Box sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }}>
+                    교육 현황 데이터가 없습니다.
+                  </Box>
+                )}
+              </Box>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+              <Typography variant="h6" color="text.secondary">
+                요약 데이터를 불러올 수 없습니다.
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+        
+        <DialogActions sx={{ padding: '16px 20px' }}>
+          <Button
+            onClick={() => setOpenSummaryDialog(false)}
+            variant="contained"
+            sx={{
+              background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+              borderRadius: '8px',
+              textTransform: 'none',
+              fontWeight: '600',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)'
+              }
+            }}
+          >
+            닫기
           </Button>
         </DialogActions>
       </Dialog>
