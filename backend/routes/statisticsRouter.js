@@ -505,8 +505,8 @@ router.post('/generate', async (req, res) => {
   try {
     const { year, department } = req.body;
     
-    if (!year || year < 2025) {
-      return res.status(400).json({ message: '2025년 이후부터 통계를 생성할 수 있습니다.' });
+    if (!year || year < 2000 || year > 2100) {
+      return res.status(400).json({ message: '2000년부터 2100년까지 통계를 생성할 수 있습니다.' });
     }
     
     if (!department) {
