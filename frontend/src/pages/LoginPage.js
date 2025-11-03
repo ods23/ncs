@@ -90,11 +90,11 @@ const LoginPage = () => {
         padding: 2
       }}
     >
-      <Container component="main" maxWidth="sm">
+      <Container component="main" maxWidth="xs">
         <Paper 
           elevation={24} 
           sx={{ 
-            p: 4, 
+            p: 1.5, 
             width: '100%',
             borderRadius: 3,
             background: 'rgba(255, 255, 255, 0.95)',
@@ -102,12 +102,12 @@ const LoginPage = () => {
             border: '1px solid rgba(255, 255, 255, 0.2)'
           }}
         >
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Box sx={{ textAlign: 'center', mb: 1.5 }}>
             <Typography 
               component="h1" 
-              variant="h3" 
+              variant="h4" 
               sx={{ 
-                mb: 1,
+                mb: 0.3,
                 fontWeight: 700,
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 backgroundClip: 'text',
@@ -155,7 +155,7 @@ const LoginPage = () => {
                 ),
               }}
               sx={{ 
-                mb: 2,
+                mb: 1.5,
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 2,
                   '&:hover fieldset': {
@@ -197,7 +197,7 @@ const LoginPage = () => {
                 ),
               }}
               sx={{ 
-                mb: 3,
+                mb: 2,
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 2,
                   '&:hover fieldset': {
@@ -214,9 +214,9 @@ const LoginPage = () => {
               fullWidth
               variant="contained"
               sx={{ 
-                mb: 3,
-                py: 1.5,
-                fontSize: '16px',
+                mb: 2,
+                py: 1.2,
+                fontSize: '15px',
                 fontWeight: 600,
                 borderRadius: 2,
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -232,7 +232,7 @@ const LoginPage = () => {
               로그인
             </Button>
             
-            <Divider sx={{ my: 3, '&::before, &::after': { borderColor: 'rgba(0,0,0,0.1)' } }}>
+            <Divider sx={{ my: 2, '&::before, &::after': { borderColor: 'rgba(0,0,0,0.1)' } }}>
               <Typography variant="body2" color="text.secondary" sx={{ px: 2 }}>
                 또는
               </Typography>
@@ -244,9 +244,9 @@ const LoginPage = () => {
               onClick={handleGoogleLogin}
               startIcon={<GoogleIcon />}
               sx={{ 
-                mb: 3,
-                py: 1.5,
-                fontSize: '16px',
+                mb: 2,
+                py: 1.2,
+                fontSize: '15px',
                 fontWeight: 600,
                 borderRadius: 2,
                 borderColor: '#ddd',

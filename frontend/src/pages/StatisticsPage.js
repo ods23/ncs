@@ -216,9 +216,9 @@ const StatisticsPage = () => {
 
     const year = parseInt(selectedYear);
       
-      // 2025년 이후부터만 생성 가능
-    if (year < 2025) {
-        showSnackbar('2025년 이후부터 통계를 생성할 수 있습니다.', 'error');
+      // 년도 유효성 검증 (2000년 이후부터 생성 가능)
+    if (year < 2000 || year > 2100) {
+        showSnackbar('2000년부터 2100년까지 통계를 생성할 수 있습니다.', 'error');
         return;
       }
 
@@ -1183,7 +1183,7 @@ const StatisticsPage = () => {
       {/* 통계 테이블 */}
         {getFilteredStatistics().length > 0 && (
       <Paper sx={{ 
-        width: '90%', 
+        width: '98%', 
         mx: 'auto', 
         overflow: 'hidden' 
       }}>
@@ -1672,13 +1672,13 @@ const StatisticsPage = () => {
       {/* 년도별 등록/수료 현황 차트 */}
         {getFilteredStatistics().length > 0 && (
         <Paper sx={{ 
-          width: '90%', 
+          width: '95%', 
           mx: 'auto', 
           mt: 3, 
           p: 1.5, 
           boxSizing: 'border-box',
           minWidth: false ? '100%' : 'auto',
-          maxWidth: false ? '100%' : '90%',
+          maxWidth: false ? '100%' : '95%',
           flex: false ? '1 1 100%' : 'none',
           display: false ? 'block' : 'block',
           overflow: 'hidden'
@@ -1708,15 +1708,15 @@ const StatisticsPage = () => {
           {/* 차트 영역 */}
           <Box id="annual-chart" sx={{ 
             height: 220, 
-            width: '98%', 
+            width: '100%', 
             backgroundColor: 'white', 
             borderRadius: 2, 
             p: 1, 
             border: '1px solid #e5e7eb', 
             pageBreakInside: 'avoid',
-            minWidth: '98%',
-            maxWidth: '98%',
-            flex: '1 1 98%',
+            minWidth: '100%',
+            maxWidth: '100%',
+            flex: '1 1 100%',
             display: 'block',
             overflow: 'hidden',
             mx: 'auto'
@@ -1726,14 +1726,14 @@ const StatisticsPage = () => {
               return chartData.length > 0;
             })() ? (
               <ResponsiveContainer 
-                width={false ? '98%' : '98%'} 
+                width={false ? '100%' : '100%'} 
                 height="100%" 
-                minWidth={false ? '98%' : '98%'}
-                maxWidth={false ? '98%' : '98%'}
+                minWidth={false ? '100%' : '100%'}
+                maxWidth={false ? '100%' : '100%'}
                 style={{ 
-                  width: '98%',
-                  minWidth: '98%',
-                  maxWidth: '98%',
+                  width: '100%',
+                  minWidth: '100%',
+                  maxWidth: '100%',
                   overflow: 'hidden'
                 }}
               >
@@ -1883,7 +1883,7 @@ const StatisticsPage = () => {
       {/* 월별/연령대별 통계 표 */}
       <Box sx={{ 
         mt: 3, 
-        width: '90%', 
+        width: '95%', 
         mx: 'auto' 
       }}>
         <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center', fontWeight: 'bold', fontSize: '16px' }}>
@@ -2215,7 +2215,7 @@ const StatisticsPage = () => {
       {/* 월별/연령대별 통계 차트 */}
       {Object.keys(monthlyAgeStats).length > 0 && (
         <Paper sx={{ 
-          width: '90%', 
+          width: '95%', 
           mt: 3, 
           p: 1, 
           boxShadow: 2, 
@@ -2348,7 +2348,7 @@ const StatisticsPage = () => {
       {/* 초신자/전입신자 분리 연령대별 통계 차트 */}
       {Object.keys(monthlyAgeStats).length > 0 && (
         <Paper id="age-group-chart" sx={{ 
-          width: '90%', 
+          width: '95%', 
           mt: 3, 
           p: 1, 
           boxShadow: 2, 
@@ -2457,7 +2457,7 @@ const StatisticsPage = () => {
       {/* 월별/연령대별 막대 차트 */}
       {Object.keys(monthlyAgeStats).length > 0 && (
         <Paper sx={{ 
-          width: '90%', 
+          width: '95%', 
           mt: 3, 
           p: 1, 
           boxShadow: 2, 
@@ -2471,37 +2471,37 @@ const StatisticsPage = () => {
             {/* 1월-6월 막대 차트 */}
             <Grid item xs={12}>
               <Box id="monthly-age-chart-1" sx={{ 
-                p: 1.5, 
+                p: 1, 
                 backgroundColor: 'white', 
                 borderRadius: 2, 
                 border: '1px solid #e5e7eb',
                 height: 320,
                 pageBreakInside: 'avoid',
-                width: false ? '98%' : '100%',
-                minWidth: false ? '98%' : '100%',
-                maxWidth: false ? '98%' : '100%',
+                width: false ? '95%' : '95%',
+                minWidth: false ? '95%' : '95%',
+                maxWidth: false ? '95%' : '95%',
                 mx: 'auto'
               }}>
                 <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center', fontWeight: 'bold', color: '#1f2937', fontSize: '16px' }}>
                   1월 ~ 6월 초신자/전입신자 등록자의 연령별 현황
                 </Typography>
                 <ResponsiveContainer 
-                  width={false ? '98%' : '100%'} 
+                  width={false ? '95%' : '95%'} 
                   height="85%"
-                  minWidth={false ? '98%' : '100%'}
-                  maxWidth={false ? '98%' : '100%'}
+                  minWidth={false ? '95%' : '95%'}
+                  maxWidth={false ? '95%' : '95%'}
                   style={{ 
-                    width: false ? '98%' : '100%',
-                    minWidth: false ? '98%' : '100%',
-                    maxWidth: false ? '98%' : '100%'
+                    width: false ? '95%' : '95%',
+                    minWidth: false ? '95%' : '95%',
+                    maxWidth: false ? '95%' : '95%'
                   }}
                 >
                   <BarChart 
                     data={prepareMonthlyAgeBarData(1, 6)}
                     margin={{
                       top: 20,
-                      right: false ? 30 : 30,
-                      left: false ? 50 : 40,
+                      right: false ? 20 : 20,
+                      left: false ? 30 : 30,
                       bottom: 30
                     }}
                   >
@@ -2559,37 +2559,37 @@ const StatisticsPage = () => {
             {/* 7월-12월 막대 차트 */}
             <Grid item xs={12}>
               <Box id="monthly-age-chart-2" sx={{ 
-                p: 1.5, 
+                p: 1, 
                 backgroundColor: 'white', 
                 borderRadius: 2, 
                 border: '1px solid #e5e7eb',
                 height: 320,
                 pageBreakInside: 'avoid',
-                width: false ? '98%' : '100%',
-                minWidth: false ? '98%' : '100%',
-                maxWidth: false ? '98%' : '100%',
+                width: false ? '95%' : '95%',
+                minWidth: false ? '95%' : '95%',
+                maxWidth: false ? '95%' : '95%',
                 mx: 'auto'
               }}>
                 <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center', fontWeight: 'bold', color: '#1f2937', fontSize: '16px' }}>
                   7월 ~ 12월 초신자/전입신자 등록자의 연령별 현황
                 </Typography>
                 <ResponsiveContainer 
-                  width={false ? '98%' : '100%'} 
+                  width={false ? '95%' : '95%'} 
                   height="85%"
-                  minWidth={false ? '98%' : '100%'}
-                  maxWidth={false ? '98%' : '100%'}
+                  minWidth={false ? '95%' : '95%'}
+                  maxWidth={false ? '95%' : '95%'}
                   style={{ 
-                    width: false ? '98%' : '100%',
-                    minWidth: false ? '98%' : '100%',
-                    maxWidth: false ? '98%' : '100%'
+                    width: false ? '95%' : '95%',
+                    minWidth: false ? '95%' : '95%',
+                    maxWidth: false ? '95%' : '95%'
                   }}
                 >
                   <BarChart 
                     data={prepareMonthlyAgeBarData(7, 12)}
                     margin={{
                       top: 20,
-                      right: false ? 30 : 30,
-                      left: false ? 50 : 40,
+                      right: false ? 20 : 20,
+                      left: false ? 30 : 30,
                       bottom: 30
                     }}
                   >

@@ -28,11 +28,11 @@ const UnauthorizedPage = () => {
         padding: 2
       }}
     >
-      <Container component="main" maxWidth="sm">
+      <Container component="main" maxWidth="xs">
         <Paper 
           elevation={24} 
           sx={{ 
-            p: 4, 
+            p: 2, 
             width: '100%',
             borderRadius: 3,
             background: 'rgba(255, 255, 255, 0.95)',
@@ -41,28 +41,28 @@ const UnauthorizedPage = () => {
             textAlign: 'center'
           }}
         >
-          <Box sx={{ mb: 4 }}>
+          <Box sx={{ mb: 2 }}>
             <Box
               sx={{
-                width: 80,
-                height: 80,
+                width: 60,
+                height: 60,
                 borderRadius: '50%',
                 background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                margin: '0 auto 2rem',
-                boxShadow: '0 8px 25px rgba(255, 107, 107, 0.3)'
+                margin: '0 auto 1rem',
+                boxShadow: '0 6px 20px rgba(255, 107, 107, 0.3)'
               }}
             >
-              <LockIcon sx={{ fontSize: 40, color: 'white' }} />
+              <LockIcon sx={{ fontSize: 30, color: 'white' }} />
             </Box>
             
             <Typography 
               component="h1" 
-              variant="h4" 
+              variant="h5" 
               sx={{ 
-                mb: 2,
+                mb: 1,
                 fontWeight: 700,
                 background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)',
                 backgroundClip: 'text',
@@ -74,9 +74,9 @@ const UnauthorizedPage = () => {
             </Typography>
             
             <Typography 
-              variant="body1" 
+              variant="body2" 
               color="text.secondary"
-              sx={{ mb: 3, fontSize: '16px' }}
+              sx={{ mb: 2, fontSize: '14px' }}
             >
               이 페이지에 접근하려면 로그인이 필요합니다.
             </Typography>
@@ -86,8 +86,9 @@ const UnauthorizedPage = () => {
             severity="warning" 
             icon={<WarningIcon />}
             sx={{ 
-              mb: 3, 
+              mb: 2, 
               borderRadius: 2,
+              fontSize: '14px',
               '& .MuiAlert-icon': {
                 color: '#ff6b6b'
               }
@@ -101,9 +102,9 @@ const UnauthorizedPage = () => {
             onClick={() => navigate('/login')}
             startIcon={<LoginIcon />}
             sx={{ 
-              py: 1.5,
-              px: 4,
-              fontSize: '16px',
+              py: 1.2,
+              px: 3,
+              fontSize: '15px',
               fontWeight: 600,
               borderRadius: 2,
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',

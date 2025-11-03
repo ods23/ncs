@@ -404,7 +404,7 @@ const ScreenRegistrationPage = () => {
               }
             }}
           >
-            <DisplaySettingsIcon sx={{ fontSize: 14 }} />
+            <AddIcon sx={{ fontSize: 16 }} />
           </IconButton>
         </Tooltip>
       </Box>
