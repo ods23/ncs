@@ -1,14 +1,28 @@
 import axios from 'axios';
 
+// API 기본 URL 설정 (환경 변수 우선, 없으면 상대 경로 사용)
+const getBaseURL = () => {
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+  // 프로덕션 환경에서는 상대 경로 사용, 개발 환경에서는 localhost 사용
+  if (process.env.NODE_ENV === 'production') {
+    return ''; // 상대 경로
+  }
+  return 'http://localhost:3001';
+};
+
+const baseURL = getBaseURL();
+
 // Create axios instance
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3001',
+  baseURL,
   timeout: 10000,
 });
 
 // API 전용 인스턴스 (baseURL에 /api 포함)
 const apiWithPrefix = axios.create({
-  baseURL: (process.env.REACT_APP_API_URL || 'http://localhost:3001') + '/api',
+  baseURL: `${baseURL}/api`,
   timeout: 10000,
 });
 
@@ -20,8 +34,9 @@ const refreshToken = async () => {
       throw new Error('토큰이 없습니다.');
     }
 
+    const refreshURL = baseURL ? `${baseURL}/auth/refresh` : '/auth/refresh';
     const response = await axios.post(
-      `${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/auth/refresh`,
+      refreshURL,
       {},
       {
         headers: { Authorization: `Bearer ${token}` }
@@ -123,14 +138,21 @@ apiWithPrefix.interceptors.response.use(
 );
 
 // Auth API
+const getAuthURL = (path) => {
+  if (baseURL) {
+    return `${baseURL}/auth${path}`;
+  }
+  return `/auth${path}`;
+};
+
 export const authAPI = {
   login: (email, password) => api.post('/auth/login', { email, password }),
   register: (name, email, password) => api.post('/auth/register', { name, email, password }),
   logout: () => api.post('/auth/logout'),
   verify: () => api.get('/auth/verify'),
   refresh: () => api.post('/auth/refresh'),
-  google: () => window.open('http://localhost:3001/auth/google', '_self'),
-  naver: () => window.open('http://localhost:3001/auth/naver', '_self'),
+  google: () => window.open(getAuthURL('/google'), '_self'),
+  naver: () => window.open(getAuthURL('/naver'), '_self'),
 };
 
 // Believer API
@@ -226,15 +248,20 @@ export const getFileUrl = async (savedPath) => {
     const fileUploadPath = fileUploadPathResponse.data.constant_value;
     
     // 상대경로에서 절대경로로 변환
-    const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
     const uploadUrl = fileUploadPath.startsWith('/') ? fileUploadPath : `/${fileUploadPath}`;
     
-    return `${baseUrl}${uploadUrl}/${savedPath}`;
+    // baseURL이 있으면 사용, 없으면 상대 경로 사용
+    if (baseURL) {
+      return `${baseURL}${uploadUrl}/${savedPath}`;
+    }
+    return `${uploadUrl}/${savedPath}`;
   } catch (error) {
     console.error('파일 URL 생성 실패:', error);
     // 기본값으로 fallback
-    const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-    return `${baseUrl}/uploads/${savedPath}`;
+    if (baseURL) {
+      return `${baseURL}/uploads/${savedPath}`;
+    }
+    return `/uploads/${savedPath}`;
   }
 };
 

@@ -1,13 +1,20 @@
 const mariadb = require('mariadb');
 const fs = require('fs');
 const path = require('path');
+require('dotenv').config();
+
+// 환경 변수 검증
+if (!process.env.DB_HOST || !process.env.DB_USER || !process.env.DB_PASSWORD || !process.env.DB_NAME) {
+    console.error('❌ 환경 변수가 설정되지 않았습니다. .env 파일을 확인하세요.');
+    process.exit(1);
+}
 
 const pool = mariadb.createPool({
-    host: 'localhost',
-    port: 3306,
-    user: 'root',
-    password: 'insa119!!',
-    database: 'nodejsweb_db',
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || 3306,
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME || 'nodejsweb_db',
     charset: 'utf8',
     collation: 'utf8_unicode_ci',
     connectionLimit: 10,

@@ -1,5 +1,14 @@
 const jwt = require('jsonwebtoken');
 
+// JWT Secret 검증
+const getJWTSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret || secret === 'your-secret-key-change-in-production') {
+    console.warn('⚠️  JWT_SECRET이 기본값이거나 설정되지 않았습니다. 프로덕션 환경에서는 반드시 강력한 시크릿을 설정하세요.');
+  }
+  return secret || 'your-secret-key-change-in-production';
+};
+
 const generateToken = (user) => {
   return jwt.sign(
     { 
@@ -8,14 +17,14 @@ const generateToken = (user) => {
       name: user.name, 
       role: user.role 
     },
-    process.env.JWT_SECRET,
+    getJWTSecret(),
     { expiresIn: '7d' } // 24시간에서 7일로 변경
   );
 };
 
 const verifyToken = (token) => {
   try {
-    return jwt.verify(token, process.env.JWT_SECRET);
+    return jwt.verify(token, getJWTSecret());
   } catch (error) {
     return null;
   }
@@ -30,7 +39,7 @@ const refreshToken = (user) => {
       name: user.name, 
       role: user.role 
     },
-    process.env.JWT_SECRET,
+    getJWTSecret(),
     { expiresIn: '7d' }
   );
 };

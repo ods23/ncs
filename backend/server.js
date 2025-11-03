@@ -7,6 +7,19 @@ require('dotenv').config();
 // 한국 시간대 설정
 process.env.TZ = 'Asia/Seoul';
 
+// 환경 변수 검증
+const requiredEnvVars = ['JWT_SECRET', 'DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'];
+const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+  console.error('❌ 필수 환경 변수가 설정되지 않았습니다:');
+  missingEnvVars.forEach(envVar => console.error(`   - ${envVar}`));
+  console.error('⚠️  .env 파일을 확인하세요.');
+  if (process.env.NODE_ENV === 'production') {
+    process.exit(1);
+  }
+}
+
 // Database connection
 const { pool } = require('./config/database');
 
@@ -15,26 +28,44 @@ require('./config/passport');
 
 const app = express();
 
-// Middleware
+// CORS 설정 - 프로덕션 환경 고려
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['http://localhost:3000', 'http://localhost:80'];
+
 app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true
+  origin: function (origin, callback) {
+    // origin이 없는 경우 (같은 도메인 요청 등) 허용
+    if (!origin || allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS 정책에 의해 차단되었습니다.'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// 요청 크기 제한 설정
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // 정적 파일 서빙 (uploads 폴더)
 app.use('/uploads', express.static('uploads'));
 
-// Session middleware
+// Session middleware - 보안 강화
+const isProduction = process.env.NODE_ENV === 'production';
 app.use(session({
-  secret: process.env.JWT_SECRET || 'your-secret-key',
+  secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
   resave: false,
   saveUninitialized: false,
+  name: 'sessionId', // 기본 'connect.sid' 대신 커스텀 이름 사용
   cookie: {
-    secure: false,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    secure: isProduction, // HTTPS에서만 쿠키 전송 (프로덕션)
+    httpOnly: true, // XSS 공격 방지
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'strict' // CSRF 공격 방지
   }
 }));
 
@@ -81,9 +112,45 @@ app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
 });
 
+// 404 핸들러
+app.use((req, res) => {
+  res.status(404).json({ 
+    success: false,
+    message: '요청한 리소스를 찾을 수 없습니다.',
+    path: req.path 
+  });
+});
+
+// 전역 에러 처리 미들웨어
+app.use((err, req, res, next) => {
+  console.error('에러 발생:', {
+    message: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    path: req.path,
+    method: req.method,
+    timestamp: new Date().toISOString()
+  });
+
+  // CORS 에러 처리
+  if (err.message && err.message.includes('CORS')) {
+    return res.status(403).json({
+      success: false,
+      message: 'CORS 정책에 의해 요청이 차단되었습니다.'
+    });
+  }
+
+  // 기본 에러 응답
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || '서버 오류가 발생했습니다.',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+});
+
 const PORT = process.env.PORT || 3001;
 
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
+  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
 }); 
