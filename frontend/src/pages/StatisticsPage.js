@@ -53,7 +53,8 @@ import {
   LabelList,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  Label
 } from 'recharts';
 
 const StatisticsPage = () => {
@@ -258,6 +259,7 @@ const StatisticsPage = () => {
       showSnackbar(error.message || '통계 생성에 실패했습니다.', 'error');
     }
   };
+
 
 
 
@@ -908,7 +910,7 @@ const StatisticsPage = () => {
           sx={{
             width: 140,
             '& .MuiInputLabel-root': {
-              fontSize: '12px',
+              fontSize: '11px',
               fontWeight: '600',
               color: '#374151'
             },
@@ -932,7 +934,7 @@ const StatisticsPage = () => {
               }
             },
             '& .MuiFormHelperText-root': {
-              fontSize: '10px',
+              fontSize: '11px',
               marginTop: '2px'
             }
           }}
@@ -948,7 +950,7 @@ const StatisticsPage = () => {
           sx={{
             width: 140,
             '& .MuiInputLabel-root': {
-              fontSize: '12px',
+              fontSize: '11px',
               fontWeight: '600',
               color: '#374151'
             },
@@ -972,7 +974,7 @@ const StatisticsPage = () => {
               }
             },
             '& .MuiFormHelperText-root': {
-              fontSize: '10px',
+              fontSize: '11px',
               marginTop: '2px'
             }
           }}
@@ -1112,8 +1114,8 @@ const StatisticsPage = () => {
             }
           }}>
             <Box sx={{ textAlign: 'center', flex: 1 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '16px' }}>총 등록</Typography>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', fontSize: '22px', lineHeight: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '11px' }}>총 등록</Typography>
+              <Typography variant="h4" sx={{  fontSize: '11px', lineHeight: 1 }}>
                     {statistics.reduce((sum, stat) => sum + stat.total_registration, 0)}
                   </Typography>
                 </Box>
@@ -1139,8 +1141,8 @@ const StatisticsPage = () => {
             }
           }}>
             <Box sx={{ textAlign: 'center', flex: 1 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '16px' }}>총 수료</Typography>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', fontSize: '22px', lineHeight: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '11px' }}>총 수료</Typography>
+              <Typography variant="h4" sx={{  fontSize: '11px', lineHeight: 1 }}>
                     {statistics.reduce((sum, stat) => sum + stat.total_graduate, 0)}
                   </Typography>
                 </Box>
@@ -1166,8 +1168,8 @@ const StatisticsPage = () => {
             }
           }}>
             <Box sx={{ textAlign: 'center', flex: 1 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '16px' }}>관리 년도</Typography>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', fontSize: '22px', lineHeight: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '11px' }}>관리 년도</Typography>
+              <Typography variant="h4" sx={{  fontSize: '11px', lineHeight: 1 }}>
                 {statistics.length}
                   </Typography>
                 </Box>
@@ -1195,8 +1197,7 @@ const StatisticsPage = () => {
           textAlign: 'center'
         }}>
           <Typography variant="h5" sx={{ 
-            fontWeight: 'bold', 
-            fontSize: '16px', 
+            fontSize: '11px', 
             color: '#1f2937',
             letterSpacing: '0.5px'
           }}>
@@ -1204,128 +1205,138 @@ const StatisticsPage = () => {
           </Typography>
         </Box>
         
-        <TableContainer sx={{ pageBreakInside: 'avoid' }} id="main-statistics-table">
-          <Table stickyHeader sx={{ border: '1px solid #e5e7eb', '& .MuiTableCell-root': { py: 0.05, fontSize: '16px' } }}>
+        <TableContainer sx={{ pageBreakInside: 'avoid', width: '100%', overflowX: 'auto' }} id="main-statistics-table">
+          <Table stickyHeader size="small" sx={{ 
+            border: '1px solid #e5e7eb', 
+            tableLayout: 'fixed',
+            width: '100%',
+            '& .MuiTableCell-root': { 
+              py: 0.3, 
+              px: 0.5,
+              fontSize: '11px',
+              lineHeight: 1.2
+            } 
+          }}>
             <TableHead>
               {/* 메인 헤더 행 */}
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '3px solid #6b7280' }} rowSpan={3}>년도</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '3px solid #1e40af' }} colSpan={3}>등록</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '3px solid #059669' }} colSpan={7}>수료</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b' }} colSpan={7}>교육</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }} rowSpan={3}>수정</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb' }} rowSpan={3}>삭제</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #6b7280', fontSize: '11px', width: '3%' }} rowSpan={3}>년도</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #1e40af', fontSize: '11px' }} colSpan={3}>등록</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #059669', fontSize: '11px' }} colSpan={7}>수료</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b', fontSize: '11px' }} colSpan={7}>교육</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px', width: '3%' }} rowSpan={3}>수정</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', fontSize: '11px', width: '3%' }} rowSpan={3}>삭제</TableCell>
               </TableRow>
               
               {/* 서브 헤더 행 */}
               <TableRow>
                 {/* 등록 서브헤더 */}
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }} rowSpan={2}>초신자</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }} rowSpan={2}>전입신자</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '3px solid #1e40af' }} rowSpan={2}>합계</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px', width: '6%' }} rowSpan={2}>초신자</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px', width: '8%' }} rowSpan={2}>전입신자</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #1e40af', fontSize: '11px', width: '6%' }} rowSpan={2}>합계</TableCell>
                 
                 {/* 수료 서브헤더 */}
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }} colSpan={3}>초신자</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }} colSpan={3}>전입신자</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '3px solid #059669' }} rowSpan={2}>합계</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }} colSpan={3}>초신자</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }} colSpan={3}>전입신자</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #059669', fontSize: '11px' }} rowSpan={2}>합계</TableCell>
                 
                 {/* 교육 서브헤더 */}
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }} colSpan={3}>초신자</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }} colSpan={3}>전입신자</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b' }} rowSpan={2}>합계</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }} colSpan={3}>초신자</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }} colSpan={3}>전입신자</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b', fontSize: '11px' }} rowSpan={2}>합계</TableCell>
               </TableRow>
               
               {/* 상세 헤더 행 */}
               <TableRow>
                 {/* 수료 상세헤더 */}
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>전년도</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>올해</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>합계</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>전년도</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>올해</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>합계</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>전년도</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>올해</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>합계</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>전년도</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>올해</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>합계</TableCell>
                 
                 {/* 교육 상세헤더 */}
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>교육중</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>교육중단</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>합계</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>교육중</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>교육중단</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', textAlign: 'center', py: 0.1, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>합계</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>교육중</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>교육중단</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>합계</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>교육중</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>교육중단</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>합계</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {getFilteredStatistics().map((stat) => (
                 <TableRow key={stat.year} hover>
                   {/* 년도 */}
-                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#dbeafe', textAlign: 'center', py: 0.2, border: '1px solid #e5e7eb', borderRight: '3px solid #6b7280' }}>
+                  <TableCell sx={{  backgroundColor: '#dbeafe', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #6b7280', fontSize: '11px' }}>
                     {stat.year}
                   </TableCell>
                   
                   {/* 등록 섹션 */}
-                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px', width: '6%' }}>
                     {stat.new_comer_registration}
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px', width: '8%' }}>
                     {stat.transfer_believer_registration}
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#dbeafe', textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '3px solid #1e40af' }}>
+                  <TableCell sx={{  backgroundColor: '#dbeafe', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #1e40af', fontSize: '11px', width: '6%' }}>
                     {stat.total_registration}
                   </TableCell>
                   
                   {/* 수료 섹션 */}
-                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
                     {stat.new_comer_graduate_prev_year}
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
                     {stat.new_comer_graduate_current_year}
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#dcfce7', textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{  backgroundColor: '#dcfce7', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
                     {stat.new_comer_graduate_total}
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
                     {stat.transfer_believer_graduate_prev_year}
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
                     {stat.transfer_believer_graduate_current_year}
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#dcfce7', textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{  backgroundColor: '#dcfce7', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
                     {stat.transfer_believer_graduate_total}
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#bbf7d0', textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '3px solid #059669' }}>
+                  <TableCell sx={{  backgroundColor: '#bbf7d0', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #059669', fontSize: '11px' }}>
                     {stat.total_graduate}
                   </TableCell>
                   
                   {/* 교육 섹션 */}
-                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
                     {stat.new_comer_education_in_progress}
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
                     {stat.new_comer_education_discontinued}
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#fef3c7', textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{  backgroundColor: '#fef3c7', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
                     {stat.new_comer_education_total}
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
                     {stat.transfer_believer_education_in_progress}
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
                     {stat.transfer_believer_education_discontinued}
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#fef3c7', textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{  backgroundColor: '#fef3c7', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
                     {stat.transfer_believer_education_total}
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#fde68a', textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b' }}>
+                  <TableCell sx={{  backgroundColor: '#fde68a', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b', fontSize: '11px' }}>
                     {stat.total_education}
                   </TableCell>
                   
                   {/* 수정 칼럼 */}
-                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
                       <Tooltip title="수정" arrow>
                         <IconButton
                           size="small"
                           onClick={() => openEditDialog(stat)}
-                          sx={{ color: '#3b82f6' }}
+                          sx={{ color: '#3b82f6', '& .MuiSvgIcon-root': { fontSize: '14px' } }}
                         >
                           <EditIcon />
                         </IconButton>
@@ -1333,12 +1344,12 @@ const StatisticsPage = () => {
                   </TableCell>
                   
                   {/* 삭제 칼럼 */}
-                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', fontSize: '11px' }}>
                       <Tooltip title="삭제" arrow>
                         <IconButton
                           size="small"
                           onClick={() => deleteStatistics(stat.year)}
-                          sx={{ color: '#ef4444' }}
+                          sx={{ color: '#ef4444', '& .MuiSvgIcon-root': { fontSize: '14px' } }}
                         >
                           <DeleteIcon />
                         </IconButton>
@@ -1352,13 +1363,14 @@ const StatisticsPage = () => {
                 <TableRow sx={{ backgroundColor: '#f8fafc', '&:hover': { backgroundColor: '#f1f5f9' } }}>
                   {/* 년도 */}
                   <TableCell sx={{ 
-                    fontWeight: 'bold', 
                     backgroundColor: '#e2e8f0', 
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '3px solid #6b7280',
-                    fontSize: '16px',
-                    color: '#1e293b'
+                    fontSize: '11px',
+                    color: '#1e293b',
+                    py: 0.3,
+                    px: 0.5
                   }}>
                     합계
                   </TableCell>
@@ -1368,8 +1380,8 @@ const StatisticsPage = () => {
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
-                    fontWeight: 'bold',
-                    backgroundColor: '#fef3c7'
+                    backgroundColor: '#fef3c7',
+                    width: '6%'
                   }}>
                     <Chip 
                       label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_registration || 0), 0)}
@@ -1377,8 +1389,7 @@ const StatisticsPage = () => {
                       sx={{ 
                         backgroundColor: '#fef3c7', 
                         color: '#92400e',
-                        fontWeight: 'bold',
-                        fontSize: '16px'
+                        fontSize: '11px'
                       }}
                     />
                   </TableCell>
@@ -1386,8 +1397,8 @@ const StatisticsPage = () => {
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
-                    fontWeight: 'bold',
-                    backgroundColor: '#fef3c7'
+                    backgroundColor: '#fef3c7',
+                    width: '8%'
                   }}>
                     <Chip 
                       label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_registration || 0), 0)}
@@ -1395,8 +1406,7 @@ const StatisticsPage = () => {
                       sx={{ 
                         backgroundColor: '#fef3c7', 
                         color: '#92400e',
-                        fontWeight: 'bold',
-                        fontSize: '16px'
+                        fontSize: '10px'
                       }}
                     />
                   </TableCell>
@@ -1404,10 +1414,10 @@ const StatisticsPage = () => {
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '3px solid #1e40af',
-                    fontWeight: 'bold',
                     backgroundColor: '#dbeafe',
                     color: '#1e40af',
-                    fontSize: '16px'
+                    fontSize: '11px',
+                    width: '6%'
                   }}>
                     {getFilteredStatistics().reduce((sum, stat) => sum + (stat.total_registration || 0), 0)}
                   </TableCell>
@@ -1417,7 +1427,6 @@ const StatisticsPage = () => {
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
-                    fontWeight: 'bold',
                     backgroundColor: '#dcfce7'
                   }}>
                     <Chip 
@@ -1426,8 +1435,7 @@ const StatisticsPage = () => {
                       sx={{ 
                         backgroundColor: '#dcfce7', 
                         color: '#166534',
-                        fontWeight: 'bold',
-                        fontSize: '16px'
+                        fontSize: '11px'
                       }}
                     />
                   </TableCell>
@@ -1435,8 +1443,9 @@ const StatisticsPage = () => {
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
-                    fontWeight: 'bold',
-                    backgroundColor: '#dcfce7'
+                    backgroundColor: '#dcfce7',
+                    py: 0.3,
+                    px: 0.5
                   }}>
                     <Chip 
                       label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_graduate_current_year || 0), 0)}
@@ -1444,8 +1453,7 @@ const StatisticsPage = () => {
                       sx={{ 
                         backgroundColor: '#dcfce7', 
                         color: '#166534',
-                        fontWeight: 'bold',
-                        fontSize: '16px'
+                        fontSize: '11px'
                       }}
                     />
                   </TableCell>
@@ -1453,8 +1461,9 @@ const StatisticsPage = () => {
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
-                    fontWeight: 'bold',
-                    backgroundColor: '#dcfce7'
+                    backgroundColor: '#dcfce7',
+                    py: 0.3,
+                    px: 0.5
                   }}>
                     <Chip 
                       label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_graduate_total || 0), 0)}
@@ -1462,8 +1471,7 @@ const StatisticsPage = () => {
                       sx={{ 
                         backgroundColor: '#dcfce7', 
                         color: '#166534',
-                        fontWeight: 'bold',
-                        fontSize: '16px'
+                        fontSize: '11px'
                       }}
                     />
                   </TableCell>
@@ -1471,8 +1479,9 @@ const StatisticsPage = () => {
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
-                    fontWeight: 'bold',
-                    backgroundColor: '#dcfce7'
+                    backgroundColor: '#dcfce7',
+                    py: 0.3,
+                    px: 0.5
                   }}>
                     <Chip 
                       label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_graduate_prev_year || 0), 0)}
@@ -1480,8 +1489,7 @@ const StatisticsPage = () => {
                       sx={{ 
                         backgroundColor: '#dcfce7', 
                         color: '#166534',
-                        fontWeight: 'bold',
-                        fontSize: '16px'
+                        fontSize: '11px'
                       }}
                     />
                   </TableCell>
@@ -1489,8 +1497,9 @@ const StatisticsPage = () => {
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
-                    fontWeight: 'bold',
-                    backgroundColor: '#dcfce7'
+                    backgroundColor: '#dcfce7',
+                    py: 0.3,
+                    px: 0.5
                   }}>
                     <Chip 
                       label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_graduate_current_year || 0), 0)}
@@ -1498,8 +1507,7 @@ const StatisticsPage = () => {
                       sx={{ 
                         backgroundColor: '#dcfce7', 
                         color: '#166534',
-                        fontWeight: 'bold',
-                        fontSize: '16px'
+                        fontSize: '11px'
                       }}
                     />
                   </TableCell>
@@ -1507,8 +1515,9 @@ const StatisticsPage = () => {
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
-                    fontWeight: 'bold',
-                    backgroundColor: '#dcfce7'
+                    backgroundColor: '#dcfce7',
+                    py: 0.3,
+                    px: 0.5
                   }}>
                     <Chip 
                       label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_graduate_total || 0), 0)}
@@ -1516,8 +1525,7 @@ const StatisticsPage = () => {
                       sx={{ 
                         backgroundColor: '#dcfce7', 
                         color: '#166534',
-                        fontWeight: 'bold',
-                        fontSize: '16px'
+                        fontSize: '10px'
                       }}
                     />
                   </TableCell>
@@ -1525,10 +1533,11 @@ const StatisticsPage = () => {
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '3px solid #059669',
-                    fontWeight: 'bold',
                     backgroundColor: '#bbf7d0',
                     color: '#059669',
-                    fontSize: '16px'
+                    fontSize: '11px',
+                    py: 0.3,
+                    px: 0.5
                   }}>
                     {getFilteredStatistics().reduce((sum, stat) => sum + (stat.total_graduate || 0), 0)}
                   </TableCell>
@@ -1538,8 +1547,9 @@ const StatisticsPage = () => {
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
-                    fontWeight: 'bold',
-                    backgroundColor: '#fef3c7'
+                    backgroundColor: '#fef3c7',
+                    py: 0.3,
+                    px: 0.5
                   }}>
                     <Chip 
                       label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_education_in_progress || 0), 0)}
@@ -1547,8 +1557,7 @@ const StatisticsPage = () => {
                       sx={{ 
                         backgroundColor: '#fef3c7', 
                         color: '#92400e',
-                        fontWeight: 'bold',
-                        fontSize: '16px'
+                        fontSize: '11px'
                       }}
                     />
                   </TableCell>
@@ -1556,8 +1565,9 @@ const StatisticsPage = () => {
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
-                    fontWeight: 'bold',
-                    backgroundColor: '#fef3c7'
+                    backgroundColor: '#fef3c7',
+                    py: 0.3,
+                    px: 0.5
                   }}>
                     <Chip 
                       label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_education_discontinued || 0), 0)}
@@ -1565,8 +1575,7 @@ const StatisticsPage = () => {
                       sx={{ 
                         backgroundColor: '#fef3c7', 
                         color: '#92400e',
-                        fontWeight: 'bold',
-                        fontSize: '16px'
+                        fontSize: '11px'
                       }}
                     />
                   </TableCell>
@@ -1574,8 +1583,9 @@ const StatisticsPage = () => {
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
-                    fontWeight: 'bold',
-                    backgroundColor: '#fef3c7'
+                    backgroundColor: '#fef3c7',
+                    py: 0.3,
+                    px: 0.5
                   }}>
                     <Chip 
                       label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_education_total || 0), 0)}
@@ -1583,8 +1593,7 @@ const StatisticsPage = () => {
                       sx={{ 
                         backgroundColor: '#fef3c7', 
                         color: '#92400e',
-                        fontWeight: 'bold',
-                        fontSize: '16px'
+                        fontSize: '11px'
                       }}
                     />
                   </TableCell>
@@ -1592,8 +1601,9 @@ const StatisticsPage = () => {
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
-                    fontWeight: 'bold',
-                    backgroundColor: '#fef3c7'
+                    backgroundColor: '#fef3c7',
+                    py: 0.3,
+                    px: 0.5
                   }}>
                     <Chip 
                       label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_education_in_progress || 0), 0)}
@@ -1601,8 +1611,7 @@ const StatisticsPage = () => {
                       sx={{ 
                         backgroundColor: '#fef3c7', 
                         color: '#92400e',
-                        fontWeight: 'bold',
-                        fontSize: '16px'
+                        fontSize: '11px'
                       }}
                     />
                   </TableCell>
@@ -1610,8 +1619,9 @@ const StatisticsPage = () => {
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
-                    fontWeight: 'bold',
-                    backgroundColor: '#fef3c7'
+                    backgroundColor: '#fef3c7',
+                    py: 0.3,
+                    px: 0.5
                   }}>
                     <Chip 
                       label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_education_discontinued || 0), 0)}
@@ -1619,8 +1629,7 @@ const StatisticsPage = () => {
                       sx={{ 
                         backgroundColor: '#fef3c7', 
                         color: '#92400e',
-                        fontWeight: 'bold',
-                        fontSize: '16px'
+                        fontSize: '11px'
                       }}
                     />
                   </TableCell>
@@ -1628,8 +1637,9 @@ const StatisticsPage = () => {
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
-                    fontWeight: 'bold',
-                    backgroundColor: '#fef3c7'
+                    backgroundColor: '#fef3c7',
+                    py: 0.3,
+                    px: 0.5
                   }}>
                     <Chip 
                       label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_education_total || 0), 0)}
@@ -1637,8 +1647,7 @@ const StatisticsPage = () => {
                       sx={{ 
                         backgroundColor: '#fef3c7', 
                         color: '#92400e',
-                        fontWeight: 'bold',
-                        fontSize: '16px'
+                        fontSize: '10px'
                       }}
                     />
                   </TableCell>
@@ -1646,19 +1655,20 @@ const StatisticsPage = () => {
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '3px solid #f59e0b',
-                    fontWeight: 'bold',
                     backgroundColor: '#fed7aa',
                     color: '#f59e0b',
-                    fontSize: '16px'
+                    fontSize: '11px',
+                    py: 0.3,
+                    px: 0.5
                   }}>
                     {getFilteredStatistics().reduce((sum, stat) => sum + (stat.total_education || 0), 0)}
                   </TableCell>
                   
                   {/* 수정/삭제 버튼 (합계 행에는 없음) */}
-                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8' }}>
+                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', py: 0.3, px: 0.5, fontSize: '11px' }}>
                     -
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb' }}>
+                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', py: 0.3, px: 0.5, fontSize: '11px' }}>
                     -
                   </TableCell>
                 </TableRow>
@@ -1699,7 +1709,7 @@ const StatisticsPage = () => {
           {/* 헤더 */}
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
             <div style={{ width: '100px' }}></div>
-            <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#374151', fontSize: '16px', flex: 1, textAlign: 'center' }}>
+            <Typography variant="h6" sx={{  color: '#374151', fontSize: '12px', flex: 1, textAlign: 'center' }}>
               {selectedYear && selectedDepartment ? `${selectedYear}년 기준 ${selectedDepartment}의 등록자/수료자 현황` : '년도별 등록자/수료자 현황'}
             </Typography>
             <div style={{ width: '100px' }}></div>
@@ -1754,9 +1764,8 @@ const StatisticsPage = () => {
                   <XAxis 
                     dataKey="year" 
                     tick={{ 
-                      fontSize: 16, 
-                      fill: '#6b7280',
-                      fontWeight: '500'
+                      fontSize: 11, 
+                      fill: '#6b7280'
                     }}
                     tickFormatter={(value) => `${value}년`}
                     axisLine={{ stroke: '#d1d5db' }}
@@ -1766,9 +1775,8 @@ const StatisticsPage = () => {
                   />
                   <YAxis 
                     tick={{ 
-                      fontSize: 16, 
-                      fill: '#6b7280',
-                      fontWeight: '500'
+                      fontSize: 11, 
+                      fill: '#6b7280'
                     }}
                     domain={[0, 'dataMax + 50']}
                     axisLine={{ stroke: '#d1d5db' }}
@@ -1782,14 +1790,13 @@ const StatisticsPage = () => {
                       border: '1px solid #e5e7eb',
                       borderRadius: '12px',
                       boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-                      fontSize: '16px'
+                      fontSize: '11px'
                     }}
                   />
                   <Legend 
                     wrapperStyle={{
                       paddingTop: '20px',
-                      fontSize: '16px',
-                      fontWeight: '500'
+                      fontSize: '11px'
                     }}
                   />
                   <Bar 
@@ -1804,8 +1811,7 @@ const StatisticsPage = () => {
                       position="top" 
                       style={{ 
                         fill: '#1e40af', 
-                        fontSize: '16px', 
-                        fontWeight: 'bold' 
+                        fontSize: '11px'
                       }}
                       formatter={(value) => value > 0 ? value : ''}
                     />
@@ -1822,8 +1828,7 @@ const StatisticsPage = () => {
                       position="top" 
                       style={{ 
                         fill: '#059669', 
-                        fontSize: '16px', 
-                        fontWeight: 'bold' 
+                        fontSize: '11px'
                       }}
                       formatter={(value) => value > 0 ? value : ''}
                     />
@@ -1886,7 +1891,7 @@ const StatisticsPage = () => {
         width: '95%', 
         mx: 'auto' 
       }}>
-        <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center', fontWeight: 'bold', fontSize: '16px' }}>
+        <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  fontSize: '11px' }}>
           {selectedYear && selectedDepartment ? `${selectedYear}년 ${selectedDepartment}의 등록현황보고` : `${selectedYear || new Date().getFullYear()}년 새가족 등록현황 보고서`}
         </Typography>
         
@@ -1895,7 +1900,7 @@ const StatisticsPage = () => {
             <Table size="small" sx={{ 
               width: '100%', 
               tableLayout: 'fixed',
-              '& .MuiTableCell-root': { py: 0.2, fontSize: '16px' } 
+              '& .MuiTableCell-root': { py: 0.3, px: 0.5, fontSize: '11px', lineHeight: 1.2 } 
             }}>
               <TableHead>
                 {/* 메인 헤더 */}
@@ -1905,7 +1910,6 @@ const StatisticsPage = () => {
                     sx={{ 
                       width: '5%',
                       backgroundColor: '#f5f5f5', 
-                      fontWeight: 'bold',
                       border: '1px solid #ddd',
                       textAlign: 'center',
                       verticalAlign: 'middle'
@@ -1920,7 +1924,6 @@ const StatisticsPage = () => {
                       sx={{ 
                         textAlign: 'center', 
                         backgroundColor: '#e3f2fd', 
-                        fontWeight: 'bold',
                         border: '1px solid #ddd',
                         width: '5%',
                         minWidth: 0
@@ -1934,7 +1937,6 @@ const StatisticsPage = () => {
                     sx={{ 
                       textAlign: 'center', 
                       backgroundColor: '#e8f5e8', 
-                      fontWeight: 'bold',
                       border: '1px solid #ddd',
                       verticalAlign: 'middle',
                       width: '3%'
@@ -1947,7 +1949,6 @@ const StatisticsPage = () => {
                     sx={{ 
                       textAlign: 'center', 
                       backgroundColor: '#fff3e0', 
-                      fontWeight: 'bold',
                       border: '1px solid #ddd',
                       verticalAlign: 'middle',
                       width: '3%'
@@ -1960,7 +1961,6 @@ const StatisticsPage = () => {
                     sx={{ 
                       textAlign: 'center', 
                       backgroundColor: '#f3e5f5', 
-                      fontWeight: 'bold',
                       border: '1px solid #ddd',
                       verticalAlign: 'middle',
                       width: '3%'
@@ -2041,9 +2041,10 @@ const StatisticsPage = () => {
                     <TableCell 
                       sx={{ 
                         backgroundColor: '#f5f5f5', 
-                        fontWeight: 'bold',
                         border: '1px solid #ddd',
-                        width: '5%'
+                        width: '5%',
+                        fontSize: '11px',
+                        lineHeight: 1.2
                       }}
                     >
                       {ageGroup.label}<br/>({ageGroup.birthYear})
@@ -2084,7 +2085,6 @@ const StatisticsPage = () => {
                       sx={{ 
                         textAlign: 'center', 
                         backgroundColor: '#e8f5e8', 
-                        fontWeight: 'bold',
                         border: '1px solid #ddd',
                         width: '3%'
                       }}
@@ -2099,7 +2099,6 @@ const StatisticsPage = () => {
                       sx={{ 
                         textAlign: 'center', 
                         backgroundColor: '#fff3e0', 
-                        fontWeight: 'bold',
                         border: '1px solid #ddd',
                         width: '3%'
                       }}
@@ -2114,7 +2113,6 @@ const StatisticsPage = () => {
                       sx={{ 
                         textAlign: 'center', 
                         backgroundColor: '#f3e5f5', 
-                        fontWeight: 'bold',
                         border: '1px solid #ddd',
                         width: '3%'
                       }}
@@ -2131,7 +2129,6 @@ const StatisticsPage = () => {
                   <TableCell 
                     sx={{ 
                       backgroundColor: '#f5f5f5', 
-                      fontWeight: 'bold',
                       border: '1px solid #ddd'
                     }}
                   >
@@ -2145,7 +2142,6 @@ const StatisticsPage = () => {
                         sx={{ 
                           textAlign: 'center', 
                           backgroundColor: '#e8f5e8', 
-                          fontWeight: 'bold',
                           border: '1px solid #ddd'
                         }}
                       >
@@ -2155,7 +2151,6 @@ const StatisticsPage = () => {
                         sx={{ 
                           textAlign: 'center', 
                           backgroundColor: '#e8f5e8', 
-                          fontWeight: 'bold',
                           border: '1px solid #ddd'
                         }}
                       >
@@ -2169,7 +2164,6 @@ const StatisticsPage = () => {
                     sx={{ 
                       textAlign: 'center', 
                       backgroundColor: '#e8f5e8', 
-                      fontWeight: 'bold',
                       border: '1px solid #ddd'
                     }}
                   >
@@ -2183,7 +2177,6 @@ const StatisticsPage = () => {
                     sx={{ 
                       textAlign: 'center', 
                       backgroundColor: '#e8f5e8', 
-                      fontWeight: 'bold',
                       border: '1px solid #ddd'
                     }}
                   >
@@ -2197,7 +2190,6 @@ const StatisticsPage = () => {
                     sx={{ 
                       textAlign: 'center', 
                       backgroundColor: '#e8f5e8', 
-                      fontWeight: 'bold',
                       border: '1px solid #ddd'
                     }}
                   >
@@ -2221,7 +2213,7 @@ const StatisticsPage = () => {
           boxShadow: 2, 
           mx: 'auto' 
         }}>
-          <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center', fontWeight: 'bold', color: '#374151', fontSize: '16px' }}>
+          <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#374151', fontSize: '12px' }}>
             {selectedYear && selectedDepartment ? `${selectedYear}년 ${selectedDepartment}의 등록현황 분석` : `${selectedYear || new Date().getFullYear()}년 새가족 등록현황 분석`}
           </Typography>
           
@@ -2243,7 +2235,7 @@ const StatisticsPage = () => {
                 height: 250,
                 pageBreakInside: 'avoid'
               }}>
-                <Typography variant="h6" sx={{ mb: 1, textAlign: 'center', fontWeight: 'bold', color: '#1f2937', fontSize: '16px' }}>
+                <Typography variant="h6" sx={{ mb: 1, textAlign: 'center',  color: '#1f2937', fontSize: '12px' }}>
                   월별 전체 등록자 현황
                 </Typography>
                 <ResponsiveContainer width="100%" height="85%">
@@ -2251,12 +2243,12 @@ const StatisticsPage = () => {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis 
                       dataKey="month" 
-                      tick={{ fontSize: 16, fill: '#6b7280' }}
+                      tick={{ fontSize: 11, fill: '#6b7280' }}
                       axisLine={{ stroke: '#d1d5db' }}
                       tickLine={{ stroke: '#d1d5db' }}
                     />
                     <YAxis 
-                      tick={{ fontSize: 16, fill: '#6b7280' }}
+                      tick={{ fontSize: 11, fill: '#6b7280' }}
                       axisLine={{ stroke: '#d1d5db' }}
                       tickLine={{ stroke: '#d1d5db' }}
                     />
@@ -2267,7 +2259,8 @@ const StatisticsPage = () => {
                         backgroundColor: 'white',
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                        fontSize: '11px'
                       }}
                     />
                     <Bar 
@@ -2280,8 +2273,7 @@ const StatisticsPage = () => {
                         position="top" 
                         style={{ 
                           fill: '#1e40af', 
-                          fontSize: '16px', 
-                          fontWeight: 'bold' 
+                          fontSize: '11px'
                         }}
                         formatter={(value) => value > 0 ? value : ''}
                       />
@@ -2299,9 +2291,15 @@ const StatisticsPage = () => {
                 borderRadius: 2, 
                 border: '1px solid #e5e7eb',
                 height: 250,
-                pageBreakInside: 'avoid'
+                pageBreakInside: 'avoid',
+                '& .recharts-pie-label-text': {
+                  fontSize: '11px !important'
+                },
+                '& text': {
+                  fontSize: '11px !important'
+                }
               }}>
-                <Typography variant="h6" sx={{ mb: 1, textAlign: 'center', fontWeight: 'bold', color: '#1f2937', fontSize: '16px' }}>
+                <Typography variant="h6" sx={{ mb: 1, textAlign: 'center',  color: '#1f2937', fontSize: '12px' }}>
                   연령별 전체 등록자 비율
                 </Typography>
                 <ResponsiveContainer width="100%" height="95%">
@@ -2315,6 +2313,7 @@ const StatisticsPage = () => {
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
+                      labelStyle={{ fontSize: 11 }}
                     >
                       {prepareAgeGroupData().map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
@@ -2329,7 +2328,8 @@ const StatisticsPage = () => {
                         backgroundColor: 'white',
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                        fontSize: '11px'
                       }}
                     />
                   </PieChart>
@@ -2354,7 +2354,7 @@ const StatisticsPage = () => {
           boxShadow: 2, 
           mx: 'auto' 
         }}>
-          <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center', fontWeight: 'bold', color: '#374151', fontSize: '16px' }}>
+          <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#374151', fontSize: '12px' }}>
             {selectedYear && selectedDepartment ? `${selectedYear}년 ${selectedDepartment}의 초신자 및 전입신자의 등록자의 연령대별 현황` : `${selectedYear || new Date().getFullYear()}년 초신자 및 전입신자 등록자의 연령대별 현황`}
           </Typography>
           
@@ -2367,9 +2367,15 @@ const StatisticsPage = () => {
                 borderRadius: 2, 
                 border: '1px solid #e5e7eb',
                 height: 320,
-                pageBreakInside: 'avoid'
+                pageBreakInside: 'avoid',
+                '& .recharts-pie-label-text': {
+                  fontSize: '11px !important'
+                },
+                '& text': {
+                  fontSize: '11px !important'
+                }
               }}>
-                <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center', fontWeight: 'bold', color: '#3b82f6', fontSize: '16px' }}>
+                <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#3b82f6', fontSize: '12px' }}>
                   초신자 등록자 비율
                 </Typography>
                 <ResponsiveContainer width="100%" height="85%">
@@ -2383,6 +2389,7 @@ const StatisticsPage = () => {
                       outerRadius={100}
                       fill="#8884d8"
                       dataKey="value"
+                      labelStyle={{ fontSize: 11 }}
                     >
                       {prepareNewComerAgeGroupData().map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
@@ -2397,7 +2404,8 @@ const StatisticsPage = () => {
                         backgroundColor: 'white',
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                        fontSize: '11px'
                       }}
                     />
                   </PieChart>
@@ -2413,9 +2421,15 @@ const StatisticsPage = () => {
                 borderRadius: 2, 
                 border: '1px solid #e5e7eb',
                 height: 320,
-                pageBreakInside: 'avoid'
+                pageBreakInside: 'avoid',
+                '& .recharts-pie-label-text': {
+                  fontSize: '11px !important'
+                },
+                '& text': {
+                  fontSize: '11px !important'
+                }
               }}>
-                <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center', fontWeight: 'bold', color: '#8b5cf6', fontSize: '16px' }}>
+                <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#8b5cf6', fontSize: '12px' }}>
                   전입신자 등록자 비율
                 </Typography>
                 <ResponsiveContainer width="100%" height="85%">
@@ -2429,6 +2443,7 @@ const StatisticsPage = () => {
                       outerRadius={100}
                       fill="#8884d8"
                       dataKey="value"
+                      labelStyle={{ fontSize: 11 }}
                     >
                       {prepareTransferBelieverAgeGroupData().map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
@@ -2443,7 +2458,8 @@ const StatisticsPage = () => {
                         backgroundColor: 'white',
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                        fontSize: '11px'
                       }}
                     />
                   </PieChart>
@@ -2463,7 +2479,7 @@ const StatisticsPage = () => {
           boxShadow: 2, 
           mx: 'auto' 
         }}>
-          <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center', fontWeight: 'bold', color: '#374151', fontSize: '16px' }}>
+          <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#374151', fontSize: '12px' }}>
             {selectedYear && selectedDepartment ? `${selectedYear}년 ${selectedDepartment}의 초신자 및 전입신자 등록자의 월별/연령대별 현황` : `${selectedYear || new Date().getFullYear()}년 초신자 및 전입신자 등록자의 월별/연령대별 현황`}
           </Typography>
           
@@ -2482,7 +2498,7 @@ const StatisticsPage = () => {
                 maxWidth: false ? '95%' : '95%',
                 mx: 'auto'
               }}>
-                <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center', fontWeight: 'bold', color: '#1f2937', fontSize: '16px' }}>
+                <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#1f2937', fontSize: '12px' }}>
                   1월 ~ 6월 초신자/전입신자 등록자의 연령별 현황
                 </Typography>
                 <ResponsiveContainer 
@@ -2508,12 +2524,12 @@ const StatisticsPage = () => {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis 
                       dataKey="monthGroup" 
-                      tick={{ fontSize: 16, fill: '#6b7280' }}
+                      tick={{ fontSize: 11, fill: '#6b7280' }}
                       axisLine={{ stroke: '#d1d5db' }}
                       tickLine={{ stroke: '#d1d5db' }}
                     />
                     <YAxis 
-                      tick={{ fontSize: 16, fill: '#6b7280' }}
+                      tick={{ fontSize: 11, fill: '#6b7280' }}
                       axisLine={{ stroke: '#d1d5db' }}
                       tickLine={{ stroke: '#d1d5db' }}
                     />
@@ -2524,12 +2540,14 @@ const StatisticsPage = () => {
                         backgroundColor: 'white',
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                        fontSize: '11px'
                       }}
                     />
                     <Legend 
                       wrapperStyle={{
-                        paddingTop: '5px'
+                        paddingTop: '5px',
+                        fontSize: '11px'
                       }}
                     />
                     {prepareAgeGroupBarData().map((ageGroup, index) => (
@@ -2544,8 +2562,7 @@ const StatisticsPage = () => {
                           position="top" 
                           style={{ 
                             fill: '#1e40af', 
-                            fontSize: '12px', 
-                            fontWeight: 'bold' 
+                            fontSize: '11px'
                           }}
                           formatter={(value) => value > 0 ? value : ''}
                         />
@@ -2570,7 +2587,7 @@ const StatisticsPage = () => {
                 maxWidth: false ? '95%' : '95%',
                 mx: 'auto'
               }}>
-                <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center', fontWeight: 'bold', color: '#1f2937', fontSize: '16px' }}>
+                <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#1f2937', fontSize: '12px' }}>
                   7월 ~ 12월 초신자/전입신자 등록자의 연령별 현황
                 </Typography>
                 <ResponsiveContainer 
@@ -2596,12 +2613,12 @@ const StatisticsPage = () => {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis 
                       dataKey="monthGroup" 
-                      tick={{ fontSize: 16, fill: '#6b7280' }}
+                      tick={{ fontSize: 11, fill: '#6b7280' }}
                       axisLine={{ stroke: '#d1d5db' }}
                       tickLine={{ stroke: '#d1d5db' }}
                     />
                     <YAxis 
-                      tick={{ fontSize: 16, fill: '#6b7280' }}
+                      tick={{ fontSize: 11, fill: '#6b7280' }}
                       axisLine={{ stroke: '#d1d5db' }}
                       tickLine={{ stroke: '#d1d5db' }}
                     />
@@ -2612,12 +2629,14 @@ const StatisticsPage = () => {
                         backgroundColor: 'white',
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                        fontSize: '11px'
                       }}
                     />
                     <Legend 
                       wrapperStyle={{
-                        paddingTop: '5px'
+                        paddingTop: '5px',
+                        fontSize: '11px'
                       }}
                     />
                     {prepareAgeGroupBarData().map((ageGroup, index) => (
@@ -2632,8 +2651,7 @@ const StatisticsPage = () => {
                           position="top" 
                           style={{ 
                             fill: '#1e40af', 
-                            fontSize: '12px', 
-                            fontWeight: 'bold' 
+                            fontSize: '11px'
                           }}
                           formatter={(value) => value > 0 ? value : ''}
                         />
@@ -2680,7 +2698,7 @@ const StatisticsPage = () => {
               <CalculateIcon sx={{ color: 'white', fontSize: 20 }} />
             </Box>
             <Box>
-              <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1f2937' }}>
+              <Typography variant="h6" sx={{  color: '#1f2937' }}>
           {editingStat ? `${editingStat.year}년 통계 수정` : '새 통계 추가'}
               </Typography>
               <Typography variant="body2" sx={{ color: '#6b7280', mt: 0.5 }}>
@@ -2737,7 +2755,7 @@ const StatisticsPage = () => {
                 }}>
                   <PeopleIcon sx={{ color: 'white', fontSize: 16 }} />
                 </Box>
-                <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#3b82f6' }}>
+                <Typography variant="h6" sx={{  color: '#3b82f6' }}>
                   초신자
                 </Typography>
               </Box>
@@ -2881,7 +2899,7 @@ const StatisticsPage = () => {
                 }}>
                   <SchoolIcon sx={{ color: 'white', fontSize: 16 }} />
                 </Box>
-                <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#8b5cf6' }}>
+                <Typography variant="h6" sx={{  color: '#8b5cf6' }}>
                   전입신자
                 </Typography>
               </Box>
@@ -3031,7 +3049,7 @@ const StatisticsPage = () => {
                 }}>
                   <CheckCircleIcon sx={{ color: 'white', fontSize: 16 }} />
                 </Box>
-                <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#10b981' }}>
+                <Typography variant="h6" sx={{  color: '#10b981' }}>
                   합계
                 </Typography>
               </Box>
@@ -3177,7 +3195,6 @@ const StatisticsPage = () => {
         <DialogTitle sx={{ 
           textAlign: 'center', 
           fontSize: '20px', 
-          fontWeight: 'bold', 
           color: '#1f2937',
           pb: 1,
           background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
@@ -3189,7 +3206,7 @@ const StatisticsPage = () => {
         <DialogContent sx={{ pt: 3, pb: 2 }}>
           <DialogContentText sx={{ 
             textAlign: 'center', 
-            fontSize: '12px', 
+            fontSize: '11px', 
             color: '#374151',
             mb: 2
           }}>
@@ -3197,7 +3214,7 @@ const StatisticsPage = () => {
           </DialogContentText>
           <DialogContentText sx={{ 
             textAlign: 'center', 
-            fontSize: '12px', 
+            fontSize: '11px', 
             color: '#6b7280',
             mb: 1
           }}>
