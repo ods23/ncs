@@ -327,6 +327,8 @@ const StatisticsPage = () => {
     return statistics;
   };
 
+
+
   // 차트 데이터 준비 함수 - 서버에서 필터링된 데이터를 사용
   const prepareChartData = () => {
     if (!selectedYear || statistics.length === 0) {
