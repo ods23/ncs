@@ -858,6 +858,7 @@ const StatisticsPage = () => {
       const pdf = new jsPDF('p', 'mm', 'a4');
       const imgWidth = 210; // A4 너비 (mm)
       const pageHeight = 297; // A4 높이 (mm)
+      const topMargin = 10; // 상단 여백 (mm)
 
       // 전체 컨테이너를 캡처
       // 스크롤 위치를 맨 위로 이동하여 전체 컨텐츠가 보이도록 함
@@ -991,31 +992,31 @@ const StatisticsPage = () => {
 
             // 첫 번째 부분을 PDF에 추가
             let heightLeft1 = imgHeight1;
-            let position1 = 0;
+            let position1 = topMargin;
             pdf.addImage(imgData1, 'PNG', 0, position1, imgWidth, imgHeight1);
-            heightLeft1 -= pageHeight;
+            heightLeft1 -= (pageHeight - topMargin);
 
             // 여러 페이지로 분할
             while (heightLeft1 > 0) {
-              position1 = heightLeft1 - imgHeight1;
+              position1 = topMargin + (heightLeft1 - imgHeight1);
               pdf.addPage();
               pdf.addImage(imgData1, 'PNG', 0, position1, imgWidth, imgHeight1);
-              heightLeft1 -= pageHeight;
+              heightLeft1 -= (pageHeight - topMargin);
             }
 
             // 두 번째 부분: 새로운 페이지에서 시작 (연령대별 현황 섹션)
             let heightLeft2 = imgHeight2;
-            let position2 = 0;
+            let position2 = topMargin;
             pdf.addPage();
             pdf.addImage(imgData2, 'PNG', 0, position2, imgWidth, imgHeight2);
-            heightLeft2 -= pageHeight;
+            heightLeft2 -= (pageHeight - topMargin);
 
             // 여러 페이지로 분할
             while (heightLeft2 > 0) {
-              position2 = heightLeft2 - imgHeight2;
+              position2 = topMargin + (heightLeft2 - imgHeight2);
               pdf.addPage();
               pdf.addImage(imgData2, 'PNG', 0, position2, imgWidth, imgHeight2);
-              heightLeft2 -= pageHeight;
+              heightLeft2 -= (pageHeight - topMargin);
             }
 
             resolve();
@@ -1024,18 +1025,18 @@ const StatisticsPage = () => {
       } else {
         // 연령대별 현황 섹션이 없는 경우: 전체를 한 번에 처리
         let heightLeft = imgHeight;
-        let position = 0;
+        let position = topMargin;
 
         // 첫 페이지 추가
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+        heightLeft -= (pageHeight - topMargin);
 
         // 여러 페이지로 분할
         while (heightLeft > 0) {
-          position = heightLeft - imgHeight;
+          position = topMargin + (heightLeft - imgHeight);
           pdf.addPage();
           pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-          heightLeft -= pageHeight;
+          heightLeft -= (pageHeight - topMargin);
         }
       }
 
