@@ -40,6 +40,7 @@ import {
   School as SchoolIcon,
   CheckCircle as CheckCircleIcon,
   AutoAwesome as AutoAwesomeIcon,
+  PictureAsPdf as PictureAsPdfIcon,
 } from '@mui/icons-material';
 import {
   BarChart,
@@ -56,6 +57,8 @@ import {
   Cell,
   Label
 } from 'recharts';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const StatisticsPage = () => {
   const [statistics, setStatistics] = useState([]);
@@ -795,6 +798,262 @@ const StatisticsPage = () => {
     setSnackbar({ open: true, message, severity });
   };
 
+  // PDF 다운로드 함수
+  const handleDownloadPdf = async () => {
+    try {
+      setLoading(true);
+      
+      // 스낵바 닫기 (PDF 캡처에 포함되지 않도록)
+      setSnackbar({ open: false, message: '', severity: 'success' });
+
+      const container = document.getElementById('statistics-container');
+      if (!container) {
+        throw new Error('통계 컨텐츠를 찾을 수 없습니다.');
+      }
+
+      // 차트가 완전히 렌더링될 때까지 대기
+      // SVG 요소들이 모두 로드될 때까지 기다림
+      const waitForCharts = () => {
+        return new Promise((resolve) => {
+          // 첫 번째 대기: 기본 렌더링 시간
+          setTimeout(() => {
+            // SVG 요소들이 모두 그려졌는지 확인
+            const svgElements = container.querySelectorAll('svg');
+            let allChartsReady = true;
+            
+            svgElements.forEach((svg) => {
+              try {
+                // SVG가 비어있거나 너무 작으면 아직 렌더링 중
+                if (!svg.children.length) {
+                  allChartsReady = false;
+                } else {
+                  const bbox = svg.getBBox();
+                  if (bbox.width === 0 && bbox.height === 0) {
+                    allChartsReady = false;
+                  }
+                }
+              } catch (e) {
+                // getBBox() 실패 시 자식 요소 확인
+                if (!svg.children.length) {
+                  allChartsReady = false;
+                }
+              }
+            });
+            
+            if (allChartsReady && svgElements.length > 0) {
+              // 추가 대기: 차트가 완전히 그려질 때까지
+              setTimeout(resolve, 2000);
+            } else {
+              // 차트가 아직 준비되지 않았으면 더 기다림
+              setTimeout(resolve, 3000);
+            }
+          }, 2000);
+        });
+      };
+
+      await waitForCharts();
+
+      const ageGroupSectionStart = document.getElementById('age-group-section-start');
+      
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210; // A4 너비 (mm)
+      const pageHeight = 297; // A4 높이 (mm)
+
+      // 전체 컨테이너를 캡처
+      // 스크롤 위치를 맨 위로 이동하여 전체 컨텐츠가 보이도록 함
+      const originalScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      window.scrollTo(0, 0);
+      
+      // 컨테이너가 화면에 보이도록 스크롤
+      container.scrollIntoView({ behavior: 'instant', block: 'start' });
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: container.scrollWidth,
+        windowHeight: container.scrollHeight,
+        allowTaint: false,
+        removeContainer: false,
+        onclone: (clonedDoc) => {
+          // 복제된 문서에서 스낵바 제거
+          const snackbar = clonedDoc.querySelector('[role="alert"]');
+          if (snackbar) {
+            snackbar.style.display = 'none';
+          }
+          
+          // 합계 행의 텍스트 색상을 명시적으로 설정하여 PDF에서 보이도록 함
+          const totalRows = clonedDoc.querySelectorAll('tr');
+          totalRows.forEach((row) => {
+            const cells = row.querySelectorAll('td');
+            let isTotalRow = false;
+            
+            // 합계 행인지 확인 (첫 번째 셀이 "합계"인지 확인)
+            const firstCell = cells[0];
+            if (firstCell && firstCell.textContent?.trim() === '합계') {
+              isTotalRow = true;
+            }
+            
+            cells.forEach((cell) => {
+              // computed style로 배경색 확인
+              const computedStyle = clonedDoc.defaultView?.getComputedStyle(cell);
+              const bgColor = computedStyle?.backgroundColor || cell.style.backgroundColor || '';
+              
+              // 합계 행이거나, 배경색이 합계 행 색상인 경우
+              if (isTotalRow || cell.textContent?.trim() === '합계' || 
+                  (bgColor && (
+                    bgColor.includes('rgb(254, 243, 199)') || // #fef3c7
+                    bgColor.includes('rgb(220, 252, 231)') || // #dcfce7
+                    bgColor.includes('rgb(219, 234, 254)') || // #dbeafe
+                    bgColor.includes('rgb(187, 247, 208)') || // #bbf7d0
+                    bgColor.includes('rgb(254, 215, 170)') || // #fed7aa
+                    bgColor.includes('rgb(232, 245, 232)') || // #e8f5e8
+                    bgColor.includes('rgb(243, 229, 245)') || // #f3e5f5
+                    bgColor.includes('fef3c7') ||
+                    bgColor.includes('dcfce7') ||
+                    bgColor.includes('dbeafe') ||
+                    bgColor.includes('bbf7d0') ||
+                    bgColor.includes('fed7aa') ||
+                    bgColor.includes('e8f5e8') ||
+                    bgColor.includes('f3e5f5')
+                  ))) {
+                // 강제로 검은색으로 설정
+                cell.style.setProperty('color', '#000000', 'important');
+                cell.style.setProperty('font-weight', 'bold', 'important');
+                
+                // Chip 컴포넌트 내부의 텍스트도 확인
+                const chips = cell.querySelectorAll('[class*="MuiChip"]');
+                chips.forEach((chip) => {
+                  chip.style.setProperty('color', '#000000', 'important');
+                  chip.style.setProperty('font-weight', 'bold', 'important');
+                  // Chip 내부의 span도 확인
+                  const chipSpans = chip.querySelectorAll('span');
+                  chipSpans.forEach((span) => {
+                    span.style.setProperty('color', '#000000', 'important');
+                    span.style.setProperty('font-weight', 'bold', 'important');
+                  });
+                });
+                
+                // 모든 자식 요소의 색상도 검은색으로 설정
+                const allChildren = cell.querySelectorAll('*');
+                allChildren.forEach((child) => {
+                  child.style.setProperty('color', '#000000', 'important');
+                });
+              }
+            });
+          });
+        },
+      });
+      
+      // 원래 스크롤 위치로 복원
+      window.scrollTo(0, originalScrollTop);
+
+      const imgData = canvas.toDataURL('image/png');
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const imgHeightPx = canvas.height;
+      const imgWidthPx = canvas.width;
+
+      if (ageGroupSectionStart) {
+        // 연령대별 현황 섹션의 위치 계산
+        const containerRect = container.getBoundingClientRect();
+        const sectionRect = ageGroupSectionStart.getBoundingClientRect();
+        const relativeTop = sectionRect.top - containerRect.top + container.scrollTop;
+        
+        // 캔버스 좌표로 변환 (scale 고려)
+        const splitPositionPx = Math.round((relativeTop * canvas.height) / container.scrollHeight);
+        
+        // 이미지를 두 부분으로 분리
+        const img = new Image();
+        img.src = imgData;
+        
+        await new Promise((resolve) => {
+          img.onload = () => {
+            // 첫 번째 부분 캔버스 생성
+            const canvas1 = document.createElement('canvas');
+            canvas1.width = imgWidthPx;
+            canvas1.height = splitPositionPx;
+            const ctx1 = canvas1.getContext('2d');
+            ctx1.drawImage(img, 0, 0, imgWidthPx, splitPositionPx, 0, 0, imgWidthPx, splitPositionPx);
+            const imgData1 = canvas1.toDataURL('image/png');
+            const imgHeight1 = (splitPositionPx * imgWidth) / imgWidthPx;
+
+            // 두 번째 부분 캔버스 생성
+            const canvas2 = document.createElement('canvas');
+            canvas2.width = imgWidthPx;
+            canvas2.height = imgHeightPx - splitPositionPx;
+            const ctx2 = canvas2.getContext('2d');
+            ctx2.drawImage(img, 0, splitPositionPx, imgWidthPx, imgHeightPx - splitPositionPx, 0, 0, imgWidthPx, imgHeightPx - splitPositionPx);
+            const imgData2 = canvas2.toDataURL('image/png');
+            const imgHeight2 = ((imgHeightPx - splitPositionPx) * imgWidth) / imgWidthPx;
+
+            // 첫 번째 부분을 PDF에 추가
+            let heightLeft1 = imgHeight1;
+            let position1 = 0;
+            pdf.addImage(imgData1, 'PNG', 0, position1, imgWidth, imgHeight1);
+            heightLeft1 -= pageHeight;
+
+            // 여러 페이지로 분할
+            while (heightLeft1 > 0) {
+              position1 = heightLeft1 - imgHeight1;
+              pdf.addPage();
+              pdf.addImage(imgData1, 'PNG', 0, position1, imgWidth, imgHeight1);
+              heightLeft1 -= pageHeight;
+            }
+
+            // 두 번째 부분: 새로운 페이지에서 시작 (연령대별 현황 섹션)
+            let heightLeft2 = imgHeight2;
+            let position2 = 0;
+            pdf.addPage();
+            pdf.addImage(imgData2, 'PNG', 0, position2, imgWidth, imgHeight2);
+            heightLeft2 -= pageHeight;
+
+            // 여러 페이지로 분할
+            while (heightLeft2 > 0) {
+              position2 = heightLeft2 - imgHeight2;
+              pdf.addPage();
+              pdf.addImage(imgData2, 'PNG', 0, position2, imgWidth, imgHeight2);
+              heightLeft2 -= pageHeight;
+            }
+
+            resolve();
+          };
+        });
+      } else {
+        // 연령대별 현황 섹션이 없는 경우: 전체를 한 번에 처리
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        // 첫 페이지 추가
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        // 여러 페이지로 분할
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+      }
+
+      // 파일명 생성
+      const fileName = `통계보고서_${selectedYear || '전체'}_${selectedDepartment || '전체'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      // PDF 다운로드
+      pdf.save(fileName);
+      
+      setLoading(false);
+      showSnackbar('PDF 다운로드가 완료되었습니다.', 'success');
+    } catch (error) {
+      console.error('PDF 생성 실패:', error);
+      setLoading(false);
+      showSnackbar('PDF 생성 중 오류가 발생했습니다.', 'error');
+    }
+  };
+
   // 폼 데이터 변경 처리
   const handleFormChange = (field, value) => {
     setFormData(prev => ({
@@ -1095,6 +1354,39 @@ const StatisticsPage = () => {
           </IconButton>
         </Tooltip>
 
+        <Tooltip title="PDF 다운로드" arrow placement="top">
+          <IconButton
+            onClick={handleDownloadPdf}
+            disabled={loading}
+            size="small"
+            sx={{
+              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+              color: 'white',
+              width: 36,
+              height: 36,
+              borderRadius: '12px',
+              boxShadow: '0 4px 6px -1px rgba(239, 68, 68, 0.3), 0 2px 4px -1px rgba(239, 68, 68, 0.2)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+                transform: 'translateY(-2px) scale(1.05)',
+                boxShadow: '0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.3)'
+              },
+              '&:active': {
+                transform: 'translateY(0) scale(0.98)'
+              },
+              '&.Mui-disabled': {
+                background: '#e5e7eb',
+                color: '#9ca3af',
+                transform: 'none',
+                boxShadow: 'none'
+              }
+            }}
+          >
+            <PictureAsPdfIcon sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Tooltip>
+
         {/* 요약 카드들 */}
         <Box sx={{ display: 'flex', gap: 2, flex: 1 }}>
           {/* 총 등록 카드 */}
@@ -1383,42 +1675,37 @@ const StatisticsPage = () => {
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#fef3c7',
-                    width: '6%'
+                    color: '#000000',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                    width: '6%',
+                    py: 0.3,
+                    px: 0.5
                   }}>
-                    <Chip 
-                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_registration || 0), 0)}
-                      size="small"
-                      sx={{ 
-                        backgroundColor: '#fef3c7', 
-                        color: '#92400e',
-                        fontSize: '11px'
-                      }}
-                    />
+                    {getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_registration || 0), 0)}
                   </TableCell>
                   <TableCell sx={{ 
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#fef3c7',
-                    width: '8%'
+                    color: '#000000',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                    width: '8%',
+                    py: 0.3,
+                    px: 0.5
                   }}>
-                    <Chip 
-                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_registration || 0), 0)}
-                      size="small"
-                      sx={{ 
-                        backgroundColor: '#fef3c7', 
-                        color: '#92400e',
-                        fontSize: '10px'
-                      }}
-                    />
+                    {getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_registration || 0), 0)}
                   </TableCell>
                   <TableCell sx={{ 
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '3px solid #1e40af',
                     backgroundColor: '#dbeafe',
-                    color: '#1e40af',
+                    color: '#000000',
                     fontSize: '11px',
+                    fontWeight: 'bold',
                     width: '6%'
                   }}>
                     {getFilteredStatistics().reduce((sum, stat) => sum + (stat.total_registration || 0), 0)}
@@ -1429,115 +1716,88 @@ const StatisticsPage = () => {
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
-                    backgroundColor: '#dcfce7'
+                    backgroundColor: '#dcfce7',
+                    color: '#000000',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                    py: 0.3,
+                    px: 0.5
                   }}>
-                    <Chip 
-                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_graduate_prev_year || 0), 0)}
-                      size="small"
-                      sx={{ 
-                        backgroundColor: '#dcfce7', 
-                        color: '#166534',
-                        fontSize: '11px'
-                      }}
-                    />
+                    {getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_graduate_prev_year || 0), 0)}
                   </TableCell>
                   <TableCell sx={{ 
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#dcfce7',
+                    color: '#000000',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
                   }}>
-                    <Chip 
-                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_graduate_current_year || 0), 0)}
-                      size="small"
-                      sx={{ 
-                        backgroundColor: '#dcfce7', 
-                        color: '#166534',
-                        fontSize: '11px'
-                      }}
-                    />
+                    {getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_graduate_current_year || 0), 0)}
                   </TableCell>
                   <TableCell sx={{ 
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#dcfce7',
+                    color: '#000000',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
                   }}>
-                    <Chip 
-                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_graduate_total || 0), 0)}
-                      size="small"
-                      sx={{ 
-                        backgroundColor: '#dcfce7', 
-                        color: '#166534',
-                        fontSize: '11px'
-                      }}
-                    />
+                    {getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_graduate_total || 0), 0)}
                   </TableCell>
                   <TableCell sx={{ 
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#dcfce7',
+                    color: '#000000',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
                   }}>
-                    <Chip 
-                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_graduate_prev_year || 0), 0)}
-                      size="small"
-                      sx={{ 
-                        backgroundColor: '#dcfce7', 
-                        color: '#166534',
-                        fontSize: '11px'
-                      }}
-                    />
+                    {getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_graduate_prev_year || 0), 0)}
                   </TableCell>
                   <TableCell sx={{ 
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#dcfce7',
+                    color: '#000000',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
                   }}>
-                    <Chip 
-                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_graduate_current_year || 0), 0)}
-                      size="small"
-                      sx={{ 
-                        backgroundColor: '#dcfce7', 
-                        color: '#166534',
-                        fontSize: '11px'
-                      }}
-                    />
+                    {getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_graduate_current_year || 0), 0)}
                   </TableCell>
                   <TableCell sx={{ 
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#dcfce7',
+                    color: '#000000',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
                   }}>
-                    <Chip 
-                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_graduate_total || 0), 0)}
-                      size="small"
-                      sx={{ 
-                        backgroundColor: '#dcfce7', 
-                        color: '#166534',
-                        fontSize: '10px'
-                      }}
-                    />
+                    {getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_graduate_total || 0), 0)}
                   </TableCell>
                   <TableCell sx={{ 
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '3px solid #059669',
                     backgroundColor: '#bbf7d0',
-                    color: '#059669',
+                    color: '#000000',
                     fontSize: '11px',
+                    fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
                   }}>
@@ -1550,116 +1810,87 @@ const StatisticsPage = () => {
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#fef3c7',
+                    color: '#000000',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
                   }}>
-                    <Chip 
-                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_education_in_progress || 0), 0)}
-                      size="small"
-                      sx={{ 
-                        backgroundColor: '#fef3c7', 
-                        color: '#92400e',
-                        fontSize: '11px'
-                      }}
-                    />
+                    {getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_education_in_progress || 0), 0)}
                   </TableCell>
                   <TableCell sx={{ 
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#fef3c7',
+                    color: '#000000',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
                   }}>
-                    <Chip 
-                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_education_discontinued || 0), 0)}
-                      size="small"
-                      sx={{ 
-                        backgroundColor: '#fef3c7', 
-                        color: '#92400e',
-                        fontSize: '11px'
-                      }}
-                    />
+                    {getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_education_discontinued || 0), 0)}
                   </TableCell>
                   <TableCell sx={{ 
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#fef3c7',
+                    color: '#000000',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
                   }}>
-                    <Chip 
-                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_education_total || 0), 0)}
-                      size="small"
-                      sx={{ 
-                        backgroundColor: '#fef3c7', 
-                        color: '#92400e',
-                        fontSize: '11px'
-                      }}
-                    />
+                    {getFilteredStatistics().reduce((sum, stat) => sum + (stat.new_comer_education_total || 0), 0)}
                   </TableCell>
                   <TableCell sx={{ 
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#fef3c7',
+                    color: '#000000',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
                   }}>
-                    <Chip 
-                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_education_in_progress || 0), 0)}
-                      size="small"
-                      sx={{ 
-                        backgroundColor: '#fef3c7', 
-                        color: '#92400e',
-                        fontSize: '11px'
-                      }}
-                    />
+                    {getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_education_in_progress || 0), 0)}
                   </TableCell>
                   <TableCell sx={{ 
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#fef3c7',
+                    color: '#000000',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
                   }}>
-                    <Chip 
-                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_education_discontinued || 0), 0)}
-                      size="small"
-                      sx={{ 
-                        backgroundColor: '#fef3c7', 
-                        color: '#92400e',
-                        fontSize: '11px'
-                      }}
-                    />
+                    {getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_education_discontinued || 0), 0)}
                   </TableCell>
                   <TableCell sx={{ 
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#fef3c7',
+                    color: '#000000',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
                   }}>
-                    <Chip 
-                      label={getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_education_total || 0), 0)}
-                      size="small"
-                      sx={{ 
-                        backgroundColor: '#fef3c7', 
-                        color: '#92400e',
-                        fontSize: '10px'
-                      }}
-                    />
+                    {getFilteredStatistics().reduce((sum, stat) => sum + (stat.transfer_believer_education_total || 0), 0)}
                   </TableCell>
                   <TableCell sx={{ 
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '3px solid #f59e0b',
                     backgroundColor: '#fed7aa',
-                    color: '#f59e0b',
+                    color: '#000000',
                     fontSize: '11px',
+                    fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
                   }}>
@@ -2131,7 +2362,10 @@ const StatisticsPage = () => {
                   <TableCell 
                     sx={{ 
                       backgroundColor: '#f5f5f5', 
-                      border: '1px solid #ddd'
+                      border: '1px solid #ddd',
+                      color: '#000000',
+                      fontWeight: 'bold',
+                      fontSize: '11px'
                     }}
                   >
                     합계
@@ -2144,7 +2378,10 @@ const StatisticsPage = () => {
                         sx={{ 
                           textAlign: 'center', 
                           backgroundColor: '#e8f5e8', 
-                          border: '1px solid #ddd'
+                          border: '1px solid #ddd',
+                          color: '#000000',
+                          fontWeight: 'bold',
+                          fontSize: '11px'
                         }}
                       >
                         {monthlyAgeStats[month]?.초신자?.total || 0}
@@ -2153,7 +2390,10 @@ const StatisticsPage = () => {
                         sx={{ 
                           textAlign: 'center', 
                           backgroundColor: '#e8f5e8', 
-                          border: '1px solid #ddd'
+                          border: '1px solid #ddd',
+                          color: '#000000',
+                          fontWeight: 'bold',
+                          fontSize: '11px'
                         }}
                       >
                         {monthlyAgeStats[month]?.전입신자?.total || 0}
@@ -2166,7 +2406,10 @@ const StatisticsPage = () => {
                     sx={{ 
                       textAlign: 'center', 
                       backgroundColor: '#e8f5e8', 
-                      border: '1px solid #ddd'
+                      border: '1px solid #ddd',
+                      color: '#000000',
+                      fontWeight: 'bold',
+                      fontSize: '11px'
                     }}
                   >
                     {Object.values(monthlyAgeStats).reduce((sum, monthData) => 
@@ -2179,7 +2422,10 @@ const StatisticsPage = () => {
                     sx={{ 
                       textAlign: 'center', 
                       backgroundColor: '#e8f5e8', 
-                      border: '1px solid #ddd'
+                      border: '1px solid #ddd',
+                      color: '#000000',
+                      fontWeight: 'bold',
+                      fontSize: '11px'
                     }}
                   >
                     {Object.values(monthlyAgeStats).reduce((sum, monthData) => 
@@ -2192,7 +2438,10 @@ const StatisticsPage = () => {
                     sx={{ 
                       textAlign: 'center', 
                       backgroundColor: '#e8f5e8', 
-                      border: '1px solid #ddd'
+                      border: '1px solid #ddd',
+                      color: '#000000',
+                      fontWeight: 'bold',
+                      fontSize: '11px'
                     }}
                   >
                     {Object.values(monthlyAgeStats).reduce((sum, monthData) => 
@@ -2346,7 +2595,7 @@ const StatisticsPage = () => {
       </div>
       
       {/* 3페이지: 연령대별 현황 + 월별/연령대별 현황 */}
-      <div>
+      <div id="age-group-section-start">
       {/* 초신자/전입신자 분리 연령대별 통계 차트 */}
       {Object.keys(monthlyAgeStats).length > 0 && (
         <Paper id="age-group-chart" sx={{ 
