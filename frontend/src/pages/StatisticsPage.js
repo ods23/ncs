@@ -41,7 +41,6 @@ import {
   CheckCircle as CheckCircleIcon,
   AutoAwesome as AutoAwesomeIcon,
   PictureAsPdf as PictureAsPdfIcon,
-  AspectRatio as AspectRatioIcon,
 } from '@mui/icons-material';
 import {
   BarChart,
@@ -72,7 +71,7 @@ const StatisticsPage = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [departments, setDepartments] = useState([]);
   const [generateConfirmOpen, setGenerateConfirmOpen] = useState(false);
-  const [pdfOrientation, setPdfOrientation] = useState('portrait'); // 'portrait' or 'landscape'
+  const [pdfOrientationDialogOpen, setPdfOrientationDialogOpen] = useState(false);
   
   const [formData, setFormData] = useState({
     year: '',
@@ -801,9 +800,10 @@ const StatisticsPage = () => {
   };
 
   // PDF 다운로드 함수
-  const handleDownloadPdf = async () => {
+  const handleDownloadPdf = async (orientation = 'portrait') => {
     try {
       setLoading(true);
+      setPdfOrientationDialogOpen(false);
       
       // 스낵바 닫기 (PDF 캡처에 포함되지 않도록)
       setSnackbar({ open: false, message: '', severity: 'success' });
@@ -860,8 +860,9 @@ const StatisticsPage = () => {
       const monthlyAgeStatisticsSection = document.getElementById('monthly-age-statistics-section');
       
       // PDF 방향에 따라 설정
-      const orientation = pdfOrientation === 'landscape' ? 'l' : 'p';
-      const pdf = new jsPDF(orientation, 'mm', 'a4');
+      const pdfOrientation = orientation;
+      const orientationParam = pdfOrientation === 'landscape' ? 'l' : 'p';
+      const pdf = new jsPDF(orientationParam, 'mm', 'a4');
       const imgWidth = pdfOrientation === 'landscape' ? 297 : 210; // A4 가로/세로 너비 (mm)
       const pageHeight = pdfOrientation === 'landscape' ? 210 : 297; // A4 가로/세로 높이 (mm)
       const topMargin = 10; // 상단 여백 (mm)
@@ -1625,36 +1626,9 @@ const StatisticsPage = () => {
           </IconButton>
         </Tooltip>
 
-        <Tooltip title="PDF 방향 변경" arrow placement="top">
+        <Tooltip title="PDF 다운로드" arrow placement="top">
           <IconButton
-            onClick={() => setPdfOrientation(pdfOrientation === 'portrait' ? 'landscape' : 'portrait')}
-            size="small"
-            sx={{
-              background: pdfOrientation === 'landscape' 
-                ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)'
-                : 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
-              color: 'white',
-              width: 36,
-              height: 36,
-              borderRadius: '12px',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              '&:hover': {
-                transform: 'translateY(-2px) scale(1.05)',
-                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3)'
-              },
-              '&:active': {
-                transform: 'translateY(0) scale(0.98)'
-              }
-            }}
-          >
-            <AspectRatioIcon sx={{ fontSize: 18 }} />
-          </IconButton>
-        </Tooltip>
-
-        <Tooltip title={`PDF 다운로드 (${pdfOrientation === 'portrait' ? '세로' : '가로'})`} arrow placement="top">
-          <IconButton
-            onClick={handleDownloadPdf}
+            onClick={() => setPdfOrientationDialogOpen(true)}
             disabled={loading}
             size="small"
             sx={{
@@ -3826,6 +3800,112 @@ const StatisticsPage = () => {
         </DialogActions>
       </Dialog>
 
+      {/* PDF 방향 선택 다이얼로그 */}
+      <Dialog 
+        open={pdfOrientationDialogOpen} 
+        onClose={() => setPdfOrientationDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 4,
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            border: '1px solid #e5e7eb'
+          }
+        }}
+      >
+        <DialogTitle sx={{
+          background: 'linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%)',
+          borderBottom: '1px solid #e5e7eb',
+          borderRadius: '16px 16px 0 0',
+          p: 3
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{
+              width: 40,
+              height: 40,
+              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <PictureAsPdfIcon sx={{ color: 'white', fontSize: 20 }} />
+            </Box>
+            <Box>
+              <Typography variant="h6" sx={{ color: '#1f2937' }}>
+                PDF 방향 선택
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#6b7280', mt: 0.5 }}>
+                PDF 생성 방향을 선택해주세요
+              </Typography>
+            </Box>
+          </Box>
+        </DialogTitle>
+        
+        <DialogContent sx={{ p: 3, backgroundColor: '#f9fafb' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Button
+              variant="outlined"
+              fullWidth
+              onClick={() => handleDownloadPdf('portrait')}
+              disabled={loading}
+              sx={{
+                p: 3,
+                border: '2px solid #3b82f6',
+                borderRadius: 3,
+                backgroundColor: 'white',
+                color: '#1e40af',
+                fontSize: '16px',
+                fontWeight: 600,
+                '&:hover': {
+                  backgroundColor: '#eff6ff',
+                  borderColor: '#2563eb',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)'
+                },
+                transition: 'all 0.3s ease'
+              }}
+            >
+              세로 모드 (Portrait)
+            </Button>
+            
+            <Button
+              variant="outlined"
+              fullWidth
+              onClick={() => handleDownloadPdf('landscape')}
+              disabled={loading}
+              sx={{
+                p: 3,
+                border: '2px solid #8b5cf6',
+                borderRadius: 3,
+                backgroundColor: 'white',
+                color: '#7c3aed',
+                fontSize: '16px',
+                fontWeight: 600,
+                '&:hover': {
+                  backgroundColor: '#f5f3ff',
+                  borderColor: '#7c3aed',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 10px 15px -3px rgba(139, 92, 246, 0.3)'
+                },
+                transition: 'all 0.3s ease'
+              }}
+            >
+              가로 모드 (Landscape)
+            </Button>
+          </Box>
+        </DialogContent>
+        
+        <DialogActions sx={{ p: 2, backgroundColor: '#f9fafb', borderTop: '1px solid #e5e7eb' }}>
+          <Button 
+            onClick={() => setPdfOrientationDialogOpen(false)}
+            sx={{ color: '#6b7280' }}
+          >
+            취소
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* 스낵바 */}
       <Snackbar
