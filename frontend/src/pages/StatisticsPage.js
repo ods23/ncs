@@ -1680,8 +1680,8 @@ const StatisticsPage = () => {
             }
           }}>
             <Box sx={{ textAlign: 'center', flex: 1 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '12px' }}>총 등록</Typography>
-              <Typography variant="h4" sx={{  fontSize: '12px', lineHeight: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '14px' }}>총 등록</Typography>
+              <Typography variant="h4" sx={{  fontSize: '14px', lineHeight: 1, fontWeight: 'bold' }}>
                     {statistics.reduce((sum, stat) => sum + stat.total_registration, 0)}
                   </Typography>
                 </Box>
@@ -1707,8 +1707,8 @@ const StatisticsPage = () => {
             }
           }}>
             <Box sx={{ textAlign: 'center', flex: 1 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '12px' }}>총 수료</Typography>
-              <Typography variant="h4" sx={{  fontSize: '12px', lineHeight: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '14px' }}>총 수료</Typography>
+              <Typography variant="h4" sx={{  fontSize: '14px', lineHeight: 1, fontWeight: 'bold' }}>
                     {statistics.reduce((sum, stat) => sum + stat.total_graduate, 0)}
                   </Typography>
                 </Box>
@@ -1734,8 +1734,8 @@ const StatisticsPage = () => {
             }
           }}>
             <Box sx={{ textAlign: 'center', flex: 1 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '12px' }}>관리 년도</Typography>
-              <Typography variant="h4" sx={{  fontSize: '12px', lineHeight: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '14px' }}>관리 년도</Typography>
+              <Typography variant="h4" sx={{  fontSize: '14px', lineHeight: 1, fontWeight: 'bold' }}>
                 {statistics.length}
                   </Typography>
                 </Box>
@@ -1765,7 +1765,8 @@ const StatisticsPage = () => {
           <Typography variant="h5" sx={{ 
             fontSize: '14px', 
             color: '#1f2937',
-            letterSpacing: '0.5px'
+            letterSpacing: '0.5px',
+            fontWeight: 'bold'
           }}>
             {selectedYear && selectedDepartment ? `${selectedDepartment} 등록/수료/교육 현황 보고서` : '새가족 등록현황보고'}
           </Typography>
@@ -1780,7 +1781,8 @@ const StatisticsPage = () => {
               py: 0.3, 
               px: 0.5,
               fontSize: '12px',
-              lineHeight: 1.2
+              lineHeight: 1.2,
+              fontWeight: 'bold'
             } 
           }}>
             <TableHead>
@@ -2215,7 +2217,7 @@ const StatisticsPage = () => {
           {/* 헤더 */}
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
             <div style={{ width: '100px' }}></div>
-            <Typography variant="h6" sx={{  color: '#374151', fontSize: '14px', flex: 1, textAlign: 'center' }}>
+            <Typography variant="h6" sx={{  color: '#374151', fontSize: '14px', flex: 1, textAlign: 'center', fontWeight: 'bold' }}>
               {selectedYear && selectedDepartment ? `${selectedYear}년 기준 ${selectedDepartment}의 등록자/수료자 현황` : '년도별 등록자/수료자 현황'}
             </Typography>
             <div style={{ width: '100px' }}></div>
@@ -2267,7 +2269,8 @@ const StatisticsPage = () => {
                   <XAxis 
                     dataKey="year" 
                     tick={{ 
-                      fontSize: 12, 
+                      fontSize: 12,
+                      fontWeight: 'bold', 
                       fill: '#6b7280'
                     }}
                     tickFormatter={(value) => `${value}년`}
@@ -2278,7 +2281,8 @@ const StatisticsPage = () => {
                   />
                   <YAxis 
                     tick={{ 
-                      fontSize: 12, 
+                      fontSize: 12,
+                      fontWeight: 'bold', 
                       fill: '#6b7280'
                     }}
                     domain={[0, 'dataMax + 50']}
@@ -2293,13 +2297,15 @@ const StatisticsPage = () => {
                       border: '1px solid #e5e7eb',
                       borderRadius: '12px',
                       boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-                          fontSize: '12px'
+                      fontSize: '12px',
+                      fontWeight: 'bold'
                     }}
                   />
                   <Legend 
                     wrapperStyle={{
                       paddingTop: '20px',
-                          fontSize: '12px'
+                      fontSize: '12px',
+                      fontWeight: 'bold'
                     }}
                   />
                   <Bar 
@@ -2314,7 +2320,8 @@ const StatisticsPage = () => {
                       position="top" 
                       style={{ 
                         fill: '#1e40af', 
-                        fontSize: '12px'
+                        fontSize: '12px',
+                        fontWeight: 'bold'
                       }}
                       formatter={(value) => value > 0 ? value : ''}
                     />
@@ -2331,7 +2338,8 @@ const StatisticsPage = () => {
                       position="top" 
                       style={{ 
                         fill: '#059669', 
-                        fontSize: '12px'
+                        fontSize: '12px',
+                        fontWeight: 'bold'
                       }}
                       formatter={(value) => value > 0 ? value : ''}
                     />
@@ -2393,7 +2401,7 @@ const StatisticsPage = () => {
         width: '95%', 
         mx: 'auto' 
       }}>
-        <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  fontSize: '14px' }}>
+        <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  fontSize: '14px', fontWeight: 'bold' }}>
           {selectedYear && selectedDepartment ? `${selectedYear}년 ${selectedDepartment}의 등록현황보고` : `${selectedYear || new Date().getFullYear()}년 새가족 등록현황 보고서`}
         </Typography>
         
@@ -2402,7 +2410,7 @@ const StatisticsPage = () => {
             <Table size="small" sx={{ 
               width: '100%', 
               tableLayout: 'fixed',
-              '& .MuiTableCell-root': { py: 0.3, px: 0.5, fontSize: '12px', lineHeight: 1.2 } 
+              '& .MuiTableCell-root': { py: 0.3, px: 0.5, fontSize: '12px', lineHeight: 1.2, fontWeight: 'bold' } 
             }}>
               <TableHead>
                 {/* 메인 헤더 */}
@@ -2734,7 +2742,7 @@ const StatisticsPage = () => {
           boxShadow: 2, 
           mx: 'auto' 
         }}>
-          <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#374151', fontSize: '14px' }}>
+          <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#374151', fontSize: '14px', fontWeight: 'bold' }}>
             {selectedYear && selectedDepartment ? `${selectedYear}년 ${selectedDepartment}의 등록현황 분석` : `${selectedYear || new Date().getFullYear()}년 새가족 등록현황 분석`}
           </Typography>
           
@@ -2758,7 +2766,7 @@ const StatisticsPage = () => {
                 width: '95%',
                 mx: 'auto'
               }}>
-                <Typography variant="h6" sx={{ mb: 1, textAlign: 'center',  color: '#1f2937', fontSize: '14px' }}>
+                <Typography variant="h6" sx={{ mb: 1, textAlign: 'center',  color: '#1f2937', fontSize: '12px', fontWeight: 'bold' }}>
                   월별 전체 등록자 현황
                 </Typography>
                 <ResponsiveContainer width="95%" height="85%">
@@ -2774,12 +2782,12 @@ const StatisticsPage = () => {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis 
                       dataKey="month" 
-                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      tick={{ fontSize: 12, fontWeight: 'bold', fill: '#6b7280' }}
                       axisLine={{ stroke: '#d1d5db' }}
                       tickLine={{ stroke: '#d1d5db' }}
                     />
                     <YAxis 
-                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      tick={{ fontSize: 12, fontWeight: 'bold', fill: '#6b7280' }}
                       axisLine={{ stroke: '#d1d5db' }}
                       tickLine={{ stroke: '#d1d5db' }}
                     />
@@ -2804,7 +2812,8 @@ const StatisticsPage = () => {
                         position="top" 
                         style={{ 
                           fill: '#1e40af', 
-                          fontSize: '12px'
+                          fontSize: '12px',
+                          fontWeight: 'bold'
                         }}
                         formatter={(value) => value > 0 ? value : ''}
                       />
@@ -2824,13 +2833,15 @@ const StatisticsPage = () => {
                 height: 250,
                 pageBreakInside: 'avoid',
                 '& .recharts-pie-label-text': {
-                  fontSize: '12px !important'
+                  fontSize: '12px !important',
+                  fontWeight: 'bold !important'
                 },
                 '& text': {
-                  fontSize: '12px !important'
+                  fontSize: '12px !important',
+                  fontWeight: 'bold !important'
                 }
               }}>
-                <Typography variant="h6" sx={{ mb: 1, textAlign: 'center',  color: '#1f2937', fontSize: '12px' }}>
+                <Typography variant="h6" sx={{ mb: 1, textAlign: 'center',  color: '#000000', fontSize: '12px', fontWeight: 'bold' }}>
                   연령별 전체 등록자 비율
                 </Typography>
                 <ResponsiveContainer width="100%" height="95%">
@@ -2844,7 +2855,7 @@ const StatisticsPage = () => {
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
-                      labelStyle={{ fontSize: 12 }}
+                      labelStyle={{ fontSize: 12, fontWeight: 'bold' }}
                     >
                       {prepareAgeGroupData().map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
@@ -2883,7 +2894,7 @@ const StatisticsPage = () => {
           boxShadow: 2, 
           mx: 'auto' 
         }}>
-          <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#374151', fontSize: '14px' }}>
+          <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#374151', fontSize: '14px', fontWeight: 'bold' }}>
             {selectedYear && selectedDepartment ? `${selectedYear}년 ${selectedDepartment}의 초신자 및 전입신자의 등록자의 연령대별 현황` : `${selectedYear || new Date().getFullYear()}년 초신자 및 전입신자 등록자의 연령대별 현황`}
           </Typography>
           
@@ -2898,13 +2909,15 @@ const StatisticsPage = () => {
                 height: 320,
                 pageBreakInside: 'avoid',
                 '& .recharts-pie-label-text': {
-                  fontSize: '12px !important'
+                  fontSize: '12px !important',
+                  fontWeight: 'bold !important'
                 },
                 '& text': {
-                  fontSize: '12px !important'
+                  fontSize: '12px !important',
+                  fontWeight: 'bold !important'
                 }
               }}>
-                <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#3b82f6', fontSize: '12px' }}>
+                <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#000000', fontSize: '12px', fontWeight: 'bold' }}>
                   초신자 등록자 비율
                 </Typography>
                 <ResponsiveContainer width="100%" height="85%">
@@ -2918,7 +2931,7 @@ const StatisticsPage = () => {
                       outerRadius={100}
                       fill="#8884d8"
                       dataKey="value"
-                      labelStyle={{ fontSize: 12 }}
+                      labelStyle={{ fontSize: 12, fontWeight: 'bold' }}
                     >
                       {prepareNewComerAgeGroupData().map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
@@ -2952,13 +2965,15 @@ const StatisticsPage = () => {
                 height: 320,
                 pageBreakInside: 'avoid',
                 '& .recharts-pie-label-text': {
-                  fontSize: '12px !important'
+                  fontSize: '12px !important',
+                  fontWeight: 'bold !important'
                 },
                 '& text': {
-                  fontSize: '12px !important'
+                  fontSize: '12px !important',
+                  fontWeight: 'bold !important'
                 }
               }}>
-                <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#8b5cf6', fontSize: '12px' }}>
+                <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#000000', fontSize: '12px', fontWeight: 'bold' }}>
                   전입신자 등록자 비율
                 </Typography>
                 <ResponsiveContainer width="100%" height="85%">
@@ -2972,7 +2987,7 @@ const StatisticsPage = () => {
                       outerRadius={100}
                       fill="#8884d8"
                       dataKey="value"
-                      labelStyle={{ fontSize: 12 }}
+                      labelStyle={{ fontSize: 12, fontWeight: 'bold' }}
                     >
                       {prepareTransferBelieverAgeGroupData().map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
@@ -3008,7 +3023,7 @@ const StatisticsPage = () => {
           boxShadow: 2, 
           mx: 'auto' 
         }}>
-          <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#374151', fontSize: '14px' }}>
+          <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#374151', fontSize: '14px', fontWeight: 'bold' }}>
             {selectedYear && selectedDepartment ? `${selectedYear}년 ${selectedDepartment}의 초신자 및 전입신자 등록자의 월별/연령대별 현황` : `${selectedYear || new Date().getFullYear()}년 초신자 및 전입신자 등록자의 월별/연령대별 현황`}
           </Typography>
           
@@ -3027,7 +3042,7 @@ const StatisticsPage = () => {
                 maxWidth: false ? '95%' : '95%',
                 mx: 'auto'
               }}>
-                <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#1f2937', fontSize: '12px' }}>
+                <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#1f2937', fontSize: '12px', fontWeight: 'bold' }}>
                   1월 ~ 6월 초신자/전입신자 등록자의 연령별 현황
                 </Typography>
                 <ResponsiveContainer 
@@ -3053,12 +3068,12 @@ const StatisticsPage = () => {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis 
                       dataKey="monthGroup" 
-                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      tick={{ fontSize: 12, fontWeight: 'bold', fill: '#6b7280' }}
                       axisLine={{ stroke: '#d1d5db' }}
                       tickLine={{ stroke: '#d1d5db' }}
                     />
                     <YAxis 
-                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      tick={{ fontSize: 12, fontWeight: 'bold', fill: '#6b7280' }}
                       axisLine={{ stroke: '#d1d5db' }}
                       tickLine={{ stroke: '#d1d5db' }}
                     />
@@ -3070,13 +3085,15 @@ const StatisticsPage = () => {
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
                         boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                        fontSize: '12px'
+                        fontSize: '12px',
+                        fontWeight: 'bold'
                       }}
                     />
                     <Legend 
                       wrapperStyle={{
                         paddingTop: '5px',
-                        fontSize: '12px'
+                        fontSize: '12px',
+                        fontWeight: 'bold'
                       }}
                     />
                     {prepareAgeGroupBarData().map((ageGroup, index) => (
@@ -3091,7 +3108,8 @@ const StatisticsPage = () => {
                           position="top" 
                           style={{ 
                             fill: '#1e40af', 
-                            fontSize: '12px'
+                            fontSize: '12px',
+                            fontWeight: 'bold'
                           }}
                           formatter={(value) => value > 0 ? value : ''}
                         />
@@ -3116,7 +3134,7 @@ const StatisticsPage = () => {
                 maxWidth: false ? '95%' : '95%',
                 mx: 'auto'
               }}>
-                <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#1f2937', fontSize: '12px' }}>
+                <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#1f2937', fontSize: '12px', fontWeight: 'bold' }}>
                   7월 ~ 12월 초신자/전입신자 등록자의 연령별 현황
                 </Typography>
                 <ResponsiveContainer 
@@ -3142,12 +3160,12 @@ const StatisticsPage = () => {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis 
                       dataKey="monthGroup" 
-                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      tick={{ fontSize: 12, fontWeight: 'bold', fill: '#6b7280' }}
                       axisLine={{ stroke: '#d1d5db' }}
                       tickLine={{ stroke: '#d1d5db' }}
                     />
                     <YAxis 
-                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      tick={{ fontSize: 12, fontWeight: 'bold', fill: '#6b7280' }}
                       axisLine={{ stroke: '#d1d5db' }}
                       tickLine={{ stroke: '#d1d5db' }}
                     />
@@ -3159,13 +3177,15 @@ const StatisticsPage = () => {
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
                         boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                        fontSize: '12px'
+                        fontSize: '12px',
+                        fontWeight: 'bold'
                       }}
                     />
                     <Legend 
                       wrapperStyle={{
                         paddingTop: '5px',
-                        fontSize: '12px'
+                        fontSize: '12px',
+                        fontWeight: 'bold'
                       }}
                     />
                     {prepareAgeGroupBarData().map((ageGroup, index) => (
@@ -3180,7 +3200,8 @@ const StatisticsPage = () => {
                           position="top" 
                           style={{ 
                             fill: '#1e40af', 
-                            fontSize: '12px'
+                            fontSize: '12px',
+                            fontWeight: 'bold'
                           }}
                           formatter={(value) => value > 0 ? value : ''}
                         />
