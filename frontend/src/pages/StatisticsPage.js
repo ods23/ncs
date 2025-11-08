@@ -2863,15 +2863,16 @@ const StatisticsPage = () => {
                     </Pie>
                     <RechartsTooltip 
                       formatter={(value, name, props) => [
-                        `${value}명 (${props.payload.percentage}%)`, 
-                        '등록자 수'
+                        `${props.payload.name}:${value}(${props.payload.percentage}%)`
                       ]}
+                      labelFormatter={() => ''}
                       contentStyle={{
                         backgroundColor: 'white',
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
                         boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                        fontSize: '12px'
+                        fontSize: '12px',
+                        fontWeight: 'bold'
                       }}
                     />
                   </PieChart>
@@ -2939,15 +2940,16 @@ const StatisticsPage = () => {
                     </Pie>
                     <RechartsTooltip 
                       formatter={(value, name, props) => [
-                        `${value}명 (${props.payload.percentage}%)`, 
-                        '초신자 수'
+                        `${props.payload.name}:${value}(${props.payload.percentage}%)`
                       ]}
+                      labelFormatter={() => ''}
                       contentStyle={{
                         backgroundColor: 'white',
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
                         boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                        fontSize: '12px'
+                        fontSize: '12px',
+                        fontWeight: 'bold'
                       }}
                     />
                   </PieChart>
@@ -2995,15 +2997,16 @@ const StatisticsPage = () => {
                     </Pie>
                     <RechartsTooltip 
                       formatter={(value, name, props) => [
-                        `${value}명 (${props.payload.percentage}%)`, 
-                        '전입신자 수'
+                        `${props.payload.name}:${value}(${props.payload.percentage}%)`
                       ]}
+                      labelFormatter={() => ''}
                       contentStyle={{
                         backgroundColor: 'white',
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
                         boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                        fontSize: '12px'
+                        fontSize: '12px',
+                        fontWeight: 'bold'
                       }}
                     />
                   </PieChart>
