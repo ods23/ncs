@@ -41,6 +41,7 @@ import {
   CheckCircle as CheckCircleIcon,
   AutoAwesome as AutoAwesomeIcon,
   PictureAsPdf as PictureAsPdfIcon,
+  AspectRatio as AspectRatioIcon,
 } from '@mui/icons-material';
 import {
   BarChart,
@@ -71,6 +72,7 @@ const StatisticsPage = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [departments, setDepartments] = useState([]);
   const [generateConfirmOpen, setGenerateConfirmOpen] = useState(false);
+  const [pdfOrientation, setPdfOrientation] = useState('portrait'); // 'portrait' or 'landscape'
   
   const [formData, setFormData] = useState({
     year: '',
@@ -854,11 +856,16 @@ const StatisticsPage = () => {
       await waitForCharts();
 
       const ageGroupSectionStart = document.getElementById('age-group-section-start');
+      const ageGroupStatisticsSection = document.getElementById('age-group-statistics-section');
+      const monthlyAgeStatisticsSection = document.getElementById('monthly-age-statistics-section');
       
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210; // A4 너비 (mm)
-      const pageHeight = 297; // A4 높이 (mm)
+      // PDF 방향에 따라 설정
+      const orientation = pdfOrientation === 'landscape' ? 'l' : 'p';
+      const pdf = new jsPDF(orientation, 'mm', 'a4');
+      const imgWidth = pdfOrientation === 'landscape' ? 297 : 210; // A4 가로/세로 너비 (mm)
+      const pageHeight = pdfOrientation === 'landscape' ? 210 : 297; // A4 가로/세로 높이 (mm)
       const topMargin = 10; // 상단 여백 (mm)
+      const sideMargin = 10; // 좌우 여백 (mm)
 
       // 전체 컨테이너를 캡처
       // 스크롤 위치를 맨 위로 이동하여 전체 컨텐츠가 보이도록 함
@@ -957,7 +964,270 @@ const StatisticsPage = () => {
       const imgHeightPx = canvas.height;
       const imgWidthPx = canvas.width;
 
-      if (ageGroupSectionStart) {
+      if (pdfOrientation === 'landscape') {
+        // 가로 방향: 각 섹션을 개별적으로 캡처하여 지정된 페이지에 배치
+        const containerRect = container.getBoundingClientRect();
+        
+        // 각 섹션을 개별적으로 캡처하는 함수
+        const captureSection = async (sectionElement) => {
+          if (!sectionElement) return null;
+          
+          // 섹션 요소를 직접 html2canvas로 캡처 (더 정확함)
+          const sectionCanvas = await html2canvas(sectionElement, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff',
+            windowWidth: sectionElement.scrollWidth,
+            windowHeight: sectionElement.scrollHeight,
+            allowTaint: false,
+            removeContainer: false,
+            onclone: (clonedDoc) => {
+              // 복제된 문서에서 스낵바 제거
+              const snackbar = clonedDoc.querySelector('[role="alert"]');
+              if (snackbar) {
+                snackbar.style.display = 'none';
+              }
+              
+              // 합계 행의 텍스트 색상을 명시적으로 설정
+              const totalRows = clonedDoc.querySelectorAll('tr');
+              totalRows.forEach((row) => {
+                const cells = row.querySelectorAll('td');
+                let isTotalRow = false;
+                
+                const firstCell = cells[0];
+                if (firstCell && firstCell.textContent?.trim() === '합계') {
+                  isTotalRow = true;
+                }
+                
+                cells.forEach((cell) => {
+                  const computedStyle = clonedDoc.defaultView?.getComputedStyle(cell);
+                  const bgColor = computedStyle?.backgroundColor || cell.style.backgroundColor || '';
+                  
+                  if (isTotalRow || cell.textContent?.trim() === '합계' || 
+                      (bgColor && (
+                        bgColor.includes('rgb(254, 243, 199)') ||
+                        bgColor.includes('rgb(220, 252, 231)') ||
+                        bgColor.includes('rgb(219, 234, 254)') ||
+                        bgColor.includes('rgb(187, 247, 208)') ||
+                        bgColor.includes('rgb(254, 215, 170)') ||
+                        bgColor.includes('rgb(232, 245, 232)') ||
+                        bgColor.includes('rgb(243, 229, 245)') ||
+                        bgColor.includes('fef3c7') ||
+                        bgColor.includes('dcfce7') ||
+                        bgColor.includes('dbeafe') ||
+                        bgColor.includes('bbf7d0') ||
+                        bgColor.includes('fed7aa') ||
+                        bgColor.includes('e8f5e8') ||
+                        bgColor.includes('f3e5f5')
+                      ))) {
+                    cell.style.setProperty('color', '#000000', 'important');
+                    cell.style.setProperty('font-weight', 'bold', 'important');
+                    
+                    const chips = cell.querySelectorAll('[class*="MuiChip"]');
+                    chips.forEach((chip) => {
+                      chip.style.setProperty('color', '#000000', 'important');
+                      chip.style.setProperty('font-weight', 'bold', 'important');
+                      const chipSpans = chip.querySelectorAll('span');
+                      chipSpans.forEach((span) => {
+                        span.style.setProperty('color', '#000000', 'important');
+                        span.style.setProperty('font-weight', 'bold', 'important');
+                      });
+                    });
+                    
+                    const allChildren = cell.querySelectorAll('*');
+                    allChildren.forEach((child) => {
+                      child.style.setProperty('color', '#000000', 'important');
+                    });
+                  }
+                });
+              });
+            },
+          });
+          
+          const sectionImgData = sectionCanvas.toDataURL('image/png');
+          // 실제 캔버스 크기를 반환 (픽셀 단위)
+          return { 
+            imgData: sectionImgData, 
+            originalWidth: sectionCanvas.width,
+            originalHeight: sectionCanvas.height
+          };
+        };
+        
+        // 첫 번째 페이지: 새가족위원회 등록/수료/교육 현황 보고서, 등록자/수료자 현황, 등록현황보고
+        const mainSection = document.getElementById('main-statistics-section');
+        const annualSection = document.getElementById('annual-statistics-section');
+        const monthlyReportSection = document.getElementById('monthly-registration-report-section');
+        
+        let mainSectionData = null;
+        let annualSectionData = null;
+        let monthlyReportData = null;
+        
+        // 첫 번째 페이지의 첫 번째 항목: 새가족위원회 등록/수료/교육 현황 보고서
+        if (mainSection) {
+          mainSectionData = await captureSection(mainSection);
+        }
+        
+        // 첫 번째 페이지의 두 번째 항목: 등록자/수료자 현황
+        if (annualSection) {
+          annualSectionData = await captureSection(annualSection);
+        }
+        
+        // 첫 번째 페이지의 세 번째 항목: 등록현황보고
+        if (monthlyReportSection) {
+          monthlyReportData = await captureSection(monthlyReportSection);
+        }
+        
+        // 첫 번째 페이지: 세 섹션을 동일한 방식으로 계산하여 배치
+        const availableWidth = imgWidth - sideMargin * 2;
+        const availableHeight = pageHeight - topMargin * 2;
+        const itemSpacing = 5; // 5mm 간격
+        const maxItemHeight = (availableHeight - itemSpacing * 2) / 3; // 각 항목의 최대 높이 (3개 항목)
+        
+        let currentY = topMargin;
+        
+        // 첫 번째 섹션 배치
+        if (mainSectionData && mainSectionData.imgData) {
+          const mainAspectRatio = mainSectionData.originalWidth && mainSectionData.originalHeight 
+            ? mainSectionData.originalWidth / mainSectionData.originalHeight 
+            : 1.5;
+          const mainScaledWidth = availableWidth;
+          const mainScaledHeight = mainScaledWidth / mainAspectRatio;
+          const mainFinalHeight = Math.min(mainScaledHeight, maxItemHeight);
+          const mainFinalWidth = mainScaledWidth;
+          
+          pdf.addImage(mainSectionData.imgData, 'PNG', sideMargin, currentY, mainFinalWidth, mainFinalHeight);
+          currentY += mainFinalHeight + itemSpacing;
+        }
+        
+        // 두 번째 섹션 배치
+        if (annualSectionData && annualSectionData.imgData) {
+          const annualAspectRatio = annualSectionData.originalWidth && annualSectionData.originalHeight 
+            ? annualSectionData.originalWidth / annualSectionData.originalHeight 
+            : 1.5;
+          const annualScaledWidth = availableWidth;
+          const annualScaledHeight = annualScaledWidth / annualAspectRatio;
+          const annualFinalHeight = Math.min(annualScaledHeight, maxItemHeight);
+          const annualFinalWidth = annualScaledWidth;
+          
+          pdf.addImage(annualSectionData.imgData, 'PNG', sideMargin, currentY, annualFinalWidth, annualFinalHeight);
+          currentY += annualFinalHeight + itemSpacing;
+        }
+        
+        // 세 번째 섹션 배치
+        if (monthlyReportData && monthlyReportData.imgData) {
+          const monthlyAspectRatio = monthlyReportData.originalWidth && monthlyReportData.originalHeight 
+            ? monthlyReportData.originalWidth / monthlyReportData.originalHeight 
+            : 1.5;
+          const monthlyScaledWidth = availableWidth;
+          const monthlyScaledHeight = monthlyScaledWidth / monthlyAspectRatio;
+          const monthlyFinalHeight = Math.min(monthlyScaledHeight, maxItemHeight);
+          const monthlyFinalWidth = monthlyScaledWidth;
+          
+          pdf.addImage(monthlyReportData.imgData, 'PNG', sideMargin, currentY, monthlyFinalWidth, monthlyFinalHeight);
+        }
+        
+        // 두 번째 페이지: 등록현황 분석, 연령대별 현황
+        const registrationAnalysisSection = document.getElementById('registration-analysis-section');
+        
+        let registrationAnalysisData = null;
+        let ageGroupData = null;
+        
+        // 두 번째 페이지의 첫 번째 항목: 등록현황 분석
+        if (registrationAnalysisSection) {
+          registrationAnalysisData = await captureSection(registrationAnalysisSection);
+        }
+        
+        // 두 번째 페이지의 두 번째 항목: 연령대별 현황
+        if (ageGroupStatisticsSection) {
+          ageGroupData = await captureSection(ageGroupStatisticsSection);
+        }
+        
+        // 두 번째 페이지: 두 섹션을 동일한 방식으로 계산하여 배치
+        if (registrationAnalysisData && ageGroupData && registrationAnalysisData.imgData && ageGroupData.imgData) {
+          pdf.addPage();
+          
+          const availableWidth = imgWidth - sideMargin * 2;
+          const availableHeight = pageHeight - topMargin * 2;
+          const itemSpacing = 5; // 5mm 간격
+          const maxItemHeight = (availableHeight - itemSpacing) / 2; // 각 항목의 최대 높이
+          
+          // 첫 번째 섹션 크기 계산 (너비 기준, 높이 제한)
+          const analysisAspectRatio = registrationAnalysisData.originalWidth && registrationAnalysisData.originalHeight 
+            ? registrationAnalysisData.originalWidth / registrationAnalysisData.originalHeight 
+            : 1.5; // 기본 비율
+          const analysisScaledWidth = availableWidth;
+          const analysisScaledHeight = analysisScaledWidth / analysisAspectRatio;
+          const analysisFinalHeight = Math.min(analysisScaledHeight, maxItemHeight);
+          const analysisFinalWidth = analysisScaledWidth; // 너비는 항상 availableWidth 사용
+          
+          // 두 번째 섹션 크기 계산 (너비 기준, 높이 제한)
+          const ageGroupAspectRatio = ageGroupData.originalWidth && ageGroupData.originalHeight 
+            ? ageGroupData.originalWidth / ageGroupData.originalHeight 
+            : 1.5; // 기본 비율
+          const ageGroupScaledWidth = availableWidth;
+          const ageGroupScaledHeight = ageGroupScaledWidth / ageGroupAspectRatio;
+          const ageGroupFinalHeight = Math.min(ageGroupScaledHeight, maxItemHeight);
+          const ageGroupFinalWidth = ageGroupScaledWidth; // 너비는 항상 availableWidth 사용
+          
+          // 첫 번째 섹션 배치 (위쪽)
+          pdf.addImage(registrationAnalysisData.imgData, 'PNG', sideMargin, topMargin, analysisFinalWidth, analysisFinalHeight);
+          
+          // 두 번째 섹션 배치 (아래쪽)
+          const secondY = topMargin + analysisFinalHeight + itemSpacing;
+          pdf.addImage(ageGroupData.imgData, 'PNG', sideMargin, secondY, ageGroupFinalWidth, ageGroupFinalHeight);
+        } else if (registrationAnalysisData && registrationAnalysisData.imgData) {
+          // 첫 번째 섹션만 있는 경우
+          pdf.addPage();
+          const availableWidth = imgWidth - sideMargin * 2;
+          const availableHeight = pageHeight - topMargin * 2;
+          const analysisAspectRatio = registrationAnalysisData.originalWidth && registrationAnalysisData.originalHeight 
+            ? registrationAnalysisData.originalWidth / registrationAnalysisData.originalHeight 
+            : 1.5;
+          const analysisScaledWidth = availableWidth;
+          const analysisScaledHeight = analysisScaledWidth / analysisAspectRatio;
+          const analysisFinalHeight = Math.min(analysisScaledHeight, availableHeight);
+          const analysisFinalWidth = analysisScaledWidth;
+          pdf.addImage(registrationAnalysisData.imgData, 'PNG', sideMargin, topMargin, analysisFinalWidth, analysisFinalHeight);
+        } else if (ageGroupData && ageGroupData.imgData) {
+          // 두 번째 섹션만 있는 경우
+          pdf.addPage();
+          const availableWidth = imgWidth - sideMargin * 2;
+          const availableHeight = pageHeight - topMargin * 2;
+          const ageGroupAspectRatio = ageGroupData.originalWidth && ageGroupData.originalHeight 
+            ? ageGroupData.originalWidth / ageGroupData.originalHeight 
+            : 1.5;
+          const ageGroupScaledWidth = availableWidth;
+          const ageGroupScaledHeight = ageGroupScaledWidth / ageGroupAspectRatio;
+          const ageGroupFinalHeight = Math.min(ageGroupScaledHeight, availableHeight);
+          const ageGroupFinalWidth = ageGroupScaledWidth;
+          pdf.addImage(ageGroupData.imgData, 'PNG', sideMargin, topMargin, ageGroupFinalWidth, ageGroupFinalHeight);
+        }
+        
+        // 세 번째 페이지: 월별/연령대별 현황만 표시
+        if (monthlyAgeStatisticsSection) {
+          const sectionData = await captureSection(monthlyAgeStatisticsSection);
+          if (sectionData && sectionData.imgData) {
+            pdf.addPage();
+            const availableWidth = imgWidth - sideMargin * 2;
+            const availableHeight = pageHeight - topMargin * 2;
+            const aspectRatio = sectionData.originalWidth && sectionData.originalHeight 
+              ? sectionData.originalWidth / sectionData.originalHeight 
+              : 1.5;
+            const scaledWidth = availableWidth;
+            const scaledHeight = scaledWidth / aspectRatio;
+            const finalHeight = Math.min(scaledHeight, availableHeight);
+            const finalWidth = scaledWidth;
+            pdf.addImage(sectionData.imgData, 'PNG', sideMargin, topMargin, finalWidth, finalHeight);
+          }
+        }
+        
+        // 최소한 하나의 섹션이라도 추가되었는지 확인
+        const hasContent = mainSectionData || monthlyReportData || registrationAnalysisData || ageGroupData;
+        if (!hasContent) {
+          throw new Error('PDF 생성할 콘텐츠가 없습니다. 통계 데이터를 확인해주세요.');
+        }
+      } else if (ageGroupSectionStart) {
         // 연령대별 현황 섹션의 위치 계산
         const containerRect = container.getBoundingClientRect();
         const sectionRect = ageGroupSectionStart.getBoundingClientRect();
@@ -1172,7 +1442,7 @@ const StatisticsPage = () => {
           sx={{
             width: 140,
             '& .MuiInputLabel-root': {
-              fontSize: '11px',
+              fontSize: '12px',
               fontWeight: '600',
               color: '#374151'
             },
@@ -1196,7 +1466,7 @@ const StatisticsPage = () => {
               }
             },
             '& .MuiFormHelperText-root': {
-              fontSize: '11px',
+              fontSize: '12px',
               marginTop: '2px'
             }
           }}
@@ -1212,7 +1482,7 @@ const StatisticsPage = () => {
           sx={{
             width: 140,
             '& .MuiInputLabel-root': {
-              fontSize: '11px',
+              fontSize: '12px',
               fontWeight: '600',
               color: '#374151'
             },
@@ -1236,7 +1506,7 @@ const StatisticsPage = () => {
               }
             },
             '& .MuiFormHelperText-root': {
-              fontSize: '11px',
+              fontSize: '12px',
               marginTop: '2px'
             }
           }}
@@ -1355,7 +1625,34 @@ const StatisticsPage = () => {
           </IconButton>
         </Tooltip>
 
-        <Tooltip title="PDF 다운로드" arrow placement="top">
+        <Tooltip title="PDF 방향 변경" arrow placement="top">
+          <IconButton
+            onClick={() => setPdfOrientation(pdfOrientation === 'portrait' ? 'landscape' : 'portrait')}
+            size="small"
+            sx={{
+              background: pdfOrientation === 'landscape' 
+                ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)'
+                : 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
+              color: 'white',
+              width: 36,
+              height: 36,
+              borderRadius: '12px',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                transform: 'translateY(-2px) scale(1.05)',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3)'
+              },
+              '&:active': {
+                transform: 'translateY(0) scale(0.98)'
+              }
+            }}
+          >
+            <AspectRatioIcon sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Tooltip>
+
+        <Tooltip title={`PDF 다운로드 (${pdfOrientation === 'portrait' ? '세로' : '가로'})`} arrow placement="top">
           <IconButton
             onClick={handleDownloadPdf}
             disabled={loading}
@@ -1409,8 +1706,8 @@ const StatisticsPage = () => {
             }
           }}>
             <Box sx={{ textAlign: 'center', flex: 1 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '11px' }}>총 등록</Typography>
-              <Typography variant="h4" sx={{  fontSize: '11px', lineHeight: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '12px' }}>총 등록</Typography>
+              <Typography variant="h4" sx={{  fontSize: '12px', lineHeight: 1 }}>
                     {statistics.reduce((sum, stat) => sum + stat.total_registration, 0)}
                   </Typography>
                 </Box>
@@ -1436,8 +1733,8 @@ const StatisticsPage = () => {
             }
           }}>
             <Box sx={{ textAlign: 'center', flex: 1 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '11px' }}>총 수료</Typography>
-              <Typography variant="h4" sx={{  fontSize: '11px', lineHeight: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '12px' }}>총 수료</Typography>
+              <Typography variant="h4" sx={{  fontSize: '12px', lineHeight: 1 }}>
                     {statistics.reduce((sum, stat) => sum + stat.total_graduate, 0)}
                   </Typography>
                 </Box>
@@ -1463,8 +1760,8 @@ const StatisticsPage = () => {
             }
           }}>
             <Box sx={{ textAlign: 'center', flex: 1 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '11px' }}>관리 년도</Typography>
-              <Typography variant="h4" sx={{  fontSize: '11px', lineHeight: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '12px' }}>관리 년도</Typography>
+              <Typography variant="h4" sx={{  fontSize: '12px', lineHeight: 1 }}>
                 {statistics.length}
                   </Typography>
                 </Box>
@@ -1476,7 +1773,7 @@ const StatisticsPage = () => {
       {/* 통계 콘텐츠 전체 영역 */}
       <div id="statistics-container">
       {/* 1페이지: 새가족 등록현황보고 + 등록자/수료자 현황 차트 */}
-      <div style={{ pageBreakAfter: 'always' }}>
+      <div id="main-statistics-section" style={{ pageBreakAfter: 'always' }}>
       {/* 통계 테이블 */}
         {getFilteredStatistics().length > 0 && (
       <Paper sx={{ 
@@ -1492,7 +1789,7 @@ const StatisticsPage = () => {
           textAlign: 'center'
         }}>
           <Typography variant="h5" sx={{ 
-            fontSize: '11px', 
+            fontSize: '14px', 
             color: '#1f2937',
             letterSpacing: '0.5px'
           }}>
@@ -1508,125 +1805,125 @@ const StatisticsPage = () => {
             '& .MuiTableCell-root': { 
               py: 0.3, 
               px: 0.5,
-              fontSize: '11px',
+              fontSize: '12px',
               lineHeight: 1.2
             } 
           }}>
             <TableHead>
               {/* 메인 헤더 행 */}
               <TableRow>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #6b7280', fontSize: '11px', width: '3%' }} rowSpan={3}>년도</TableCell>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #1e40af', fontSize: '11px' }} colSpan={3}>등록</TableCell>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #059669', fontSize: '11px' }} colSpan={7}>수료</TableCell>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b', fontSize: '11px' }} colSpan={7}>교육</TableCell>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px', width: '3%' }} rowSpan={3}>수정</TableCell>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', fontSize: '11px', width: '3%' }} rowSpan={3}>삭제</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #6b7280', fontSize: '12px', width: '3%' }} rowSpan={3}>년도</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #1e40af', fontSize: '12px' }} colSpan={3}>등록</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #059669', fontSize: '12px' }} colSpan={7}>수료</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b', fontSize: '12px' }} colSpan={7}>교육</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px', width: '3%' }} rowSpan={3}>수정</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', fontSize: '12px', width: '3%' }} rowSpan={3}>삭제</TableCell>
               </TableRow>
               
               {/* 서브 헤더 행 */}
               <TableRow>
                 {/* 등록 서브헤더 */}
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px', width: '6%' }} rowSpan={2}>초신자</TableCell>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px', width: '8%' }} rowSpan={2}>전입신자</TableCell>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #1e40af', fontSize: '11px', width: '6%' }} rowSpan={2}>합계</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px', width: '6%' }} rowSpan={2}>초신자</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px', width: '8%' }} rowSpan={2}>전입신자</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #1e40af', fontSize: '12px', width: '6%' }} rowSpan={2}>합계</TableCell>
                 
                 {/* 수료 서브헤더 */}
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }} colSpan={3}>초신자</TableCell>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }} colSpan={3}>전입신자</TableCell>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #059669', fontSize: '11px' }} rowSpan={2}>합계</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }} colSpan={3}>초신자</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }} colSpan={3}>전입신자</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #059669', fontSize: '12px' }} rowSpan={2}>합계</TableCell>
                 
                 {/* 교육 서브헤더 */}
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }} colSpan={3}>초신자</TableCell>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }} colSpan={3}>전입신자</TableCell>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b', fontSize: '11px' }} rowSpan={2}>합계</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }} colSpan={3}>초신자</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }} colSpan={3}>전입신자</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b', fontSize: '12px' }} rowSpan={2}>합계</TableCell>
               </TableRow>
               
               {/* 상세 헤더 행 */}
               <TableRow>
                 {/* 수료 상세헤더 */}
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>전년도</TableCell>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>올해</TableCell>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>합계</TableCell>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>전년도</TableCell>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>올해</TableCell>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>합계</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>전년도</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>올해</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>합계</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>전년도</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>올해</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>합계</TableCell>
                 
                 {/* 교육 상세헤더 */}
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>교육중</TableCell>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>교육중단</TableCell>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>합계</TableCell>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>교육중</TableCell>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>교육중단</TableCell>
-                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>합계</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>교육중</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>교육중단</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>합계</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>교육중</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>교육중단</TableCell>
+                <TableCell sx={{  backgroundColor: '#f8fafc', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>합계</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {getFilteredStatistics().map((stat) => (
                 <TableRow key={stat.year} hover>
                   {/* 년도 */}
-                  <TableCell sx={{  backgroundColor: '#dbeafe', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #6b7280', fontSize: '11px' }}>
+                  <TableCell sx={{  backgroundColor: '#dbeafe', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #6b7280', fontSize: '12px' }}>
                     {stat.year}
                   </TableCell>
                   
                   {/* 등록 섹션 */}
-                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px', width: '6%' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px', width: '6%' }}>
                     {stat.new_comer_registration}
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px', width: '8%' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px', width: '8%' }}>
                     {stat.transfer_believer_registration}
                   </TableCell>
-                  <TableCell sx={{  backgroundColor: '#dbeafe', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #1e40af', fontSize: '11px', width: '6%' }}>
+                  <TableCell sx={{  backgroundColor: '#dbeafe', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #1e40af', fontSize: '12px', width: '6%' }}>
                     {stat.total_registration}
                   </TableCell>
                   
                   {/* 수료 섹션 */}
-                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>
                     {stat.new_comer_graduate_prev_year}
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>
                     {stat.new_comer_graduate_current_year}
                   </TableCell>
-                  <TableCell sx={{  backgroundColor: '#dcfce7', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
+                  <TableCell sx={{  backgroundColor: '#dcfce7', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>
                     {stat.new_comer_graduate_total}
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>
                     {stat.transfer_believer_graduate_prev_year}
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>
                     {stat.transfer_believer_graduate_current_year}
                   </TableCell>
-                  <TableCell sx={{  backgroundColor: '#dcfce7', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
+                  <TableCell sx={{  backgroundColor: '#dcfce7', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>
                     {stat.transfer_believer_graduate_total}
                   </TableCell>
-                  <TableCell sx={{  backgroundColor: '#bbf7d0', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #059669', fontSize: '11px' }}>
+                  <TableCell sx={{  backgroundColor: '#bbf7d0', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #059669', fontSize: '12px' }}>
                     {stat.total_graduate}
                   </TableCell>
                   
                   {/* 교육 섹션 */}
-                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>
                     {stat.new_comer_education_in_progress}
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>
                     {stat.new_comer_education_discontinued}
                   </TableCell>
-                  <TableCell sx={{  backgroundColor: '#fef3c7', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
+                  <TableCell sx={{  backgroundColor: '#fef3c7', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>
                     {stat.new_comer_education_total}
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>
                     {stat.transfer_believer_education_in_progress}
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>
                     {stat.transfer_believer_education_discontinued}
                   </TableCell>
-                  <TableCell sx={{  backgroundColor: '#fef3c7', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
+                  <TableCell sx={{  backgroundColor: '#fef3c7', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>
                     {stat.transfer_believer_education_total}
                   </TableCell>
-                  <TableCell sx={{  backgroundColor: '#fde68a', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b', fontSize: '11px' }}>
+                  <TableCell sx={{  backgroundColor: '#fde68a', textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '3px solid #f59e0b', fontSize: '12px' }}>
                     {stat.total_education}
                   </TableCell>
                   
                   {/* 수정 칼럼 */}
-                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '11px' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', fontSize: '12px' }}>
                       <Tooltip title="수정" arrow>
                         <IconButton
                           size="small"
@@ -1639,7 +1936,7 @@ const StatisticsPage = () => {
                   </TableCell>
                   
                   {/* 삭제 칼럼 */}
-                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', fontSize: '11px' }}>
+                  <TableCell sx={{ textAlign: 'center', py: 0.3, px: 0.5, border: '1px solid #e5e7eb', fontSize: '12px' }}>
                       <Tooltip title="삭제" arrow>
                         <IconButton
                           size="small"
@@ -1662,7 +1959,7 @@ const StatisticsPage = () => {
                     textAlign: 'center', 
                     border: '1px solid #e5e7eb', 
                     borderRight: '3px solid #6b7280',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     color: '#1e293b',
                     py: 0.3,
                     px: 0.5
@@ -1677,7 +1974,7 @@ const StatisticsPage = () => {
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#fef3c7',
                     color: '#000000',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 'bold',
                     width: '6%',
                     py: 0.3,
@@ -1691,7 +1988,7 @@ const StatisticsPage = () => {
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#fef3c7',
                     color: '#000000',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 'bold',
                     width: '8%',
                     py: 0.3,
@@ -1705,7 +2002,7 @@ const StatisticsPage = () => {
                     borderRight: '3px solid #1e40af',
                     backgroundColor: '#dbeafe',
                     color: '#000000',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 'bold',
                     width: '6%'
                   }}>
@@ -1719,7 +2016,7 @@ const StatisticsPage = () => {
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#dcfce7',
                     color: '#000000',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
@@ -1732,7 +2029,7 @@ const StatisticsPage = () => {
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#dcfce7',
                     color: '#000000',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
@@ -1745,7 +2042,7 @@ const StatisticsPage = () => {
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#dcfce7',
                     color: '#000000',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
@@ -1758,7 +2055,7 @@ const StatisticsPage = () => {
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#dcfce7',
                     color: '#000000',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
@@ -1771,7 +2068,7 @@ const StatisticsPage = () => {
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#dcfce7',
                     color: '#000000',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
@@ -1784,7 +2081,7 @@ const StatisticsPage = () => {
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#dcfce7',
                     color: '#000000',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
@@ -1797,7 +2094,7 @@ const StatisticsPage = () => {
                     borderRight: '3px solid #059669',
                     backgroundColor: '#bbf7d0',
                     color: '#000000',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
@@ -1812,7 +2109,7 @@ const StatisticsPage = () => {
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#fef3c7',
                     color: '#000000',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
@@ -1825,7 +2122,7 @@ const StatisticsPage = () => {
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#fef3c7',
                     color: '#000000',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
@@ -1838,7 +2135,7 @@ const StatisticsPage = () => {
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#fef3c7',
                     color: '#000000',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
@@ -1851,7 +2148,7 @@ const StatisticsPage = () => {
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#fef3c7',
                     color: '#000000',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
@@ -1864,7 +2161,7 @@ const StatisticsPage = () => {
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#fef3c7',
                     color: '#000000',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
@@ -1877,7 +2174,7 @@ const StatisticsPage = () => {
                     borderRight: '1px solid #94a3b8',
                     backgroundColor: '#fef3c7',
                     color: '#000000',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
@@ -1890,7 +2187,7 @@ const StatisticsPage = () => {
                     borderRight: '3px solid #f59e0b',
                     backgroundColor: '#fed7aa',
                     color: '#000000',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 'bold',
                     py: 0.3,
                     px: 0.5
@@ -1899,10 +2196,10 @@ const StatisticsPage = () => {
                   </TableCell>
                   
                   {/* 수정/삭제 버튼 (합계 행에는 없음) */}
-                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', py: 0.3, px: 0.5, fontSize: '11px' }}>
+                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', borderRight: '1px solid #94a3b8', py: 0.3, px: 0.5, fontSize: '12px' }}>
                     -
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', py: 0.3, px: 0.5, fontSize: '11px' }}>
+                  <TableCell sx={{ textAlign: 'center', border: '1px solid #e5e7eb', py: 0.3, px: 0.5, fontSize: '12px' }}>
                     -
                   </TableCell>
                 </TableRow>
@@ -1912,17 +2209,18 @@ const StatisticsPage = () => {
         </TableContainer>
       </Paper>
         )}
+      </div>
 
       {/* 년도별 등록/수료 현황 차트 */}
         {getFilteredStatistics().length > 0 && (
-        <Paper sx={{ 
-          width: '95%', 
+        <Paper id="annual-statistics-section" sx={{ 
+          width: '98%', 
           mx: 'auto', 
           mt: 3, 
           p: 1.5, 
           boxSizing: 'border-box',
           minWidth: false ? '100%' : 'auto',
-          maxWidth: false ? '100%' : '95%',
+          maxWidth: false ? '100%' : '98%',
           flex: false ? '1 1 100%' : 'none',
           display: false ? 'block' : 'block',
           overflow: 'hidden'
@@ -1943,7 +2241,7 @@ const StatisticsPage = () => {
           {/* 헤더 */}
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
             <div style={{ width: '100px' }}></div>
-            <Typography variant="h6" sx={{  color: '#374151', fontSize: '12px', flex: 1, textAlign: 'center' }}>
+            <Typography variant="h6" sx={{  color: '#374151', fontSize: '14px', flex: 1, textAlign: 'center' }}>
               {selectedYear && selectedDepartment ? `${selectedYear}년 기준 ${selectedDepartment}의 등록자/수료자 현황` : '년도별 등록자/수료자 현황'}
             </Typography>
             <div style={{ width: '100px' }}></div>
@@ -1952,15 +2250,15 @@ const StatisticsPage = () => {
           {/* 차트 영역 */}
           <Box id="annual-chart" sx={{ 
             height: 220, 
-            width: '100%', 
+            width: '95%', 
             backgroundColor: 'white', 
             borderRadius: 2, 
             p: 1, 
             border: '1px solid #e5e7eb', 
             pageBreakInside: 'avoid',
-            minWidth: '100%',
-            maxWidth: '100%',
-            flex: '1 1 100%',
+            minWidth: '95%',
+            maxWidth: '95%',
+            flex: '1 1 95%',
             display: 'block',
             overflow: 'hidden',
             mx: 'auto'
@@ -1970,23 +2268,20 @@ const StatisticsPage = () => {
               return chartData.length > 0;
             })() ? (
               <ResponsiveContainer 
-                width={false ? '100%' : '100%'} 
+                width="95%" 
                 height="100%" 
-                minWidth={false ? '100%' : '100%'}
-                maxWidth={false ? '100%' : '100%'}
                 style={{ 
-                  width: '100%',
-                  minWidth: '100%',
-                  maxWidth: '100%',
-                  overflow: 'hidden'
+                  width: '95%',
+                  minWidth: 0,
+                  maxWidth: '95%'
                 }}
               >
                 <BarChart
                   data={prepareChartData()}
                   margin={{
                     top: 20,
-                    right: false ? 30 : 30,
-                    left: false ? 30 : 30,
+                    right: 20,
+                    left: 10,
                     bottom: 5,
                   }}
                 >
@@ -1998,7 +2293,7 @@ const StatisticsPage = () => {
                   <XAxis 
                     dataKey="year" 
                     tick={{ 
-                      fontSize: 11, 
+                      fontSize: 12, 
                       fill: '#6b7280'
                     }}
                     tickFormatter={(value) => `${value}년`}
@@ -2009,7 +2304,7 @@ const StatisticsPage = () => {
                   />
                   <YAxis 
                     tick={{ 
-                      fontSize: 11, 
+                      fontSize: 12, 
                       fill: '#6b7280'
                     }}
                     domain={[0, 'dataMax + 50']}
@@ -2024,13 +2319,13 @@ const StatisticsPage = () => {
                       border: '1px solid #e5e7eb',
                       borderRadius: '12px',
                       boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-                      fontSize: '11px'
+                          fontSize: '12px'
                     }}
                   />
                   <Legend 
                     wrapperStyle={{
                       paddingTop: '20px',
-                      fontSize: '11px'
+                          fontSize: '12px'
                     }}
                   />
                   <Bar 
@@ -2045,7 +2340,7 @@ const StatisticsPage = () => {
                       position="top" 
                       style={{ 
                         fill: '#1e40af', 
-                        fontSize: '11px'
+                        fontSize: '12px'
                       }}
                       formatter={(value) => value > 0 ? value : ''}
                     />
@@ -2062,7 +2357,7 @@ const StatisticsPage = () => {
                       position="top" 
                       style={{ 
                         fill: '#059669', 
-                        fontSize: '11px'
+                        fontSize: '12px'
                       }}
                       formatter={(value) => value > 0 ? value : ''}
                     />
@@ -2115,17 +2410,16 @@ const StatisticsPage = () => {
         </div>
         </Paper>
       )}
-      </div>
       
       {/* 2페이지: 월별/연령대별 통계 표 + 등록현황 분석 */}
-      <div style={{ pageBreakAfter: 'always' }}>
+      <div id="monthly-registration-report-section" style={{ pageBreakAfter: 'always' }}>
       {/* 월별/연령대별 통계 표 */}
       <Box sx={{ 
         mt: 3, 
         width: '95%', 
         mx: 'auto' 
       }}>
-        <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  fontSize: '11px' }}>
+        <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  fontSize: '14px' }}>
           {selectedYear && selectedDepartment ? `${selectedYear}년 ${selectedDepartment}의 등록현황보고` : `${selectedYear || new Date().getFullYear()}년 새가족 등록현황 보고서`}
         </Typography>
         
@@ -2134,7 +2428,7 @@ const StatisticsPage = () => {
             <Table size="small" sx={{ 
               width: '100%', 
               tableLayout: 'fixed',
-              '& .MuiTableCell-root': { py: 0.3, px: 0.5, fontSize: '11px', lineHeight: 1.2 } 
+              '& .MuiTableCell-root': { py: 0.3, px: 0.5, fontSize: '12px', lineHeight: 1.2 } 
             }}>
               <TableHead>
                 {/* 메인 헤더 */}
@@ -2277,7 +2571,7 @@ const StatisticsPage = () => {
                         backgroundColor: '#f5f5f5', 
                         border: '1px solid #ddd',
                         width: '5%',
-                        fontSize: '11px',
+                        fontSize: '12px',
                         lineHeight: 1.2
                       }}
                     >
@@ -2366,7 +2660,7 @@ const StatisticsPage = () => {
                       border: '1px solid #ddd',
                       color: '#000000',
                       fontWeight: 'bold',
-                      fontSize: '11px'
+                          fontSize: '12px'
                     }}
                   >
                     합계
@@ -2382,7 +2676,7 @@ const StatisticsPage = () => {
                           border: '1px solid #ddd',
                           color: '#000000',
                           fontWeight: 'bold',
-                          fontSize: '11px'
+                          fontSize: '12px'
                         }}
                       >
                         {monthlyAgeStats[month]?.초신자?.total || 0}
@@ -2394,7 +2688,7 @@ const StatisticsPage = () => {
                           border: '1px solid #ddd',
                           color: '#000000',
                           fontWeight: 'bold',
-                          fontSize: '11px'
+                          fontSize: '12px'
                         }}
                       >
                         {monthlyAgeStats[month]?.전입신자?.total || 0}
@@ -2410,7 +2704,7 @@ const StatisticsPage = () => {
                       border: '1px solid #ddd',
                       color: '#000000',
                       fontWeight: 'bold',
-                      fontSize: '11px'
+                          fontSize: '12px'
                     }}
                   >
                     {Object.values(monthlyAgeStats).reduce((sum, monthData) => 
@@ -2426,7 +2720,7 @@ const StatisticsPage = () => {
                       border: '1px solid #ddd',
                       color: '#000000',
                       fontWeight: 'bold',
-                      fontSize: '11px'
+                          fontSize: '12px'
                     }}
                   >
                     {Object.values(monthlyAgeStats).reduce((sum, monthData) => 
@@ -2442,7 +2736,7 @@ const StatisticsPage = () => {
                       border: '1px solid #ddd',
                       color: '#000000',
                       fontWeight: 'bold',
-                      fontSize: '11px'
+                          fontSize: '12px'
                     }}
                   >
                     {Object.values(monthlyAgeStats).reduce((sum, monthData) => 
@@ -2455,17 +2749,18 @@ const StatisticsPage = () => {
           </TableContainer>
         </Box>
       </Box>
+      </div>
 
       {/* 월별/연령대별 통계 차트 */}
       {Object.keys(monthlyAgeStats).length > 0 && (
-        <Paper sx={{ 
+        <Paper id="registration-analysis-section" sx={{ 
           width: '95%', 
           mt: 3, 
           p: 1, 
           boxShadow: 2, 
           mx: 'auto' 
         }}>
-          <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#374151', fontSize: '12px' }}>
+          <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#374151', fontSize: '14px' }}>
             {selectedYear && selectedDepartment ? `${selectedYear}년 ${selectedDepartment}의 등록현황 분석` : `${selectedYear || new Date().getFullYear()}년 새가족 등록현황 분석`}
           </Typography>
           
@@ -2485,22 +2780,32 @@ const StatisticsPage = () => {
                 borderRadius: 2, 
                 border: '1px solid #e5e7eb',
                 height: 250,
-                pageBreakInside: 'avoid'
+                pageBreakInside: 'avoid',
+                width: '95%',
+                mx: 'auto'
               }}>
-                <Typography variant="h6" sx={{ mb: 1, textAlign: 'center',  color: '#1f2937', fontSize: '12px' }}>
+                <Typography variant="h6" sx={{ mb: 1, textAlign: 'center',  color: '#1f2937', fontSize: '14px' }}>
                   월별 전체 등록자 현황
                 </Typography>
-                <ResponsiveContainer width="100%" height="85%">
-                  <BarChart data={prepareMonthlyData()}>
+                <ResponsiveContainer width="95%" height="85%">
+                  <BarChart 
+                    data={prepareMonthlyData()}
+                    margin={{
+                      top: 20,
+                      right: 20,
+                      left: -10,
+                      bottom: 5,
+                    }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis 
                       dataKey="month" 
-                      tick={{ fontSize: 11, fill: '#6b7280' }}
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
                       axisLine={{ stroke: '#d1d5db' }}
                       tickLine={{ stroke: '#d1d5db' }}
                     />
                     <YAxis 
-                      tick={{ fontSize: 11, fill: '#6b7280' }}
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
                       axisLine={{ stroke: '#d1d5db' }}
                       tickLine={{ stroke: '#d1d5db' }}
                     />
@@ -2512,7 +2817,7 @@ const StatisticsPage = () => {
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
                         boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                        fontSize: '11px'
+                        fontSize: '12px'
                       }}
                     />
                     <Bar 
@@ -2525,7 +2830,7 @@ const StatisticsPage = () => {
                         position="top" 
                         style={{ 
                           fill: '#1e40af', 
-                          fontSize: '11px'
+                          fontSize: '12px'
                         }}
                         formatter={(value) => value > 0 ? value : ''}
                       />
@@ -2545,10 +2850,10 @@ const StatisticsPage = () => {
                 height: 250,
                 pageBreakInside: 'avoid',
                 '& .recharts-pie-label-text': {
-                  fontSize: '11px !important'
+                  fontSize: '12px !important'
                 },
                 '& text': {
-                  fontSize: '11px !important'
+                  fontSize: '12px !important'
                 }
               }}>
                 <Typography variant="h6" sx={{ mb: 1, textAlign: 'center',  color: '#1f2937', fontSize: '12px' }}>
@@ -2565,7 +2870,7 @@ const StatisticsPage = () => {
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
-                      labelStyle={{ fontSize: 11 }}
+                      labelStyle={{ fontSize: 12 }}
                     >
                       {prepareAgeGroupData().map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
@@ -2581,7 +2886,7 @@ const StatisticsPage = () => {
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
                         boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                        fontSize: '11px'
+                        fontSize: '12px'
                       }}
                     />
                   </PieChart>
@@ -2592,21 +2897,19 @@ const StatisticsPage = () => {
           </Box>
         </Paper>
       )}
-
-      </div>
       
       {/* 3페이지: 연령대별 현황 + 월별/연령대별 현황 */}
       <div id="age-group-section-start">
       {/* 초신자/전입신자 분리 연령대별 통계 차트 */}
       {Object.keys(monthlyAgeStats).length > 0 && (
-        <Paper id="age-group-chart" sx={{ 
+        <Paper id="age-group-statistics-section" sx={{ 
           width: '95%', 
           mt: 3, 
           p: 1, 
           boxShadow: 2, 
           mx: 'auto' 
         }}>
-          <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#374151', fontSize: '12px' }}>
+          <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#374151', fontSize: '14px' }}>
             {selectedYear && selectedDepartment ? `${selectedYear}년 ${selectedDepartment}의 초신자 및 전입신자의 등록자의 연령대별 현황` : `${selectedYear || new Date().getFullYear()}년 초신자 및 전입신자 등록자의 연령대별 현황`}
           </Typography>
           
@@ -2621,10 +2924,10 @@ const StatisticsPage = () => {
                 height: 320,
                 pageBreakInside: 'avoid',
                 '& .recharts-pie-label-text': {
-                  fontSize: '11px !important'
+                  fontSize: '12px !important'
                 },
                 '& text': {
-                  fontSize: '11px !important'
+                  fontSize: '12px !important'
                 }
               }}>
                 <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#3b82f6', fontSize: '12px' }}>
@@ -2641,7 +2944,7 @@ const StatisticsPage = () => {
                       outerRadius={100}
                       fill="#8884d8"
                       dataKey="value"
-                      labelStyle={{ fontSize: 11 }}
+                      labelStyle={{ fontSize: 12 }}
                     >
                       {prepareNewComerAgeGroupData().map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
@@ -2657,7 +2960,7 @@ const StatisticsPage = () => {
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
                         boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                        fontSize: '11px'
+                        fontSize: '12px'
                       }}
                     />
                   </PieChart>
@@ -2675,10 +2978,10 @@ const StatisticsPage = () => {
                 height: 320,
                 pageBreakInside: 'avoid',
                 '& .recharts-pie-label-text': {
-                  fontSize: '11px !important'
+                  fontSize: '12px !important'
                 },
                 '& text': {
-                  fontSize: '11px !important'
+                  fontSize: '12px !important'
                 }
               }}>
                 <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#8b5cf6', fontSize: '12px' }}>
@@ -2695,7 +2998,7 @@ const StatisticsPage = () => {
                       outerRadius={100}
                       fill="#8884d8"
                       dataKey="value"
-                      labelStyle={{ fontSize: 11 }}
+                      labelStyle={{ fontSize: 12 }}
                     >
                       {prepareTransferBelieverAgeGroupData().map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
@@ -2711,7 +3014,7 @@ const StatisticsPage = () => {
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
                         boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                        fontSize: '11px'
+                        fontSize: '12px'
                       }}
                     />
                   </PieChart>
@@ -2724,14 +3027,14 @@ const StatisticsPage = () => {
 
       {/* 월별/연령대별 막대 차트 */}
       {Object.keys(monthlyAgeStats).length > 0 && (
-        <Paper sx={{ 
+        <Paper id="monthly-age-statistics-section" sx={{ 
           width: '95%', 
           mt: 3, 
           p: 1, 
           boxShadow: 2, 
           mx: 'auto' 
         }}>
-          <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#374151', fontSize: '12px' }}>
+          <Typography variant="h6" sx={{ mb: 1.5, textAlign: 'center',  color: '#374151', fontSize: '14px' }}>
             {selectedYear && selectedDepartment ? `${selectedYear}년 ${selectedDepartment}의 초신자 및 전입신자 등록자의 월별/연령대별 현황` : `${selectedYear || new Date().getFullYear()}년 초신자 및 전입신자 등록자의 월별/연령대별 현황`}
           </Typography>
           
@@ -2776,12 +3079,12 @@ const StatisticsPage = () => {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis 
                       dataKey="monthGroup" 
-                      tick={{ fontSize: 11, fill: '#6b7280' }}
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
                       axisLine={{ stroke: '#d1d5db' }}
                       tickLine={{ stroke: '#d1d5db' }}
                     />
                     <YAxis 
-                      tick={{ fontSize: 11, fill: '#6b7280' }}
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
                       axisLine={{ stroke: '#d1d5db' }}
                       tickLine={{ stroke: '#d1d5db' }}
                     />
@@ -2793,13 +3096,13 @@ const StatisticsPage = () => {
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
                         boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                        fontSize: '11px'
+                        fontSize: '12px'
                       }}
                     />
                     <Legend 
                       wrapperStyle={{
                         paddingTop: '5px',
-                        fontSize: '11px'
+                        fontSize: '12px'
                       }}
                     />
                     {prepareAgeGroupBarData().map((ageGroup, index) => (
@@ -2814,7 +3117,7 @@ const StatisticsPage = () => {
                           position="top" 
                           style={{ 
                             fill: '#1e40af', 
-                            fontSize: '11px'
+                            fontSize: '12px'
                           }}
                           formatter={(value) => value > 0 ? value : ''}
                         />
@@ -2865,12 +3168,12 @@ const StatisticsPage = () => {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis 
                       dataKey="monthGroup" 
-                      tick={{ fontSize: 11, fill: '#6b7280' }}
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
                       axisLine={{ stroke: '#d1d5db' }}
                       tickLine={{ stroke: '#d1d5db' }}
                     />
                     <YAxis 
-                      tick={{ fontSize: 11, fill: '#6b7280' }}
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
                       axisLine={{ stroke: '#d1d5db' }}
                       tickLine={{ stroke: '#d1d5db' }}
                     />
@@ -2882,13 +3185,13 @@ const StatisticsPage = () => {
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
                         boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                        fontSize: '11px'
+                        fontSize: '12px'
                       }}
                     />
                     <Legend 
                       wrapperStyle={{
                         paddingTop: '5px',
-                        fontSize: '11px'
+                        fontSize: '12px'
                       }}
                     />
                     {prepareAgeGroupBarData().map((ageGroup, index) => (
@@ -2903,7 +3206,7 @@ const StatisticsPage = () => {
                           position="top" 
                           style={{ 
                             fill: '#1e40af', 
-                            fontSize: '11px'
+                            fontSize: '12px'
                           }}
                           formatter={(value) => value > 0 ? value : ''}
                         />
@@ -3458,7 +3761,7 @@ const StatisticsPage = () => {
         <DialogContent sx={{ pt: 3, pb: 2 }}>
           <DialogContentText sx={{ 
             textAlign: 'center', 
-            fontSize: '11px', 
+                          fontSize: '12px', 
             color: '#374151',
             mb: 2
           }}>
@@ -3466,7 +3769,7 @@ const StatisticsPage = () => {
           </DialogContentText>
           <DialogContentText sx={{ 
             textAlign: 'center', 
-            fontSize: '11px', 
+                          fontSize: '12px', 
             color: '#6b7280',
             mb: 1
           }}>
